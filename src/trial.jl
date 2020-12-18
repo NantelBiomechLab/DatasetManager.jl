@@ -167,7 +167,7 @@ function findtrials(
     subsets::AbstractVector{DataSubset},
     conditions::TrialConditions;
     I::Type=Int,
-    subject_fmt=r"(?:Subject (?<subject>\d+))",
+    subject_fmt=r"(?<=Subject )(?<subject>\d+)",
     ignorefiles::Union{Nothing, Vector{String}}=nothing,
     defaultconds::Union{Nothing, Dict{Symbol}}=nothing
 )
