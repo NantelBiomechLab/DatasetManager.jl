@@ -61,7 +61,7 @@ struct SegmentResult{S,ID}
     results::Dict{Symbol}
 end
 
-Trial(sr::SegmentResult) = sr.segment.trial
+trial(sr::SegmentResult) = sr.segment.trial
 
 Base.show(io::IO, sr::SegmentResult) = print(io, "SegmentResult(",sr.segment,",", sr.results,")")
 
