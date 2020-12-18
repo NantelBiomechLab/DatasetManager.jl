@@ -9,10 +9,16 @@ makedocs(;
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://halleysfifthinc.github.io/DatasetManager.jl",
-        assets=String[],
+        assets=String[
+            "../assets/css/custom.css"
+        ],
     ),
     pages=[
         "Home" => "index.md",
+        "Examples" => [
+            "Datasets" => "examples/datasets-examples.md"
+        ],
+        "Reference" => "reference.md"
     ],
 )
 

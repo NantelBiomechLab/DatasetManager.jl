@@ -4,9 +4,6 @@ CurrentModule = DatasetManager
 
 # DatasetManager
 
-```@index
+```@contents
 ```
 
-```@autodocs
-Modules = [DatasetManager]
-```
