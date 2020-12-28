@@ -51,6 +51,8 @@ function Base.show(io::IO, mimet::MIME"text/plain", s::Segment{S,ID}) where {S,I
     show(io, mimet, s.conds)
 end
 
+function readsegment end
+
 """
     SegmentResult
 
