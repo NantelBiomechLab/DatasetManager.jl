@@ -7,9 +7,8 @@ export DataSubset, TrialConditions, Trial, DuplicateSourceError, Segment, Segmen
 
 export findtrials, readsource, readsegment, path
 
-include("sources/source.jl")
+include("source.jl")
 include("trial.jl")
 include("segment.jl")
-
 
 end
