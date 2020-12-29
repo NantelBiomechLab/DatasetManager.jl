@@ -1,3 +1,14 @@
+"""
+    DataSubset(name::String, source::{<:AbstractSource}, dir::String, pattern::String)
+
+Describes a subset of a larger set of data, where all the files found within `dir`, with (absolute) paths which match `pattern` (using [glob syntax](https://en.wikipedia.org/wiki/Glob_(programming))), are all of the same `AbstractSource` subtype.
+
+# Example:
+```jldoctest; setup = :(struct EventsSource <: AbstractSource; end)
+julia> DataSubset("events", EventsSource, "path/to/subset", "Subject [0-9]*/events/*.tsv")
+DataSubset("events", EventsSource, "path/to/subset", "Subject [0-9]*/events/*.tsv")
+```
+"""
 struct DataSubset
     name::String
     source::Type
@@ -9,16 +20,8 @@ struct DataSubset
     end
 end
 
-struct TrialConditions
-    condnames::Vector{Symbol}
-    required::Vector{Symbol}
-    labels_rg::Regex
-    subst::Vector{Pair{Regex,String}}
-    types::Vector{Type}
-end
-
 """
-    TrialConditions(conditions, labels; kwargs...) -> TrialConditions
+    TrialConditions(conditions, labels; kwargs...)
 
 - `conditions` is a collection of condition names (eg `(:medication, :strength)`)
 - `labels` is a `Dict` with keys for each condition name (eg `haskey(labels, :medication)`). Each key gets a collection of the labels for all levels and any transformation desired for that condition.
@@ -29,6 +32,14 @@ end
 - `types`: The (Julia) types for each condition (eg `[String, Int]`)
 - `sep`: The character separating condition labels
 """
+struct TrialConditions
+    condnames::Vector{Symbol}
+    required::Vector{Symbol}
+    labels_rg::Regex
+    subst::Vector{Pair{Regex,String}}
+    types::Vector{Type}
+end
+
 function TrialConditions(
     conditions,
     labels;
