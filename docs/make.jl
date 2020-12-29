@@ -1,6 +1,7 @@
 using DatasetManager
 using Documenter
 
+DocMeta.setdocmeta!(DatasetManager, :DocTestSetup, :(using DatasetManager); recursive=true)
 makedocs(;
     modules=[DatasetManager],
     authors="Allen Hill <allenofthehills@gmail.com> and contributors",
@@ -18,7 +19,7 @@ makedocs(;
         "Examples" => [
             "Datasets" => "examples/datasets-examples.md"
         ],
-        "Reference" => "reference.md"
+        "Julia Reference" => "julia-reference.md"
     ],
 )
 
