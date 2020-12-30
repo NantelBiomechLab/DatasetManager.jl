@@ -1,8 +1,29 @@
 # Reference
 
-```@index
+## Sources
+
+```@docs
+AbstractSource
+sourcepath
+readsource
 ```
 
-```@autodocs
-Modules = [DatasetManager]
+## Trials
+
+```@docs
+DataSubset
+TrialConditions
+Trial
+findtrials
+```
+
+## Segments
+
+```@docs
+Segment
+SegmentResult
+readsegment
+trial
+subject
+conditions
 ```
