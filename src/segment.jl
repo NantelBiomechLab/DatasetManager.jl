@@ -98,6 +98,14 @@ Return the parent `Trial` for the given `Segment` or `SegmentResult`
 trial(seg::Segment) = seg.trial
 
 """
+    subject(seg::Union{Segment,SegmentResults})
+
+Return the subject reference for the parent `Trial` of the given `Segment` or
+`SegmentResult`
+"""
+subject(seg::Segment) = seg.trial.subject
+
+"""
     conditions(seg::Union{Segment,SegmentResults}) -> Dict{Symbol}
 
 Return the conditions for the given `Segment` or `SegmentResult`
@@ -126,7 +134,9 @@ function SegmentResult(segment::Segment{S,ID}, results) where {S,ID}
 end
 
 trial(sr::SegmentResult) = trial(sr.segment)
+subject(sr::SegmentResult) = subject(sr.segment)
 conditions(sr::SegmentResult) = conditions(sr.segment)
+
 
 Base.show(io::IO, sr::SegmentResult) = print(io, "SegmentResult(",sr.segment,",", sr.results,")")
 
