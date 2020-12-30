@@ -1,9 +1,10 @@
 """
-    DataSubset(name::String, source::{<:AbstractSource}, dir::String, pattern::String)
+    DataSubset(name, source::Type{<:AbstractSource}, dir, pattern)
 
-Describes a subset of a larger set of data, where all the files found within `dir`, with (absolute) paths which match `pattern` (using [glob syntax](https://en.wikipedia.org/wiki/Glob_(programming))), are all of the same `AbstractSource` subtype.
+Describes a subset of data, where files found within `dir`, with (absolute) paths which match `pattern` (using [glob syntax](https://en.wikipedia.org/wiki/Glob_(programming))), are all of the same `AbstractSource` subtype.
 
-# Example:
+# Examples
+
 ```jldoctest; setup = :(struct EventsSource <: AbstractSource; end)
 julia> DataSubset("events", EventsSource, "path/to/subset", "Subject [0-9]*/events/*.tsv")
 DataSubset("events", EventsSource, "path/to/subset", "Subject [0-9]*/events/*.tsv")
@@ -21,16 +22,20 @@ struct DataSubset
 end
 
 """
-    TrialConditions(conditions, labels; kwargs...)
+    TrialConditions(conditions, labels; <keyword arguments>)
+
+Describes the experimental conditions and the labels for levels within each condition.
+
+# Arguments
 
 - `conditions` is a collection of condition names (eg `(:medication, :strength)`)
 - `labels` is a `Dict` with keys for each condition name (eg `haskey(labels, :medication)`). Each key gets a collection of the labels for all levels and any transformation desired for that condition.
 
 # Keyword arguments
 
-- `required`: The conditions which every trial must have (in the case of some trials having optional/additional conditions)
-- `types`: The (Julia) types for each condition (eg `[String, Int]`)
-- `sep`: The character separating condition labels
+- `required=conditions`: The conditions which every trial must have (in the case of some trials having optional/additional conditions).
+- `types=fill(String, length(conditions)`: The (Julia) types for each condition (eg `[String, Int]`)
+- `sep="[_-]": The character separating condition labels
 """
 struct TrialConditions
     condnames::Vector{Symbol}
@@ -72,10 +77,9 @@ function TrialConditions(
 end
 
 """
-    Trial{I}
+    Trial(subject, name, [conditions[, sources]])
 
-A `Trial` describes the referenced trial. Trials are parameterized for
-different locations to allow for dispatching by the Trial parameter.
+Describes a single trial, including a reference to the subject, trial name, trial conditions, and relevant sources of data.
 """
 struct Trial{I}
     subject::I
@@ -173,7 +177,21 @@ function duplicatesourceerror_show(io, trial, datasubset, original, dup)
     print(io, " for ", datasubset)
 end
 
+"""
+    findtrials(subsets::AbstractVector{DataSubset}, conditions::TrialConditions;
+        <keyword arguments>) -> Vector{Trial}
 
+Find all the trials matching `conditions` which can be found in `subsets`.
+
+# Keyword arguments:
+
+- `subject_fmt=r"(?<=Subject )(?<subject>\\d+)"`: The format that the subject identifier
+    will appear in file paths.
+- `ignorefiles::Union{Nothing, Vector{String}}=nothing`: A list of files, given in the form
+    of an absolute path, that are in any of the `subsets` folders which are to be ignored.
+- `defaultconds::Union{Nothing, Dict{Symbol}}=nothing`: Any conditions which have a default
+    level if the condition is not found in the file path.
+"""
 function findtrials(
     subsets::AbstractVector{DataSubset},
     conditions::TrialConditions;

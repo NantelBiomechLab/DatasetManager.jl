@@ -1,23 +1,16 @@
 """
-    Segment(
-            trial::Trial,
-            source::S,
-            start::Union{Nothing,Float64},
-            finish::Union{Nothing,Float64}=nothing,
-            conds::Dict{Symbol}=Dict{Symbol,Any}()
-    ) where {S<:AbstractSource}
-    Segment(trial, source, start::Union{Nothing,Float64}, conds::Dict{Symbol})
+    Segment(trial, source, start, [finish[, conds]])
 
-A `Segment` describes a portion of a Source from a given Trial, with start and finish times, and segment specific conditions, if applicable.
+Describes a portion of a source in `trial` from time `start` to `finish` with segment specific conditions, if applicable.
 
-If the finish time is omitted, the Segment will be from the given start time to the end of the Source/Trial.
+If the `finish` is omitted, the segment will be from `start` to the end of the source/trial.
 
-Any conditions present in the parent Trial will be merged into the conditions for the segment. If there are no relevant specific conditions to add for the segment, the conditions may be omitted.
+Any conditions present in `trial` will be merged into the conditions for the segment.
 
 # Example:
 
 ```julia
-t = Trial(1) # TODO: Finish this example trial constructor
+t = Trial(1, "intervention")
 
 struct MySource <: AbstractSource
     path::String
@@ -29,7 +22,7 @@ seg = Segment(t,MySource, 0.0, 10.0, Dict(:group => "control"))
 seg2 = Segment(t, MySource, 0.0, 10.0)
 seg3 = Segment(t, MySource, 25.0)
 
-# Include the entire time of this Trial/Source
+# Include the entire time of this source/trial
 seg4 = Segment(t, MySource, 0.0, Dict(:group => "control"))
 ```
 """
@@ -82,11 +75,12 @@ end
 """
     readsegment(seg::Segment; kwargs...)
 
-Read the source from time `start` (in `seg`) to time `finish` (in `seg`).
+Return the portion of `seg.source` from `seg.start` to `seg.finish`.
 
-# Note:
+# Implementation
 
-Custom subtypes e.g. `MySource <: AbstractSource` must implement this function to enable reading `Segment{MySource}` with this function.
+Subtypes of `AbstractSource` must implement this function to enable reading
+`Segment{MySource}` with this function.
 """
 function readsegment end
 
@@ -115,14 +109,13 @@ conditions(seg::Segment) = seg.conds
 """
     SegmentResult(segment::Segment, results::Dict{Symbol)
 
-Contains the results of any analysis/analyses performed on the trial segment in a Dictionary.
+Contains the results of any analysis/analyses performed on the trial segment in a `Dict`.
 
 # Example:
 
 ```julia
 segresult = SegmentResult(seg, Dict(:avg => 3.5))
 ```
-
 """
 struct SegmentResult{S,ID}
     segment::Segment{S,ID}
