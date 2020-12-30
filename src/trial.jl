@@ -119,8 +119,10 @@ function Base.show(io::IO, ::MIME"text/plain", t::Trial{I}) where I
     println(io)
 end
 
-function Base.isequal(x::Trial{I}, y::Trial{T}) where {I,T}
-    return I == T && x.subject == y.subject && x.name == y.name && x.conds == y.conds
+Base.isequal(x::Trial{I}, y::Trial{T}) where {I,T} = false
+
+function Base.isequal(x::Trial{I}, y::Trial{I}) where I
+    return x.subject == y.subject && x.name == y.name && x.conditions == y.conditions
 end
 
 function Base.hash(x::Trial{I}, h::UInt) where I
