@@ -78,29 +78,27 @@ A `Trial` describes the referenced trial. Trials are parameterized for
 different locations to allow for dispatching by the Trial parameter.
 """
 struct Trial{I}
-    "The subject identifier"
     subject::I
-
-    "The trial name"
     name::String
-
-    "The source type of the `paths`"
-    sources::Dict{String,<:AbstractSource}
-
-    "The specific trial conditions; if unneeded, this can be empty"
-    conds::Dict{Symbol,Any}
+    conditions::Dict{Symbol,Any}
+    sources::Dict{String,AbstractSource}
 end
 
-function Trial(subject::I, name, sources, conds) where I
-    return Trial{I}(subject, name, sources, conds)
+function Trial(
+    subject::I,
+    name,
+    conditions=Dict{Symbol,Any}(),
+    sources=Dict{String,AbstractSource}()
+) where I
+    return Trial{I}(subject, String(name), conditions, sources)
 end
 
 function Base.show(io::IO, t::Trial)
     print(io, "Trial(", repr(t.subject), ", ", repr(t.name), ", ")
     if length(t.sources) == 1
-        print(io, t.sources, ", ", t.conds, ')')
+        print(io, t.sources, ", ", t.conditions, ')')
     else
-        print(io, length(t.sources), " sources, ", t.conds, ')')
+        print(io, length(t.sources), " sources, ", t.conditions, ')')
     end
 end
 
@@ -108,15 +106,15 @@ function Base.show(io::IO, ::MIME"text/plain", t::Trial{I}) where I
     println(io, "Trial{", I, "}")
     println(io, "  Subject: ", t.subject)
     println(io, "  Name: ", t.name)
+    print(io, "\n  Conditions:")
+    for c in t.conditions
+        print(io, "\n    ")
+        print(io, repr(c.first), " => ", repr(c.second))
+    end
     print(io, "  Sources:")
     for p in t.sources
         print(io, "\n    ")
         print(io, repr(p.first), " => ", repr(p.second))
-    end
-    print(io, "\n  Conditions:")
-    for c in t.conds
-        print(io, "\n    ")
-        print(io, repr(c.first), " => ", repr(c.second))
     end
     println(io)
 end
@@ -128,7 +126,7 @@ end
 function Base.hash(x::Trial{I}, h::UInt) where I
     h = hash(x.subject, h)
     h = hash(x.name, h)
-    h = hash(x.conds, h)
+    h = hash(x.conditions, h)
     return h
 end
 
@@ -212,7 +210,7 @@ function findtrials(
                 seenall = findall(trials) do trial
                     trial.subject == sid &&
                     all(enumerate(conditions.condnames)) do (i, cond)
-                        trialcond = get(trial.conds, cond, _defaultconds[cond])
+                        trialcond = get(trial.conditions, cond, _defaultconds[cond])
                         if isnothing(m[cond])
                             return isnothing(trialcond)
                         elseif conditions.types[i] === String
