@@ -98,11 +98,13 @@ function Trial(
 end
 
 function Base.show(io::IO, t::Trial)
-    print(io, "Trial(", repr(t.subject), ", ", repr(t.name), ", ")
-    if length(t.sources) == 1
-        print(io, t.sources, ", ", t.conditions, ')')
+    print(io, "Trial(", repr(t.subject), ", ", repr(t.name), ", ",
+        t.conditions, ", ")
+    numsources = length(t.sources)
+    if numsources == 1
+        print(io, t.sources, ')')
     else
-        print(io, length(t.sources), " sources, ", t.conditions, ')')
+        print(io, numsources, " sources", ')')
     end
 end
 
@@ -252,8 +254,8 @@ function findtrials(
                             end
                         end
                     end
-                    push!(trials, Trial(sid, name,
-                        Dict{String,AllSources}(set.name => set.source(file)), conds))
+                    push!(trials, Trial(sid, name, conds,
+                        Dict{String,AllSources}(set.name => set.source(file))))
                 else
                     seen = only(seenall)
                     t = trials[seen]
