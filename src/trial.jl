@@ -102,7 +102,7 @@ function Base.show(io::IO, t::Trial)
         t.conditions, ", ")
     numsources = length(t.sources)
     if numsources == 1
-        print(io, t.sources, ')')
+        print(io, numsources, " source", ')')
     else
         print(io, numsources, " sources", ')')
     end
