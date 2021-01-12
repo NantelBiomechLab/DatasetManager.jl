@@ -17,7 +17,8 @@ makedocs(;
     pages=[
         "Home" => "index.md",
         "Examples" => [
-            "Datasets" => "examples/datasets-examples.md"
+            "Describing datasets" => "examples/datasets-examples.md",
+            "Defining `AbstractSource` subtypes" => "examples/abstractsource-subtypes.md"
         ],
         "Julia Reference" => "julia-reference.md"
     ],
