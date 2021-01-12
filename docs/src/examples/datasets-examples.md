@@ -1,15 +1,44 @@
-# Datasets
+# Describing datasets
 
-!!! danger
-
-    TODO: Write example data tree for each subset
-
-    TODO: Setup mock directory structures for each example to enable (actual) tests and doctests
-
+Below are two examples of datasets with different organizations and issues which demonstrate the capabilities of DatasetManager.
 
 ## Well organized dataset with minimal issues
 
-For this analysis, there are 3 different subsets that are needed. Each `DataSubset` gets a name, an `<:AbstractSource`, a parent directory, and a [glob](https://en.wikipedia.org/wiki/Glob_(programming)) which describes the structure and location, and possibly more (eg extension), of the files specified by the `DataSubset`.
+Consider a dataset organized as follows:
+
+```
+📂 genpath
+├ 📂 Visual3D
+│ ├ 📂 Subject 1
+│ │ ├ 📂 export
+│ │ │ └ 📂 park
+│ │ │   ├ park-none.mat
+│ │ │   ├ park-norm.mat
+│ │ │   └ park-excess.mat
+│ │ └ 📂 import
+│ ├ 📂 Subject 2
+│ ┊
+└ 📂 DFlow
+  ├ 📂 Subject 1
+  │ ├ park-none.csv
+  │ ├ park-norm.csv
+  │ ├ park-excess.csv
+  │ ┊
+  ├ 📂 Subject 2
+  ┊
+
+📂 rawpath
+├ 📂 Subject 1
+│ └ 📂 _
+│   ├ park-none.c3d
+│   ├ park-norm.c3d
+│   ├ park-excess.c3d
+│   ┊
+├ 📂 Subject 2
+┊
+```
+
+The dataset is organized into 3 separate folders, but all the trials use the same naming scheme between the different folders. Therefore, we can group the data into 3 different data subsets (`rawpath`, `genpath/Visual3D`, and `genpath/DFlow`) for this analysis based on their location and filetype. Each `DataSubset` gets a name, a source type, a parent directory, and a [glob](https://en.wikipedia.org/wiki/Glob_(programming)) which describes the structure and location, and possibly more (eg extension), of the files specified by the `DataSubset`.
 
 ```@raw html
 <div class="admonition">
@@ -69,10 +98,8 @@ parksubsets = [
 ```
 
 This dataset only has one condition (aka 'factor' in statistical contexts) with three levels.
-The dataset was created with different terms for 2 of the levels, and we wish to use more
-convenient/better phrased terms. Any trial with `"none"` in the path will be recognized as a
-`"held"` trial. If a trial happens to have been already renamed to match the updated
-terminology, it will also correctly be recognized as a `"held"` trial. The `"norm"`
+The dataset was created with different terms for 2 of the levels, and we also wish to improve the naming of some of the levels. Any trial with `"none"` in the path will be recognized as a
+`"held"` trial. If a trial happens to already have the new terminology (`"held"`), it will be recognized as a `"held"` trial. The `"norm"`
 condition is left unchanged, and will only match trials with `"norm"` in the path.
 
 ```@raw html
@@ -166,10 +193,9 @@ parktrials = DataSet.findtrials(parksubsets, parkconds, 'IgnoreFiles', { ...
         joinpath(rawpath, "Subject 01/_/park-norm-01.c3d")
     ])
 
-    ERROR: DuplicateSourceError: Found file "…/Subject 01/_/park-norm.c3d" which matches
-     Trial(1, "park-norm", 3 sources, Dict{Symbol,Any}(:arms => "norm")) that already contains
-     a matching file …/Subject 01/_/park-norm-01.c3d for
-     DataSubset("c3d", C3DSource, rawpath, "Subject [0-9]*/_/park-*.c3d")
+    ERROR: DuplicateSourceError: Found "vicon" source file "…/Subject 01/_/park-norm.c3d" for 
+     Trial(1, "park-norm", Dict{Symbol,Any}(:arms => "norm"), 3 sources) which already has 
+     a "vicon" source at "…/Subject 01/_/park-norm-01.c3d"
     Stacktrace:
      [1] findtrials(::Array{DataSubset,1}, ::TrialConditions; I::Type{T} where T, subject_fmt::Regex, ignorefiles::Array{String,1}, defaultconds::Nothing) at /home/user/.julia/dev/DatasetManager/src/trial.jl:232
      [2] top-level scope at REPL[7]:1
@@ -177,6 +203,34 @@ parktrials = DataSet.findtrials(parksubsets, parkconds, 'IgnoreFiles', { ...
 
 
 ## Dataset with different naming schemes
+
+Consider a different dataset, organized as follows:
+
+```
+📂 v3dpath
+├ 📂 Subject 1
+│ ├ 📂 Export
+│ │ ├ 20181204_1400_NORMS_TR03.mat
+│ │ ├ 20181204_1400_NONEC_TR03.mat
+│ │ ├ 20181204_1400_NORMC_TR03.mat
+│ │ ┊
+│ └ 📂 import
+├ 📂 Subject 2
+│ └ 📂 Export
+│   ├ norm-singletask.mat
+│   ├ held-dualtask.mat
+│   ├ norm_dual.mat
+│   ┊
+┊
+
+📂 dflowpath
+├ 📂 N01
+│ ├ 20181204_1400_1448_AS_BA_NP_N01_TR01.txt
+│ ├ 20181204_1400_1501_NA_CO_NP_N01_TR01.txt
+│ ├ 20181204_1400_1506_AS_CO_NP_N01_TR01.txt
+│ ┊
+┊
+```
 
 This analysis only needs 2 `DataSubsets`:
 
@@ -187,11 +241,11 @@ This analysis only needs 2 `DataSubsets`:
 ```
 
 ```julia
-genpath = "path/to/one/subset"
+v3dpath = "path/to/one/subset"
 dflowpath = "path/to/another/subset"
 
 parkdatafiles = [
-    DataSubset("visual3d", V3DExportSource, genpath, "Subject [0-9]*/Export/*.mat"),
+    DataSubset("visual3d", V3DExportSource, v3dpath, "Subject [0-9]*/Export/*.mat"),
     DataSubset("dflow", RawDFlowPDSource, dflowpath, "N[0-9]*/*.txt")
 ]
 ```
@@ -209,11 +263,11 @@ parkdatafiles = [
 ```
 
 ```matlab
-genpath = 'path/to/one/subset'
+v3dpath = 'path/to/one/subset'
 dflowpath = 'path/to/another/subset'
 
 parkdatafiles = [
-    DataSubset('visual3d', 'V3DExportSource', fullfile(genpath, 'Subject */Export/*.mat')),
+    DataSubset('visual3d', 'V3DExportSource', fullfile(v3dpath, 'Subject */Export/*.mat')),
     DataSubset('dflow', 'RawDFlowPDSource', fullfile(dflowpath, 'N*/*.txt'))
 ]
 ```
