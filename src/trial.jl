@@ -268,7 +268,7 @@ function findtrials(
                     seen = only(seenall)
                     t = trials[seen]
                     if haskey(t.sources, set.name)
-                        throw(DuplicateSourceError(t, set, path(t.sources[set.name]), file))
+                        throw(DuplicateSourceError(t, set, sourcepath(t.sources[set.name]), file))
                     else
                         t.sources[set.name] = set.source(file)
                     end
