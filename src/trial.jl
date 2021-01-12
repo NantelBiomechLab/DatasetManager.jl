@@ -112,12 +112,12 @@ function Base.show(io::IO, ::MIME"text/plain", t::Trial{I}) where I
     println(io, "Trial{", I, "}")
     println(io, "  Subject: ", t.subject)
     println(io, "  Name: ", t.name)
-    print(io, "\n  Conditions:")
+    print(io, "  Conditions:")
     for c in t.conditions
         print(io, "\n    ")
         print(io, repr(c.first), " => ", repr(c.second))
     end
-    print(io, "  Sources:")
+    print(io, "\n  Sources:")
     for p in t.sources
         print(io, "\n    ")
         print(io, repr(p.first), " => ", repr(p.second))
