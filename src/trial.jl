@@ -206,11 +206,10 @@ function findtrials(
     trials = Vector{Trial{I}}()
     rg = subject_fmt*r".*"*conditions.labels_rg
     reqcondnames = conditions.required
-    optcondnames = setdiff(conditions.condnames, reqcondnames)
-    _defaultconds = Dict(cond => nothing for cond in conditions.condnames)
-    if !isnothing(defaultconds)
-        _defaultconds = merge(_defaultconds, defaultconds)
+    if isnothing(defaultconds)
+        defaultconds = Dict{Symbol,String}()
     end
+    optcondnames = setdiff(conditions.condnames, reqcondnames, keys(defaultconds))
     AllSources = Union{(set.source for set in subsets)...}
 
     for set in subsets
@@ -233,7 +232,8 @@ function findtrials(
                 seenall = findall(trials) do trial
                     trial.subject == sid &&
                     all(enumerate(conditions.condnames)) do (i, cond)
-                        trialcond = get(trial.conditions, cond, _defaultconds[cond])
+                        trialcond = get(trial.conditions, cond,
+                            get(defaultconds, cond, nothing))
                         if isnothing(m[cond])
                             return isnothing(trialcond)
                         elseif conditions.types[i] === String
@@ -246,6 +246,13 @@ function findtrials(
 
                 if isempty(seenall)
                     conds = Dict(cond => String(m[cond]) for cond in reqcondnames)
+                    foreach(defaultconds) do (k,v)
+                        if isnothing(m[k])
+                            conds[k] = String(v)
+                        else
+                            conds[k] = String(m[k])
+                        end
+                    end
                     foreach(enumerate(optcondnames)) do (i, cond)
                         if !isnothing(m[cond])
                             if conditions.types[i] === String
