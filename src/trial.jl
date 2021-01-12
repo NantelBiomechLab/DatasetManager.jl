@@ -163,16 +163,6 @@ function Base.show(io::IO, e::DuplicateSourceError)
     duplicatesourceerror_show(io, e.trial, e.datasubset, _original, _dup)
 end
 
-# function Base.show(io::IO, ::MIME"text/html", e::DuplicateSourceError)
-#     numfolders = count(r"[/\\]", string(e.datasubset.pattern))
-#     _dup = joinpath("…", splitpath(e.dup)[(end-numfolders):end]...)
-#     _original = joinpath("…", splitpath(e.original)[(end-numfolders):end]...)
-#
-#     duplicatesourceerror_show(io, trial, datasubset,
-#         "<a href=\"file:///$e.original\">$_original</a>",
-#         "<a href=\"file:///$e.dup\">$_dup</a>")
-# end
-
 function duplicatesourceerror_show(io, trial, datasubset, original, dup)
     print(io, "DuplicateSourceError: ")
     print(io, "Found $(repr(datasubset.name)) source file ", dup, " for ")
