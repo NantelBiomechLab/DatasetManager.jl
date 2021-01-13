@@ -1,5 +1,9 @@
 # Using `AbstractSource` subtypes
 
+!!! warning "Warning: Sources and MATLAB"
+
+    Due to the difference between MATLAB and Julia, this functionality does not (currently) exist in the MATLAB code. It is presently unclear how this functionality would be implemented in idiomatic MATLAB code.
+
 The multiple different sources of data for any single trial might all have different file formats. In such a case, different code will be needed to read each file format. Two function stubs, `readsource` and `readsegment`, are defined for `AbstractSource` subtypes to implement methods appropriate for the source.
 
 We will construct an example module that will fully implement the `AbstractSource` API.
@@ -56,7 +60,7 @@ end
 ```@raw html
 <div class="admonition">
 <details>
-<summary class="admonition-header">Complete <code>DFlow</code> module</summary>
+<summary class="admonition-header">Complete example <code>DFlow</code> module</summary>
 ```
 
 ```julia
