@@ -1,3 +1,15 @@
+"""
+    DataSubset(name, source::Type{<:AbstractSource}, dir, pattern)
+
+Describes a subset of data, where files found within `dir`, with (absolute) paths which match `pattern` (using [glob syntax](https://en.wikipedia.org/wiki/Glob_(programming))), are all of the same `AbstractSource` subtype.
+
+# Examples
+
+```jldoctest; setup = :(struct EventsSource <: AbstractSource; end)
+julia> DataSubset("events", EventsSource, "path/to/subset", "Subject [0-9]*/events/*.tsv")
+DataSubset("events", EventsSource, "path/to/subset", "Subject [0-9]*/events/*.tsv")
+```
+"""
 struct DataSubset
     name::String
     source::Type
@@ -9,6 +21,22 @@ struct DataSubset
     end
 end
 
+"""
+    TrialConditions(conditions, labels; <keyword arguments>)
+
+Describes the experimental conditions and the labels for levels within each condition.
+
+# Arguments
+
+- `conditions` is a collection of condition names (eg `(:medication, :strength)`)
+- `labels` is a `Dict` with keys for each condition name (eg `haskey(labels, :medication)`). Each key gets a collection of the labels for all levels and any transformation desired for that condition.
+
+# Keyword arguments
+
+- `required=conditions`: The conditions which every trial must have (in the case of some trials having optional/additional conditions).
+- `types=fill(String, length(conditions)`: The (Julia) types for each condition (eg `[String, Int]`)
+- `sep="[_-]": The character separating condition labels
+"""
 struct TrialConditions
     condnames::Vector{Symbol}
     required::Vector{Symbol}
@@ -17,18 +45,6 @@ struct TrialConditions
     types::Vector{Type}
 end
 
-"""
-    TrialConditions(conditions, labels; kwargs...) -> TrialConditions
-
-- `conditions` is a collection of condition names (eg `(:medication, :strength)`)
-- `labels` is a `Dict` with keys for each condition name (eg `haskey(labels, :medication)`). Each key gets a collection of the labels for all levels and any transformation desired for that condition.
-
-# Keyword arguments
-
-- `required`: The conditions which every trial must have (in the case of some trials having optional/additional conditions)
-- `types`: The (Julia) types for each condition (eg `[String, Int]`)
-- `sep`: The character separating condition labels
-"""
 function TrialConditions(
     conditions,
     labels;
@@ -61,35 +77,34 @@ function TrialConditions(
 end
 
 """
-    Trial{I}
+    Trial(subject, name, [conditions[, sources]])
 
-A `Trial` describes the referenced trial. Trials are parameterized for
-different locations to allow for dispatching by the Trial parameter.
+Describes a single trial, including a reference to the subject, trial name, trial conditions, and relevant sources of data.
 """
 struct Trial{I}
-    "The subject identifier"
     subject::I
-
-    "The trial name"
     name::String
-
-    "The source type of the `paths`"
-    sources::Dict{String,<:AbstractSource}
-
-    "The specific trial conditions; if unneeded, this can be empty"
-    conds::Dict{Symbol,Any}
+    conditions::Dict{Symbol,Any}
+    sources::Dict{String,AbstractSource}
 end
 
-function Trial(subject::I, name, sources, conds) where I
-    return Trial{I}(subject, name, sources, conds)
+function Trial(
+    subject::I,
+    name,
+    conditions=Dict{Symbol,Any}(),
+    sources=Dict{String,AbstractSource}()
+) where I
+    return Trial{I}(subject, String(name), conditions, sources)
 end
 
 function Base.show(io::IO, t::Trial)
-    print(io, "Trial(", repr(t.subject), ", ", repr(t.name), ", ")
-    if length(t.sources) == 1
-        print(io, t.sources, ", ", t.conds, ')')
+    print(io, "Trial(", repr(t.subject), ", ", repr(t.name), ", ",
+        t.conditions, ", ")
+    numsources = length(t.sources)
+    if numsources == 1
+        print(io, numsources, " source", ')')
     else
-        print(io, length(t.sources), " sources, ", t.conds, ')')
+        print(io, numsources, " sources", ')')
     end
 end
 
@@ -97,27 +112,29 @@ function Base.show(io::IO, ::MIME"text/plain", t::Trial{I}) where I
     println(io, "Trial{", I, "}")
     println(io, "  Subject: ", t.subject)
     println(io, "  Name: ", t.name)
-    print(io, "  Sources:")
+    print(io, "  Conditions:")
+    for c in t.conditions
+        print(io, "\n    ")
+        print(io, repr(c.first), " => ", repr(c.second))
+    end
+    print(io, "\n  Sources:")
     for p in t.sources
         print(io, "\n    ")
         print(io, repr(p.first), " => ", repr(p.second))
     end
-    print(io, "\n  Conditions:")
-    for c in t.conds
-        print(io, "\n    ")
-        print(io, repr(c.first), " => ", repr(c.second))
-    end
     println(io)
 end
 
-function Base.isequal(x::Trial{I}, y::Trial{T}) where {I,T}
-    return I == T && x.subject == y.subject && x.name == y.name && x.conds == y.conds
+Base.isequal(x::Trial{I}, y::Trial{T}) where {I,T} = false
+
+function Base.isequal(x::Trial{I}, y::Trial{I}) where I
+    return x.subject == y.subject && x.name == y.name && x.conditions == y.conditions
 end
 
 function Base.hash(x::Trial{I}, h::UInt) where I
     h = hash(x.subject, h)
     h = hash(x.name, h)
-    h = hash(x.conds, h)
+    h = hash(x.conditions, h)
     return h
 end
 
@@ -141,28 +158,33 @@ end
 function Base.show(io::IO, e::DuplicateSourceError)
     numfolders = count(r"[/\\]", string(e.datasubset.pattern))
     _original = joinpath("…", splitpath(e.original)[(end-numfolders):end]...)
+    _dup = joinpath("…", splitpath(e.dup)[(end-numfolders):end]...)
 
-    duplicatesourceerror_show(io, e.trial, e.datasubset, _original, repr(e.dup))
+    duplicatesourceerror_show(io, e.trial, e.datasubset, _original, _dup)
 end
-
-# function Base.show(io::IO, ::MIME"text/html", e::DuplicateSourceError)
-#     numfolders = count(r"[/\\]", string(e.datasubset.pattern))
-#     _dup = joinpath("…", splitpath(e.dup)[(end-numfolders):end]...)
-#     _original = joinpath("…", splitpath(e.original)[(end-numfolders):end]...)
-#
-#     duplicatesourceerror_show(io, trial, datasubset,
-#         "<a href=\"file:///$e.original\">$_original</a>",
-#         "<a href=\"file:///$e.dup\">$_dup</a>")
-# end
 
 function duplicatesourceerror_show(io, trial, datasubset, original, dup)
     print(io, "DuplicateSourceError: ")
-    print(io, "Found file ", dup, " which matches ", trial)
-    print(io, " that already contains a matching file ", original)
-    print(io, " for ", datasubset)
+    print(io, "Found $(repr(datasubset.name)) source file ", dup, " for ")
+    show(io, trial)
+    print(io, " which already has a $(repr(datasubset.name)) source at ", repr(original))
 end
 
+"""
+    findtrials(subsets::AbstractVector{DataSubset}, conditions::TrialConditions;
+        <keyword arguments>) -> Vector{Trial}
 
+Find all the trials matching `conditions` which can be found in `subsets`.
+
+# Keyword arguments:
+
+- `subject_fmt=r"(?<=Subject )(?<subject>\\d+)"`: The format that the subject identifier
+    will appear in file paths.
+- `ignorefiles::Union{Nothing, Vector{String}}=nothing`: A list of files, given in the form
+    of an absolute path, that are in any of the `subsets` folders which are to be ignored.
+- `defaultconds::Union{Nothing, Dict{Symbol}}=nothing`: Any conditions which have a default
+    level if the condition is not found in the file path.
+"""
 function findtrials(
     subsets::AbstractVector{DataSubset},
     conditions::TrialConditions;
@@ -174,11 +196,10 @@ function findtrials(
     trials = Vector{Trial{I}}()
     rg = subject_fmt*r".*"*conditions.labels_rg
     reqcondnames = conditions.required
-    optcondnames = setdiff(conditions.condnames, reqcondnames)
-    _defaultconds = Dict(cond => nothing for cond in conditions.condnames)
-    if !isnothing(defaultconds)
-        _defaultconds = merge(_defaultconds, defaultconds)
+    if isnothing(defaultconds)
+        defaultconds = Dict{Symbol,String}()
     end
+    optcondnames = setdiff(conditions.condnames, reqcondnames, keys(defaultconds))
     AllSources = Union{(set.source for set in subsets)...}
 
     for set in subsets
@@ -201,7 +222,8 @@ function findtrials(
                 seenall = findall(trials) do trial
                     trial.subject == sid &&
                     all(enumerate(conditions.condnames)) do (i, cond)
-                        trialcond = get(trial.conds, cond, _defaultconds[cond])
+                        trialcond = get(trial.conditions, cond,
+                            get(defaultconds, cond, nothing))
                         if isnothing(m[cond])
                             return isnothing(trialcond)
                         elseif conditions.types[i] === String
@@ -214,6 +236,13 @@ function findtrials(
 
                 if isempty(seenall)
                     conds = Dict(cond => String(m[cond]) for cond in reqcondnames)
+                    foreach(defaultconds) do (k,v)
+                        if isnothing(m[k])
+                            conds[k] = String(v)
+                        else
+                            conds[k] = String(m[k])
+                        end
+                    end
                     foreach(enumerate(optcondnames)) do (i, cond)
                         if !isnothing(m[cond])
                             if conditions.types[i] === String
@@ -223,13 +252,13 @@ function findtrials(
                             end
                         end
                     end
-                    push!(trials, Trial(sid, name,
-                        Dict{String,AllSources}(set.name => set.source(file)), conds))
+                    push!(trials, Trial(sid, name, conds,
+                        Dict{String,AllSources}(set.name => set.source(file))))
                 else
                     seen = only(seenall)
                     t = trials[seen]
                     if haskey(t.sources, set.name)
-                        throw(DuplicateSourceError(t, set, path(t.sources[set.name]), file))
+                        throw(DuplicateSourceError(t, set, sourcepath(t.sources[set.name]), file))
                     else
                         t.sources[set.name] = set.source(file)
                     end

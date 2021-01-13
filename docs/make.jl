@@ -1,6 +1,7 @@
 using DatasetManager
 using Documenter
 
+DocMeta.setdocmeta!(DatasetManager, :DocTestSetup, :(using DatasetManager); recursive=true)
 makedocs(;
     modules=[DatasetManager],
     authors="Allen Hill <allenofthehills@gmail.com> and contributors",
@@ -9,10 +10,17 @@ makedocs(;
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://halleysfifthinc.github.io/DatasetManager.jl",
-        assets=String[],
+        assets=String[
+            "../assets/css/custom.css"
+        ],
     ),
     pages=[
         "Home" => "index.md",
+        "Examples" => [
+            "Describing datasets" => "examples/datasets-examples.md",
+            "Defining `AbstractSource` subtypes" => "examples/abstractsource-subtypes.md"
+        ],
+        "Julia Reference" => "julia-reference.md"
     ],
 )
 
