@@ -11,8 +11,9 @@ makedocs(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://halleysfifthinc.github.io/DatasetManager.jl",
         assets=String[
-            "../assets/css/custom.css"
+            "assets/css/custom.css"
         ],
+        highlights=["matlab"],
     ),
     pages=[
         "Home" => "index.md",
