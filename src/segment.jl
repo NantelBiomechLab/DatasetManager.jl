@@ -80,6 +80,8 @@ function Base.show(io::IO, mimet::MIME"text/plain", s::Segment{S,ID}) where {S,I
     show(io, mimet, s.conditions)
 end
 
+function readsegment end
+
 """
     readsegment(seg::Segment; kwargs...)
 
