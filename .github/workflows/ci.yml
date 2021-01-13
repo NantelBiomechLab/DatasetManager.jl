@@ -49,8 +49,9 @@ jobs:
             Pkg.instantiate()'
       - run: |
           julia --project=docs -e '
-            using Documenter: doctest
+            using Documenter: DocMeta, doctest
             using DatasetManager
+            DocMeta.setdocmeta!(DatasetManager, :DocTestSetup, :(using DatasetManager); recursive=true)
             doctest(DatasetManager)'
       - run: julia --project=docs docs/make.jl
         env:
