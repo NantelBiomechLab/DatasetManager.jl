@@ -1,7 +1,9 @@
 """
     DataSubset(name, source::Type{<:AbstractSource}, dir, pattern)
 
-Describes a subset of data, where files found within `dir`, with (absolute) paths which match `pattern` (using [glob syntax](https://en.wikipedia.org/wiki/Glob_(programming))), are all of the same `AbstractSource` subtype.
+Describes a subset of data, where files found within `dir`, with (absolute) paths which
+match `pattern` (using [glob syntax](https://en.wikipedia.org/wiki/Glob_(programming))), are
+all of the same `AbstractSource` subtype.
 
 # Examples
 
@@ -29,12 +31,16 @@ Describes the experimental conditions and the labels for levels within each cond
 # Arguments
 
 - `conditions` is a collection of condition names (eg `(:medication, :strength)`)
-- `labels` is a `Dict` with keys for each condition name (eg `haskey(labels, :medication)`). Each key gets a collection of the labels for all levels and any transformation desired for that condition.
+- `labels` is a `Dict` with keys for each condition name (eg `haskey(labels, :medication)`).
+Each key gets a collection of the labels for all levels and any transformation desired for
+that condition.
 
 # Keyword arguments
 
-- `required=conditions`: The conditions which every trial must have (in the case of some trials having optional/additional conditions).
-- `types=fill(String, length(conditions)`: The (Julia) types for each condition (eg `[String, Int]`)
+- `required=conditions`: The conditions which every trial must have (in the case of some
+trials having optional/additional conditions).
+- `types=fill(String, length(conditions)`: The (Julia) types for each condition (eg
+`[String, Int]`)
 - `sep="[_-]": The character separating condition labels
 """
 struct TrialConditions
@@ -66,7 +72,8 @@ function TrialConditions(
         labels_rg *= string(')', optchar, sep, '?')
         foreach(labels[cond]) do condlabel
             if condlabel isa Pair
-                altlabels = condlabel.first isa Union{Symbol,String} ? [condlabel.first] : condlabel.first
+                altlabels = condlabel.first isa Union{Symbol,String} ? [condlabel.first] :
+                    condlabel.first
                 filter!(label -> label != condlabel.second, altlabels)
                 push!(subst, Regex("(?:"*join(altlabels, '|')*")") => condlabel.second)
             end
@@ -79,7 +86,8 @@ end
 """
     Trial(subject, name, [conditions[, sources]])
 
-Describes a single trial, including a reference to the subject, trial name, trial conditions, and relevant sources of data.
+Describes a single trial, including a reference to the subject, trial name, trial
+conditions, and relevant sources of data.
 """
 struct Trial{I}
     subject::I

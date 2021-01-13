@@ -1,11 +1,13 @@
 """
     Segment(trial, source::Union{AbstractSource,String}; [start, finish, conditions])
 
-Describes a portion of a source in `trial` from time `start` to `finish` with segment specific `conditions`, if applicable.
+Describes a portion of a source in `trial` from time `start` to `finish` with segment
+specific `conditions`, if applicable.
 
 If `source isa String`, it must refer to a source that exists in `trial`.
 If the `start` is omitted, the segment will start at the beginning of the source/trial.
-If the `finish` is omitted, the segment will be from time `start` to the end of the source/trial.
+If the `finish` is omitted, the segment will be from time `start` to the end of the
+source/trial.
 
 Any conditions present in `trial` will be merged into the conditions for the segment.
 

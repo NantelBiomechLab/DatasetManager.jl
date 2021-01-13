@@ -1,7 +1,8 @@
 """
     AbstractSource
 
-The abstract supertype for custom data sources. Implement a subtype of `AbstractSource` to enable loading your data while benefitting from multiple-dispatch.
+The abstract supertype for custom data sources. Implement a subtype of `AbstractSource` to
+enable loading your data while benefitting from multiple-dispatch.
 
 # Extended help
 
