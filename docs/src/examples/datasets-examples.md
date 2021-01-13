@@ -186,7 +186,8 @@ parktrials = DataSet.findtrials(parksubsets, parkconds, 'IgnoreFiles', { ...
 
 !!! note
 
-    In this case, there are 2 files (technically in separate `DataSubset`s, although this is immaterial) that will match respective files in each `DataSubset` for the same trial. Suppose the first of attempt for this trial had an issue, and so it was repeated with a `'-02'` added after the trial name (eg `"…/Subject 01/_/park-norm-02.c3d"`). Without adding the files to `ignorefiles`, the second trial would match the same trial, and produce a `DuplicateSourceError` in each `DataSubset`.
+    In this case, there are 2 files that will match respective files in each `DataSubset` for the same trial. Suppose the first of attempt for this trial had an issue, and so it was repeated with a `'-02'` added after the trial name (eg `"…/Subject 01/_/park-norm-02.c3d"`). Without adding the files to `ignorefiles`, the two trials will appear identical (due to having the same conditions without anything, such as a trial number condition, to
+    distinguish the two trials), and produce a `DuplicateSourceError`.
     ```julia-repl
     julia> parktrials = findtrials(parksubsets, parkconds; ignorefiles=[
         joinpath(genpath, "DFlow/Subject 01/park-norm.csv"),
@@ -300,7 +301,7 @@ labels = Dict(:arms => [ ["NONE", "NA"] => "held", ["AS", "Norm", "NORM"] => "no
                            "PO" => "pert", "CP" => "dualtask", ["PARK", "(?<=_)TR(?=_)"] => "park" ],
                  :pert_type => ["NP" => "steadystate", "RT" => "rtrip", "RS" => "rslip",
                                 "LT" => "ltrip", "LS" => "lslip"])
-conditions = TrialConditions((:arms,:kind,:pert_type), labels; required=(:arms,:kind))
+conds = TrialConditions((:arms,:kind,:pert_type), labels; required=(:arms,:kind))
 ```
 
 ```@raw html
@@ -343,7 +344,7 @@ labels.pert_type(4).to = 'ltrip';
 labels.pert_type(5).from = 'LS';
 labels.pert_type(5).to = 'lslip';
 
-conditions = TrialConditions.generate({'arms','kind','pert_type'}, labels, 'Required', {'arms', 'kind'})
+conds = TrialConditions.generate({'arms','kind','pert_type'}, labels, 'Required', {'arms', 'kind'})
 ```
 
 ```@raw html
@@ -366,7 +367,7 @@ As always, the `findtrials` function will locate trials and sources within each 
 
 ```julia
 # Read all perturbations
-parktrials = findtrials(parkdatafiles, conditions;
+parktrials = findtrials(parkdatafiles, conds;
     subject_fmt=r"(?<=Subject |N)(?<subject>\d+)", ignorefiles=[
         joinpath(dflowpath, "N02/20181206_1500_1554_NA_BA_NP_N02_TR01.txt"),
         joinpath(dflowpath, "N02/20181206_1500_1657_AS_CP_RT_N02_TR01.txt"),
@@ -390,7 +391,7 @@ parktrials = findtrials(parkdatafiles, conditions;
 
 ```matlab
 % Read all perturbations
-parktrials = DataSet.findtrials(parkdatafiles, conditions, ...
+parktrials = DataSet.findtrials(parkdatafiles, conds, ...
     'SubjectFormat', '(?<=Subject |N)(?<subject>\d+)', 'IgnoreFiles', { ...
         fullfile(dflowpath, 'N02/20181206_1500_1554_NA_BA_NP_N02_TR01.txt'), ...
         fullfile(dflowpath, 'N02/20181206_1500_1657_AS_CP_RT_N02_TR01.txt'), ...
