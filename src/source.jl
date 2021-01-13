@@ -35,5 +35,4 @@ sourcepath(src::S) where S <: AbstractSource = src.path
 
 Read the source data from storage.
 """
-
 function readsource end
