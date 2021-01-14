@@ -54,8 +54,5 @@ data comprising a dataset.
 A secondary functionality of DatasetManager is to solve issue 3 by providing two functions,
 which can be extended to support reading various sources.
 
-[^1]: Organizing analysis code into a single function promotes better code quality,
-  organization and reuse, ensures that the results were all generated with the same code,
-  and enables incremental or partial analyses (e.g. for testing, analysis of incomplete
-  datasets, re-analysing problematic trials, etc)
+[^1]: Organizing analysis code into a single function promotes better code quality,organization and reuse, ensures that the results were all generated with the same code, and enables incremental or partial analyses (e.g. for testing, analysis of incomplete datasets, re-analysing problematic trials, etc)
 
