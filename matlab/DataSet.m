@@ -15,44 +15,28 @@ methods(Static, Access = private)
             bool(i) = fun(getfield(s, fields{i}));
         end
     end
-
-    function out = selectstructmerge(fun, s, m)
-        out = struct;
-        fields = union(fieldnames(s), fieldnames(m), 'stable');
-        for i = 1:length(fields)
-            if isfield(s, fields{i}) && isfield(m, fields{i})
-                if fun(s)
-                    out.(fields{i}) = m.(fields{i});
-                else
-                    out.(fields{i}) = s.(fields{i});
-                end
-            elseif isfield(s, fields{i})
-                out.(fields{i}) = s.(fields{i});
-            else
-                out.(fields{i}) = m.(fields{i});
-            end
-        end
-    end
-
-    function s = structfrommap(map)
-        s = struct;
-        ks = keys(map);
-        vs = values(map);
-        for i = 1:length(map)
-            s.(ks{i}) = vs{i};
-        end
-    end
 end
 
 methods(Static)
     function trials = findtrials(subsets, conditions, varargin)
+        % FINDTRIALS Find all the trials matching `conditions` which can be found in `subsets`.
+        %
+        % # Keyword arguments:
+        %
+        % - 'SubjectFormat'  "(?<=Subject )(?<subject>\\d+)"`: The format that the subject identifier
+        %     will appear in file paths.
+        % - `ignorefiles::Union{Nothing, Vector{String}}=nothing`: A list of files, given in the form
+        %     of an absolute path, that are in any of the `subsets` folders which are to be ignored.
+        % - `defaultconds::Union{Nothing, Dict{Symbol}}=nothing`: Any conditions which have a default
+        %     level if the condition is not found in the file path.
+
         p = inputParser;
         addRequired(p, 'subsets', @(x) isa(x, 'DataSubset'));
         addRequired(p, 'conditions', @(x) isa(x, 'TrialConditions'));
-        addParameter(p, 'SubjectFormat', '(?<=Subject )0*(?<subject>\d+)', @ischar);
+        addParameter(p, 'SubjectFormat', '(?<=Subject )(?<subject>\d+)', @ischar);
         addParameter(p, 'IgnoreFiles', {}, @iscell);
 
-        priv_defaultconds = containers.Map(conditions.condnames, cellstr(strings(length(conditions.condnames),1)));
+        priv_defaultconds = containers.Map.empty;
         addParameter(p, 'DefaultConditions', priv_defaultconds, @(x) isa(x, 'containers.Map'))
 
         parse(p, subsets, conditions, varargin{:});
@@ -65,9 +49,8 @@ methods(Static)
         rg = strcat(subject_fmt, '.*', conditions.labels_rg);
 
         reqcondnames = conditions.required;
-        optcondnames = setdiff(conditions.condnames, reqcondnames);
-
-        defaultconds = [priv_defaultconds; defaultconds];
+        optcondnames = setdiff(setdiff(conditions.condnames, reqcondnames), ...
+            keys(defaultconds));
 
         for seti = 1:length(subsets)
             set = subsets(seti);
@@ -96,31 +79,36 @@ methods(Static)
                     subject = m.subject;
                     m = rmfield(m, 'subject');
 
-                    conds = containers.Map(fieldnames(m), struct2cell(m));
-                    ks = keys(conds);
-                    for i = 1:length(conds)
-                        if isempty(conds(ks{i})) && isKey(defaultconds, ks{i}) && ~isempty(defaultconds(ks{i}))
-                            conds(ks{i}) = defaultconds(ks{i});
+                    conds = containers.Map.empty;
+                    for i = 1:length(reqcondnames)
+                        conds(reqcondnames{i}) = m.(reqcondnames{i});
+                    end
+
+                    defkeys = keys(defaultconds);
+                    for i = 1:length(defkeys)
+                        if isempty(m.(defkeys{i}))
+                            conds(defkeys{i}) = defaultconds(defkeys{i});
+                        else
+                            conds(defkeys{i}) = m.(defkeys{i});
                         end
                     end
 
-                    diffkeys = setdiff(keys(conds), keys(defaultconds));
-                    if ~isempty(diffkeys)
-                        for i = 1:length(diffkeys)
-                            conds(diffkeys{i}) = defaultconds(diffkeys{i});
+                    for i = 1:length(optcondnames)
+                        if ~isempty(m.(optcondnames{i}))
+                            conds(optcondnames{i}) = m.(optcondnames{i});
                         end
                     end
 
-                    trial = Trial(subject, name, struct(set.name, file), conds);
+                    new_trial = Trial(subject, name, conds, struct(set.name, file));
 
                     if ~isempty(trials)
-                        seenall = find(arrayfun(@(x) equiv(trial, x), trials));
+                        seenall = find(arrayfun(@(x) equiv(new_trial, x), trials));
                     else
                         seenall = [];
                     end
 
                     if ~any(seenall) % No matching trials found
-                        trials = [trials; trial ];
+                        trials = [trials; new_trial ];
                     else
                         if length(find(seenall)) > 1
                             error()
@@ -129,7 +117,13 @@ methods(Static)
                         end
                         trial = trials(seen);
                         if isfield(trial.sources, set.name)
-                            error('duplicate source found')
+                            [~, short_file, ext] = fileparts(file);
+                            [~, short_orig, o_ext] = fileparts(trial.sources.(set.name));
+                            trialdisp = sprintf("Trial('%s','%s', %i conditions, %i sources)", ...
+                                trial.subject, trial.name, length(trial.conditions), ...
+                                length(trial.sources));
+                            error("Error: Duplicate source. Found '%s' source file\n'%s'\nfor %s which already has\na '%s' source at '%s'.", ...
+                                set.name, [short_file, ext], trialdisp, set.name, [short_orig, o_ext])
                         else
                             trial.sources.(set.name) = file;
                             trials(seen) = trial;
