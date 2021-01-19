@@ -41,7 +41,7 @@ that condition.
 trials having optional/additional conditions).
 - `types=fill(String, length(conditions)`: The (Julia) types for each condition (eg
 `[String, Int]`)
-- `sep="[_-]": The character separating condition labels
+- `sep="[_-]"`: The character separating condition labels
 """
 struct TrialConditions
     condnames::Vector{Symbol}
@@ -208,7 +208,6 @@ function findtrials(
         defaultconds = Dict{Symbol,String}()
     end
     optcondnames = setdiff(conditions.condnames, reqcondnames, keys(defaultconds))
-    AllSources = Union{(set.source for set in subsets)...}
 
     for set in subsets
         pattern = set.pattern
@@ -261,7 +260,7 @@ function findtrials(
                         end
                     end
                     push!(trials, Trial(sid, name, conds,
-                        Dict{String,AllSources}(set.name => set.source(file))))
+                        Dict{String,AbstractSource}(set.name => set.source(file))))
                 else
                     seen = only(seenall)
                     t = trials[seen]
