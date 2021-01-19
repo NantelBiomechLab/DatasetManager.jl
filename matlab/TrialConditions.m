@@ -1,4 +1,6 @@
 classdef TrialConditions
+    % TrialConditions Describes the experimental conditions and the labels for levels within each condition.
+
     properties
         condnames(1,:)
         required(1,:)
@@ -19,6 +21,21 @@ classdef TrialConditions
 
     methods(Static)
         function obj = generate(conditions, labels, varargin)
+        % GENERATE  Describes the experimental conditions and the labels for levels within each condition.
+        %
+        % # Arguments
+        %
+        % - `conditions` is a cell array of condition names (eg `{'medication', 'strength'}`)
+        % - `labels` is a struct with a field for each condition name (eg `isfield(labels, 'medication')`).
+        %   Each condition field must have 'to' and 'from' fields which contain the final names and all the name possibilities, respectively.
+        %   The 'from' field is is optional if the terminology in the filenames is the desired terminology.
+        %
+        % # Optional arguments
+        %
+        % - 'Required' (defaults to all conditions): The conditions which every trial must have (in the case of some
+        %   trials having optional/additional conditions).
+        % - 'Separator' (defaults to '[_-]'): The character separating condition labels
+
             p = inputParser;
             addRequired(p, 'conditions', @iscell)
             addRequired(p, 'labels', @isstruct)
