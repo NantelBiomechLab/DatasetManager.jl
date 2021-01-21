@@ -22,7 +22,7 @@ all of the same `AbstractSource` subclass.
 
 ```@raw html
         </div>
-        <a class="docs-sourcelink" target="_blank" href="https://github.com/halleysfifthinc/DatasetManager.jl/master/docs/src/matlab-reference.md#LL11-L28">source</a>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/master/docs/src/matlab-reference.md#LL11-L28">source</a>
     </section>
 </article>
 ```
@@ -45,7 +45,7 @@ Describes the experimental conditions and the labels for levels within each cond
 
 ```@raw html
         </div>
-        <a class="docs-sourcelink" target="_blank" href="https://github.com/halleysfifthinc/DatasetManager.jl/master/docs/src/matlab-reference.md#LL11-L28">source</a>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/master/docs/src/matlab-reference.md#LL11-L28">source</a>
     </section>
 </article>
 ```
@@ -82,7 +82,7 @@ Generates a `TrialConditions`.
 
 ```@raw html
         </div>
-        <a class="docs-sourcelink" target="_blank" href="https://github.com/halleysfifthinc/DatasetManager.jl/master/docs/src/matlab-reference.md#LL11-L28">source</a>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/master/docs/src/matlab-reference.md#LL11-L28">source</a>
     </section>
 </article>
 ```
@@ -106,7 +106,7 @@ conditions, and relevant sources of data.
 
 ```@raw html
         </div>
-        <a class="docs-sourcelink" target="_blank" href="https://github.com/halleysfifthinc/DatasetManager.jl/master/docs/src/matlab-reference.md#LL11-L28">source</a>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/master/docs/src/matlab-reference.md#LL11-L28">source</a>
     </section>
 </article>
 ```
@@ -137,7 +137,7 @@ Find all the trials matching `conditions` which can be found in `subsets`.
 
 ```@raw html
         </div>
-        <a class="docs-sourcelink" target="_blank" href="https://github.com/halleysfifthinc/DatasetManager.jl/master/docs/src/matlab-reference.md#LL11-L28">source</a>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/master/docs/src/matlab-reference.md#LL11-L28">source</a>
     </section>
 </article>
 ```
@@ -157,7 +157,7 @@ Find all the trials matching `conditions` which can be found in `subsets`.
 
 ```@raw html
         </div>
-        <a class="docs-sourcelink" target="_blank" href="https://github.com/halleysfifthinc/DatasetManager.jl/master/docs/src/matlab-reference.md#LL11-L28">source</a>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/master/docs/src/matlab-reference.md#LL11-L28">source</a>
     </section>
 </article>
 ```
