@@ -41,13 +41,13 @@ struct Segment{S<:AbstractSource,ID}
                 "finish time must be ≥ start time; got $finish"))
         end
 
-        return new(trial, source, start, finish, merge(trials.conditions, conditions))
+        return new(trial, source, start, finish, merge(trial.conditions, conditions))
     end
 end
 
 function Segment(
     trial::Trial{ID},
-    sourcename::S;
+    source::S;
     start::Union{Nothing,Float64}=nothing,
     finish::Union{Nothing,Float64}=nothing,
     conditions::Dict{Symbol}=Dict{Symbol,Any}()
@@ -61,10 +61,10 @@ function Segment(
     kwargs...
 ) where ID
     haskey(trial.sources, sourcename) || throw(DomainError("source $sourcename not found in trial"))
-    source = trials.sources[sourcename]
+    source = trial.sources[sourcename]
     S = typeof(source)
 
-    return Segment{S,ID}(trial, source; kwargs...)
+    return Segment(trial, source; kwargs...)
 end
 
 function Base.show(io::IO, s::Segment{S,ID}) where {S,ID}
