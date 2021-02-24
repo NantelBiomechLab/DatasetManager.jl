@@ -237,24 +237,25 @@ Consider a different dataset, organized as follows:
 ├ 📂 Subject 1
 │ ├ 📂 Export
 │ │ ├ 20181204_1400_NORMS_TR03.mat
-│ │ ├ 20181204_1400_NONEC_TR03.mat
 │ │ ├ 20181204_1400_NORMC_TR03.mat
+│ │ ├ 20181204_1400_NORM_PARK_TR03.mat
 │ │ ┊
 │ └ 📂 import
 ├ 📂 Subject 2
 │ └ 📂 Export
 │   ├ norm-singletask.mat
-│   ├ held-dualtask.mat
-│   ├ norm_dual.mat
+│   ├ Norm-dualtask.mat
+│   ├ park-norm.mat
 │   ┊
 ┊
 
 📂 dflowpath
 ├ 📂 N01
 │ ├ 20181204_1400_1448_AS_BA_NP_N01_TR01.txt
-│ ├ 20181204_1400_1501_NA_CO_NP_N01_TR01.txt
-│ ├ 20181204_1400_1506_AS_CO_NP_N01_TR01.txt
+│ ├ 20181204_1400_1501_AS_CO_NP_N01_TR01.txt
+│ ├ 20181204_1400_1646_NA_TR_NP_N05_TR01.txt
 │ ┊
+├ 📂 N02
 ┊
 ```
 
@@ -304,10 +305,14 @@ parkdatafiles = [
 </p>
 ```
 
-This dataset has several issues which make the level filters more complex and require the use of [Regex](https://en.wikipedia.org/wiki/Regular_expression) to properly find the conditions.
+This dataset has several issues which make the level filters more complex and require the
+use of [Regex](https://en.wikipedia.org/wiki/Regular_expression) to properly find the
+conditions.
 
-- The `"visual3d"` subset isn't completely consistent in the naming. For example `"Norm"` was sometimes used instead of `"norm"`, and `"dual"` was sometimes used instead of `"dualtask"`.
-- The `"dflow"` subset used a completely different trial naming scheme. `"NA"` was used instead of `"held"`, `"RT"` instead of `"rtrip"`, etc.
+- The `"visual3d"` subset isn't completely consistent in the naming. For example `"Norm"`
+  was sometimes used instead of `"norm"`, and `"dual"` was sometimes used instead of
+- `"dualtask"`.  The `"dflow"` subset used a completely different trial naming scheme.
+  `"AS"` was used instead of `"norm"`, `"BA"` instead of `"singletask"`, etc.
 
 Such conversions can be dealt with simply. However, a more difficult issue is that the `"singletask"` condition in the `"dflow"` subset is denoted by an "S" following the "arms" factor. Just matching an "S" could match the "S" in "Subject", or in the "RS" condition. We need to only match an "S" that follows the "arms" factor, which can be specified by a [positive lookbehind group](https://en.wikipedia.org/wiki/Perl_Compatible_Regular_Expressions#Features) in Regex,
 like so `"(?<=NONE|NORM)S"`. A similar Regex can be used to deal with the "C" for "dualtask".
