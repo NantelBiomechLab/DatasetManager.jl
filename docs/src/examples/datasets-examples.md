@@ -39,7 +39,13 @@ Consider a dataset organized as follows:
 ┊
 ```
 
-The dataset is organized into 3 separate folders, but all the trials use the same naming scheme between the different folders. Therefore, we can group the data into 3 different data subsets (`genpath/Visual3D`, `genpath/DFlow`, `rawpath`) for this analysis based on their location and filetype. Each `DataSubset` gets a name, a source type, a parent directory, and a [glob](https://en.wikipedia.org/wiki/Glob_(programming)) which describes the structure and location, and possibly more (eg extension), of the files specified by the `DataSubset`.
+The dataset is organized into 3 separate folders, but all the trials use the same naming
+scheme between the different folders. Therefore, we can group the data into 3 different data
+subsets (`genpath/Visual3D`, `genpath/DFlow`, and `rawpath`) for this analysis based on
+their location and filetype. Each `DataSubset` gets a name, a source type, a parent
+directory, and a [glob](https://en.wikipedia.org/wiki/Glob_(programming)) which describes
+the structure and location, and possibly more (eg extension), of the files specified by the
+`DataSubset`.
 
 ```@raw html
 <div class="admonition">
