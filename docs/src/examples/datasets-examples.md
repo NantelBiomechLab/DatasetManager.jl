@@ -160,10 +160,7 @@ The `findtrials` function will search every `DataSubset` for trials which match 
 
 ```julia
 # Read all perturbations
-parktrials = findtrials(parksubsets, parkconds; ignorefiles=[
-    joinpath(genpath, "DFlow/Subject 01/park-norm.csv"),
-    joinpath(rawpath, "Subject 01/_/park-norm-01.c3d")
-])
+parktrials = findtrials(parksubsets, parkconds)
 ```
 
 ```@raw html
@@ -179,10 +176,7 @@ parktrials = findtrials(parksubsets, parkconds; ignorefiles=[
 ```
 
 ```matlab
-parktrials = DataSet.findtrials(parksubsets, parkconds, 'IgnoreFiles', { ...
-    fullfile(genpath, 'DFlow/Subject 01/park-norm.csv'),
-    fullfile(rawpath, 'Subject 01/_/park-norm-01.c3d')
-})
+parktrials = DataSet.findtrials(parksubsets, parkconds)
 ```
 
 ```@raw html
@@ -191,23 +185,47 @@ parktrials = DataSet.findtrials(parksubsets, parkconds, 'IgnoreFiles', { ...
 </p>
 ```
 
-!!! note
+!!! tip "Dealing with duplicate or unwanted files"
 
-    In this case, there are 2 files that will match respective files in each `DataSubset` for the same trial. Suppose the first of attempt for this trial had an issue, and so it was repeated with a `'-02'` added after the trial name (eg `"…/Subject 01/_/park-norm-02.c3d"`). Without adding the files to `ignorefiles`, the two trials will appear identical (due to having the same conditions without anything, such as a trial number condition, to
-    distinguish the two trials), and produce a `DuplicateSourceError`.
+    In some cases, there are duplicate (e.g. a trial was redone due to technical
+    difficulties, etc) or unwanted (e.g. corrupted data, etc) files that will match the same
+    set of conditions in a particular `DataSubset`, and the `findtrials` function will be
+    unable to determine which file should be used for that `DataSubset` source. Suppose the
+    first of attempt for a trial, `"Subject 01/_/park-norm.c3d"` had an issue, and it was
+    repeated with a `'-02'` added after the trial name (`"Subject 01/_/park-norm-02.c3d"`).
+
     ```julia-repl
-    julia> parktrials = findtrials(parksubsets, parkconds; ignorefiles=[
-        joinpath(genpath, "DFlow/Subject 01/park-norm.csv"),
-        joinpath(rawpath, "Subject 01/_/park-norm-01.c3d")
-    ])
+    julia> parktrials = findtrials(parksubsets, parkconds)
 
-    ERROR: DuplicateSourceError: Found "vicon" source file "…/Subject 01/_/park-norm.c3d" for 
-     Trial(1, "park-norm", Dict{Symbol,Any}(:arms => "norm"), 3 sources) which already has 
-     a "vicon" source at "…/Subject 01/_/park-norm-01.c3d"
+    ERROR: DuplicateSourceError: Found "vicon" source file "…/Subject 01/_/park-norm-02.c3d" for
+     Trial(1, "park-norm", Dict{Symbol,Any}(:arms => "norm"), 3 sources) which already has
+     a "vicon" source at "…/Subject 01/_/park-norm.c3d"
     Stacktrace:
      [1] findtrials(::Array{DataSubset,1}, ::TrialConditions; I::Type{T} where T, subject_fmt::Regex, ignorefiles::Array{String,1}, defaultconds::Nothing) at /home/user/.julia/dev/DatasetManager/src/trial.jl:232
      [2] top-level scope at REPL[7]:1
     ```
+
+    This `DuplicateSourceError` alerts you that, for `Trial(1, "park-norm",
+    Dict{Symbol,Any}(:arms => "norm"))` there are conflicting files for the `"vicon"`
+    source, and gives you the names of the two files.  The solution is to add any duplicate
+    or unwanted files to the `ignorefiles` keyword argument (or the `'IgnoreFiles'` optional
+    argument in MATLAB).
+
+    **Julia:**
+    ```julia
+    # Read all perturbations
+    parktrials = findtrials(parksubsets, parkconds; ignorefiles=[
+        joinpath(rawpath, "Subject 01/_/park-norm-01.c3d")
+    ])
+    ```
+
+    **MATLAB:**
+    ```matlab
+    parktrials = DataSet.findtrials(parksubsets, parkconds, 'IgnoreFiles', { ...
+        fullfile(rawpath, 'Subject 01/_/park-norm-01.c3d')
+    })
+    ```
+
 
 
 ## Dataset with different naming schemes
