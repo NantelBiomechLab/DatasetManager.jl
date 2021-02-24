@@ -314,10 +314,21 @@ conditions.
 - `"dualtask"`.  The `"dflow"` subset used a completely different trial naming scheme.
   `"AS"` was used instead of `"norm"`, `"BA"` instead of `"singletask"`, etc.
 
-Such conversions can be dealt with simply. However, a more difficult issue is that the `"singletask"` condition in the `"dflow"` subset is denoted by an "S" following the "arms" factor. Just matching an "S" could match the "S" in "Subject", or in the "RS" condition. We need to only match an "S" that follows the "arms" factor, which can be specified by a [positive lookbehind group](https://en.wikipedia.org/wiki/Perl_Compatible_Regular_Expressions#Features) in Regex,
-like so `"(?<=NONE|NORM)S"`. A similar Regex can be used to deal with the "C" for "dualtask".
+Such conversions can be dealt with simply. However, a slightly more complex issue is that
+the `"singletask"` condition in the `"visual3d"` subset is denoted by an `"S"` following the
+`"arms"` factor. Just matching an `"S"` could match either the `"S"` in `"Subject"` or in
+`"RS"`; we need to only match an `"S"` that follows the `"arms"` factor, which can be
+specified by a [positive lookbehind
+group](https://en.wikipedia.org/wiki/Perl_Compatible_Regular_Expressions#Features) in Regex,
+like this: `"(?<=NONE|NORM)S"`. A similar Regex can be used to deal with the `"C"` for
+`"dualtask"`.
 
-Additionally, you may not the `"(?<=_)TR(?=_)"` for the "park" condition. This was necessary because the `"dflow"` subset naming scheme separately contained "TR" for *every* trial. This regex requires the presence of underscores on either side of "TR" for it to match.
+A similar technique can be used to find the `"TR"` denoting the `"park"` condition, by using
+lookbehind and lookahead Regex groups. The naming scheme for the `"dflow"` subset contains
+`"TR"` for *every* trial ("20181204\_1400\_1646\_AS\_*TR*\_NP\_N05\_*TR*01.txt"), unrelated
+to the `"park"` condition. However, we notice that the `"TR"` denoting the `"park"`
+condition has underscores on either side; based on that observation, we can write a Regex
+for these requirements as `"(?<=_)TR(?=_)"`.
 
 ```@raw html
 <div class="admonition">
@@ -326,12 +337,13 @@ Additionally, you may not the `"(?<=_)TR(?=_)"` for the "park" condition. This w
 ```
 
 ```julia
-labels = Dict(:arms => [ ["NONE", "NA"] => "held", ["AS", "Norm", "NORM"] => "norm"],
-                 :kind => [ ["(?<=NONE|NORM|held|norm)S", "BA", "single"] => "singletask", ["(?<=NONE|NORM|norm|held)C", "CO", "dual"]=> "dualtask",
-                           "PO" => "pert", "CP" => "dualtask", ["PARK", "(?<=_)TR(?=_)"] => "park" ],
-                 :pert_type => ["NP" => "steadystate", "RT" => "rtrip", "RS" => "rslip",
-                                "LT" => "ltrip", "LS" => "lslip"])
-conds = TrialConditions((:arms,:kind,:pert_type), labels; required=(:arms,:kind))
+labels = Dict(:arms => [["NONE", "NA"] => "held", ["AS", "Norm", "NORM"] => "norm"],
+              :kind => [["(?<=NONE|NORM|held|norm)S", "BA", "single"] => "singletask",
+                        ["(?<=NONE|NORM|norm|held)C", "CO",, "CP", "dual"] => "dualtask",
+                        "PO" => "pert", ["PARK", "(?<=_)TR(?=_)"] => "park"],
+              :pert_side => ["R(?=[ST]|slip|trip)" => "right", "L(?=[ST]|slip|trip)" => "left"],
+              :pert_type => ["NP" => "steadystate", "(?<=[RL]|right|left)T" => "trip", "(?<=[RL]|right|left)S" => "slip"])
+conds = TrialConditions((:arms,:kind,:pert_side,:pert_type), labels; required=(:arms,:kind))
 ```
 
 ```@raw html
@@ -354,27 +366,26 @@ labels.arms(2).to = 'norm';
 
 labels.kind(1).from = {'(?<=NONE|NORM|held|norm)S', 'BA', 'single'};
 labels.kind(1).to = 'singletask';
-labels.kind(2).from = {'(?<=NONE|NORM|norm|held)C', 'CO', 'dual'};
+labels.kind(2).from = {'(?<=NONE|NORM|norm|held)C', 'CO', 'CP', 'dual'};
 labels.kind(2).to = 'dualtask';
 labels.kind(3).from = 'PO';
 labels.kind(3).to = 'pert';
-labels.kind(4).from = 'CP' ;
-labels.kind(4).to = 'dualtask';
-labels.kind(5).from = {'park', '(?<=_)TR(?=_)'};
-labels.kind(5).to = 'park' ;
+labels.kind(4).from = {'park', '(?<=_)TR(?=_)'};
+labels.kind(4).to = 'park' ;
+
+labels.pert_side(1).from = 'R(?=[ST]|slip|trip)';
+labels.pert_side(1).to = 'right';
+labels.pert_side(2).from = 'L(?=[ST]|slip|trip)';
+labels.pert_side(2).to = 'left';
 
 labels.pert_type(1).from = 'NP';
 labels.pert_type(1).to = 'steadystate';
-labels.pert_type(2).from = 'RT';
-labels.pert_type(2).to = 'rtrip';
-labels.pert_type(3).from = 'RS';
-labels.pert_type(3).to = 'rslip';
-labels.pert_type(4).from = 'LT';
-labels.pert_type(4).to = 'ltrip';
-labels.pert_type(5).from = 'LS';
-labels.pert_type(5).to = 'lslip';
+labels.pert_type(2).from = '(?<=[RL]|right|left)T';
+labels.pert_type(2).to = 'trip';
+labels.pert_type(3).from = '(?<=[RL]|right|left)S';
+labels.pert_type(3).to = 'slip';
 
-conds = TrialConditions.generate({'arms','kind','pert_type'}, labels, 'Required', {'arms', 'kind'})
+conds = TrialConditions.generate({'arms','kind','pert_side','pert_type'}, labels, 'Required', {'arms', 'kind'})
 ```
 
 ```@raw html
@@ -385,7 +396,10 @@ conds = TrialConditions.generate({'arms','kind','pert_type'}, labels, 'Required'
 
 !!! note
 
-    These `TrialConditions` also include the optional factor of `:pert_type`. When the `required` keyword arg is not specified, it is assumed that all factors are required. In this case, the `"visual3d"` subset only included a `:pert_type` level for trials that included a perturbation.
+    These `TrialConditions` also include the optional factors of `pert_side` and
+    `pert_type`. When the `required` (`'Required'` in MATLAB) keyword arg is not specified,
+    it is assumed that all factors are required. In this case, the `"visual3d"` subset only
+    included the `pert_side` and `pert_type` levels for trials that included a perturbation.
 
 As always, the `findtrials` function will locate trials and sources within each subset which match the given conditions.
 
