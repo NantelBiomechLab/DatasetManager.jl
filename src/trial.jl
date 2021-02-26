@@ -232,7 +232,7 @@ function findtrials(
                         trialcond = get(trial.conditions, cond,
                             get(defaultconds, cond, nothing))
                         if isnothing(m[cond])
-                            return cond ∈ keys(defaultconds) ? true : isnothing(trialcond)
+                            return defaultconds[cond] == trialcond
                         elseif conditions.types[i] === String
                             return m[cond] == trialcond
                         else
