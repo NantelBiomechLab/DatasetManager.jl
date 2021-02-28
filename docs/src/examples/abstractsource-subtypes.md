@@ -2,7 +2,7 @@
 
 !!! warning "Warning: Sources and MATLAB"
 
-    Due to the difference between MATLAB and Julia, this functionality does not (currently) exist in the MATLAB code. It is presently unclear how this functionality would be implemented in idiomatic MATLAB code.
+    This feature has not been implemented yet in MATLAB.
 
 The multiple different sources of data for any single trial might all have different file formats. In such a case, different code will be needed to read each file format. Two function stubs, `readsource` and `readsegment`, are defined for `AbstractSource` subtypes to implement methods appropriate for the source.
 
