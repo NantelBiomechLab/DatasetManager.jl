@@ -6,53 +6,58 @@ CurrentModule = DatasetManager
 
 DatasetManager was designed to solve several common problems when working with new datasets
 from human subjects research studies with the overall goal of reducing the amount of
-boilerplate style code needed for new research.
+repetitive and custom code needed for new research.
 
-**Issues**:
+The core functionality of DatasetManager eases the analysis of a new dataset by allowing the
+researcher to describe the dataset (e.g. the locations of the various sources or data,
+naming formats, etc) and then finding all the trials and associated metadata (e.g. subject
+identifier, trial conditions) in the dataset. Additional functionality includes the ability
+to define segments of the timeseries of a trial and attach experimental conditions specific
+to those segments, and a user-extensible common interface for reading/loading different sources
+of data using the correct method based on the type of data.
 
-1. Most datasets have a unique heirarchy used to organize/structure how the data is stored
-   on disk.
+### Common issues solved by DatasetManager
 
-2. Every dataset will name trials and experimental conditions differently, based on the
-   needs of the study and the preferences of the researcher.
+- Most datasets have a unique organization and structure to how and where the data is stored
+  on disk. Similarly, many datasets will use different naming schemes for trials and
+  experimental conditions, based on the needs of the study and the preferences of the
+  researcher. These unique aspects of each dataset require writing custom code to find and
+  interpret the naming for every new dataset, which wastes valuable time the researcher
+  could be spending developing analyses or interpreting results.
+  - The `findtrials` function returns a list of every trial in the dataset when given a
+    description of how and where the data is stored, paving the way for batch processing of
+    the dataset.
 
-3. Every trial may have more than one associated file which is a source of data for that
-   trial. For example, if multiple systems were used to collect data, or data has undergone
-   an intermediate stage of processing, but the original data is also needed in the final
-   analysis.
 
-4. Given a list of trials to be analysed, each trial will (should[^1]) be analysed
-   identically (e.g. the same function will be run on every trial)
+- Datasets often have more than one source of data per trial (e.g. if multiple systems were
+  used to collect different kinds of data, such as EMG and motion capture). These different
+  kinds of data require special code to load them for analysis. Furthermore, even within the
+  same file extension (e.g. `.csv`), files can have different data organization (e.g. the
+  number of lines in the header); these differences make the use of file extension to choose
+  the loading function a less than optimal solution for loading various kinds of data.
+  - DatasetManager provides a simple interface where the researcher can specify the
+    appropriate function for reading a particular type of data.
 
-5. The entirety of a trial may not need to be analysed, but only a segment of the trial,
-   such as if the first 10 s of a trial are ignored to avoid transient behavior related to
-   the beginning of the trial, or if a trial refers to a timeseries which contains multiple
-   different experimental conditions applied at different moments throughout the duration of
-   the trial.
 
-Issues 1 & 2 require writing a custom "harness" to find and interpret the naming of every
-new dataset, which wastes valuable time the researcher could be spending developing analyses
-or interpreting results.
+- Oftentimes, the entirety of a trial may not be needed, such as if the first part of a
+  trial isn't used, or if a trial contains multiple different experimental conditions
+  applied at different intervals throughout the duration of the trial.
+  - `Segment`s describe the specific interval (the start time and end time) within a given
+    trial and any experimental conditions specific to that interval of time.
 
-Issue 3 can force code gymnastics to access the different source files needed to analyse a
-trial, and requires specialized code to read sources which are of different file types, e.g.
-`.csv`, `.c3d`, `.mat`.
+### Limitations
 
-Issue 4 requires the existence of the list of trials to be analysed.
+The `findtrials` function currently requires all the desired trial metadata (e.g. subject
+identifier, experimental conditions, etc) to be present in the absolute path of every trial.
+The ability to find trial metadata in alternate formats or locations (e.g. trial metadata is
+stored in separate files) is a feature we plan to add in the future.
 
-Issue 5 is often managed in a hodge podge of ad-hoc code to strip the unneccesary portion of
-the time series signals.
+Different sources are collated into a single trial when the subject identifier and all
+experiemental conditions match. Duplicate trials (in terms of identical experimental
+conditions and subject ID) are not currently supported.
 
-DatasetManager eases the analysis of a new dataset by allowing the researcher to describe
-the dataset, including the organization heirarchy, naming schemes, and the locations of the
-various sources of data. The core functionality of DatasetManager solves issues 1, 2 and 3,
-by providing a function which will return a list of all the trials in a dataset when given
-an appropriate description. Additionally, segments of a particular source for a given trial
-can be described (solving issue 5), allowing a complete description of the metadata for the
-data comprising a dataset.
-
-A secondary functionality of DatasetManager is to solve issue 3 by providing two functions,
-which can be extended to support reading various sources.
-
-[^1]: Organizing analysis code into a single function promotes better code quality,organization and reuse, ensures that the results were all generated with the same code, and enables incremental or partial analyses (e.g. for testing, analysis of incomplete datasets, re-analysing problematic trials, etc)
+Please open an [issue](https://github.com/NantelBiomechLab/DatasetManager.jl/issues/new) if
+either of these limitations are a impediment to using DatasetManager.jl with your data, if
+you have a request for a feature that would be a good fit for this package, or if you have
+any issues using this package.
 
