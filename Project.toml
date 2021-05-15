@@ -4,6 +4,7 @@ authors = ["Allen Hill <allenofthehills@gmail.com> and contributors"]
 version = "0.1.0"
 
 [deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
 
 [compat]
