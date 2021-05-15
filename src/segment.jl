@@ -131,7 +131,7 @@ segresult = SegmentResult(seg, Dict(:avg => 3.5))
 """
 struct SegmentResult{S,ID}
     segment::Segment{S,ID}
-    results::Dict{Symbol}
+    results::Dict{String}
 end
 
 function SegmentResult(segment::Segment{S,ID}, results) where {S,ID}
