@@ -56,26 +56,32 @@ function TrialConditions(
     labels;
     required=conditions,
     types=fill(String, length(conditions)),
-    sep="[_-]"
+    sep="[_-]?"
 )
     labels_rg = ""
     subst = Vector{Pair{Regex,String}}(undef, 0)
 
-    for cond in conditions
+    for (i, cond) in enumerate(conditions)
         labels_rg *= "(?<$cond>"
         if labels[cond] isa Regex
             labels_rg *= labels[cond].pattern
+
+            optchar = cond in required ? "" : "?"
+            labels_rg *= string(')', optchar)
+            i < length(conditions) && (labels_rg *= sep)
         else
             labels_rg *= join((x isa Pair ? x.second : x for x in labels[cond]), '|')
-        end
-        optchar = cond in required ? "" : "?"
-        labels_rg *= string(')', optchar, sep, '?')
-        foreach(labels[cond]) do condlabel
-            if condlabel isa Pair
-                altlabels = condlabel.first isa Union{Symbol,String} ? [condlabel.first] :
-                    condlabel.first
-                filter!(label -> label != condlabel.second, altlabels)
-                push!(subst, Regex("(?:"*join(altlabels, '|')*")") => condlabel.second)
+
+            optchar = cond in required ? "" : "?"
+            labels_rg *= string(')', optchar)
+            i < length(conditions) && (labels_rg *= sep)
+            foreach(labels[cond]) do condlabel
+                if condlabel isa Pair
+                    altlabels = condlabel.first isa Union{Symbol,String} ? [condlabel.first] :
+                        condlabel.first
+                    filter!(label -> label != condlabel.second, altlabels)
+                    push!(subst, Regex("(?:"*join(altlabels, '|')*")") => condlabel.second)
+                end
             end
         end
     end
@@ -178,6 +184,8 @@ function duplicatesourceerror_show(io, trial, datasubset, original, dup)
     print(io, " which already has a $(repr(datasubset.name)) source at ", repr(original))
 end
 
+subject(trial::Trial{ID}) where {ID} = trial.subject
+
 """
     findtrials(subsets::AbstractVector{DataSubset}, conditions::TrialConditions;
         <keyword arguments>) -> Vector{Trial}
@@ -202,7 +210,7 @@ function findtrials(
     defaultconds::Union{Nothing, Dict{Symbol}}=nothing
 )
     trials = Vector{Trial{I}}()
-    rg = subject_fmt*r".*"*conditions.labels_rg
+    rg = subject_fmt*r".*?"*conditions.labels_rg
     reqcondnames = conditions.required
     if isnothing(defaultconds)
         defaultconds = Dict{Symbol,String}()
