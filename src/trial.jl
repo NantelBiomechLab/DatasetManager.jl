@@ -185,6 +185,9 @@ function duplicatesourceerror_show(io, trial, datasubset, original, dup)
 end
 
 subject(trial::Trial{ID}) where {ID} = trial.subject
+conditions(trial::Trial) = trial.conditions
+sources(trial::Trial) = trial.sources
+hassource(trial::Trial, src) = haskey(sources(trial), src)
 
 """
     findtrials(subsets::AbstractVector{DataSubset}, conditions::TrialConditions;
