@@ -109,7 +109,7 @@ trial(seg::Segment) = seg.trial
 Return the subject reference for the parent `Trial` of the given `Segment` or
 `SegmentResult`
 """
-subject(seg::Segment) = seg.trial.subject
+subject(seg::Segment) = subject(seg.trial)
 
 """
     conditions(seg::Union{Segment,SegmentResults}) -> Dict{Symbol}
