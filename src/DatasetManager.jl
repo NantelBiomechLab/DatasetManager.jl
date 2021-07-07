@@ -5,7 +5,7 @@ using Glob, DataFrames, CategoricalArrays, PrettyTables, StatsBase, Printf
 export DataSubset, TrialConditions, Trial, DuplicateSourceError, Segment, SegmentResult,
     AbstractSource
 
-export findtrials, readsource, readsegment, sourcepath, trial, subject, conditions,
+export findtrials, readsource, readsegment, sourcepath, trial, subject, conditions, results,
     summarize
 
 

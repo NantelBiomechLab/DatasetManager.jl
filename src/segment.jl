@@ -137,10 +137,12 @@ end
 function SegmentResult(segment::Segment{S,ID}, results) where {S,ID}
     SegmentResult{S,ID}(segment, results)
 end
+SegmentResult(seg::Segment) = SegmentResult(seg, Dict{String,Any}())
 
 trial(sr::SegmentResult) = trial(sr.segment)
 subject(sr::SegmentResult) = subject(sr.segment)
 conditions(sr::SegmentResult) = conditions(sr.segment)
+results(sr::SegmentResult) = sr.results
 
 Base.show(io::IO, sr::SegmentResult) = print(io, "SegmentResult(",sr.segment,",", sr.results,")")
 
