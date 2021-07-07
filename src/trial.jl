@@ -189,6 +189,12 @@ conditions(trial::Trial) = trial.conditions
 sources(trial::Trial) = trial.sources
 hassource(trial::Trial, src) = haskey(sources(trial), src)
 
+function readsource(trial::Trial, src; kwargs...)
+    hassource(trial, src) || throw(KeyError(src))
+    readsource(sources(trial)[src]; kwargs...)
+end
+
+
 """
     findtrials(subsets::AbstractVector{DataSubset}, conditions::TrialConditions;
         <keyword arguments>) -> Vector{Trial}
