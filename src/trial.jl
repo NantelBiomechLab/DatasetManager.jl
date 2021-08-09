@@ -80,7 +80,7 @@ function TrialConditions(
                     altlabels = condlabel.first isa Union{Symbol,String} ? [condlabel.first] :
                         condlabel.first
                     filter!(label -> label != condlabel.second, altlabels)
-                    push!(subst, Regex("(?:"*join(altlabels, '|')*")") => condlabel.second)
+                    push!(subst, Regex("("*join(altlabels, '|')*")") => condlabel.second)
                 end
             end
         end
@@ -208,6 +208,10 @@ function readsource(trial::Trial, src; kwargs...)
     readsource(sources(trial)[src]; kwargs...)
 end
 
+const red = Crayon(foreground=:black, background=(234, 121, 113))
+const green = Crayon(foreground=:black, background=(131, 177, 129))
+const lgry = Crayon(foreground=:light_gray, background=:nothing)
+const rst = Crayon(reset=true)
 
 """
     findtrials(subsets::AbstractVector{DataSubset}, conditions::TrialConditions;
@@ -228,12 +232,14 @@ function findtrials(
     subsets::AbstractVector{DataSubset},
     conditions::TrialConditions;
     I::Type=Int,
-    subject_fmt=r"(?<=Subject )(?<subject>\d+)",
+    subject_fmt=r"Subject (?<subject>\d+)",
+    debug=false,
     ignorefiles::Union{Nothing, Vector{String}}=nothing,
     defaultconds::Union{Nothing, Dict{Symbol}}=nothing
 )
     trials = Vector{Trial{I}}()
-    rg = subject_fmt*r".*?"*conditions.labels_rg
+    rg = Regex(subject_fmt.pattern*".*?"*conditions.labels_rg.pattern)
+    debug && println(stderr, "Searching using regex: ", rg)
     reqcondnames = conditions.required
     if isnothing(defaultconds)
         defaultconds = Dict{Symbol,String}()
@@ -241,6 +247,7 @@ function findtrials(
     optcondnames = setdiff(conditions.condnames, reqcondnames, keys(defaultconds))
 
     for set in subsets
+        debug && println(stderr, "┌ Subset ", repr(set.name))
         pattern = set.pattern
         files = glob(pattern, set.dir)
         if !isnothing(ignorefiles)
@@ -250,9 +257,30 @@ function findtrials(
         for file in files
             _file = foldl((str, pat) -> replace(str, pat), conditions.subst; init=file)
             m = match(rg, _file)
-            isnothing(m) && continue
+
+            if isnothing(m)
+                if debug
+                    pretty_file = foldl((str, pat) -> replace(str, first(pat) =>
+                        SubstitutionString(string(red, "\\1", green, last(pat), rst, lgry))),
+                        conditions.subst; init=string(lgry, file, rst))*string(rst)
+                    println(stderr, "│ ╭ No match")
+                    println(stderr, "│ ╰ @ \"", pretty_file, '"')
+                end
+                continue
+            end
 
             if isnothing(m[:subject]) || any(isnothing.(m[cond] for cond in reqcondnames))
+                if debug
+                    pretty_file = foldl((str, pat) -> replace(str, first(pat) =>
+                        SubstitutionString(string(red, "\\1", green, last(pat), rst, lgry))),
+                        conditions.subst; init=string(lgry, file, rst))*string(rst)
+                    mstr = repr(m)
+                    _rgx = Regex("(("*join(reqcondnames,'|')*")=nothing)")
+                    pretty_mstr = replace(mstr, _rgx =>
+                        SubstitutionString(string(crayon"bold", "\\1", crayon"!bold")))
+                    println(stderr, "│ ╭ Match: ", pretty_mstr)
+                    println(stderr, "│ ╰ @ \"", pretty_file, "\"")
+                end
                 continue
             else
                 name = splitext(basename(file))[1]
@@ -296,13 +324,15 @@ function findtrials(
                     seen = only(seenall)
                     t = trials[seen]
                     if haskey(t.sources, set.name)
-                        throw(DuplicateSourceError(t, set, sourcepath(t.sources[set.name]), file))
+                        throw(DuplicateSourceError(t, set, sourcepath(t.sources[set.name]),
+                            file))
                     else
                         t.sources[set.name] = set.source(file)
                     end
                 end
             end
         end
+        debug && println(stderr, "└ End subset: ", repr(set.name))
     end
 
     return trials
