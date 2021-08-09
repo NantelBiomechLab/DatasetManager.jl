@@ -159,6 +159,7 @@ end
 SegmentResult(seg::Segment) = SegmentResult(seg, Dict{String,Any}())
 
 trial(sr::SegmentResult) = trial(sr.segment)
+segment(sr::SegmentResult) = sr.segment
 subject(sr::SegmentResult) = subject(sr.segment)
 conditions(sr::SegmentResult) = conditions(sr.segment)
 results(sr::SegmentResult) = sr.results
