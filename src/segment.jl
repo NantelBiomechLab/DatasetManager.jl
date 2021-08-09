@@ -68,18 +68,37 @@ function Segment(
 end
 
 function Base.show(io::IO, s::Segment{S,ID}) where {S,ID}
-    print(io, "Segment{$S,$ID}(", s.trial, ", ", typeof(s.source), "(…), ")
+    print(IOContext(io, :limit=>true), "Segment{$S,$ID}($(s.trial), ", typeof(s.source), "(…), ")
     print(io, isnothing(s.start) ? "begin" : s.start, ":")
-    print(io, isnothing(s.finish) ? "end" : s.finish, ", ", s.conditions, ")")
+    print(io, isnothing(s.finish) ? "end" : s.finish)
+    if s.conditions == conditions(trial(s))
+        print(io, ")")
+    else
+        print(io, ", (")
+        _io = IOContext(io, :typeinfo=>eltype(s.conditions))
+        first = true
+        for p in pairs(s.conditions)
+            first || print(_io, ", ")
+            first = false
+            print(_io, p)
+        end
+        print(io, "))")
+    end
 end
 
 function Base.show(io::IO, mimet::MIME"text/plain", s::Segment{S,ID}) where {S,ID}
-    println(io, "Segment{$S,$ID}")
-    show(io, s.trial)
-    println(io)
-    print(io, s.source)
-    println(io, " from $(s.start) to $(isnothing(s.finish) ? "the end" : s.finish)")
-    show(io, mimet, s.conditions)
+    println(IOContext(io, :limit=>true), "Segment{$S,$ID}\n Trial: $(s.trial)")
+    println(io, " Source: ", s.source)
+    print(io, " Time: ", isnothing(s.start) ? "beginning" : s.start)
+    println(io, " to ", isnothing(s.finish) ? "end" : s.finish)
+    print(io, " Conditions: ")
+    if s.conditions == conditions(trial(s))
+        print(io, "(same as parent trial)")
+    end
+    for c in s.conditions
+        print(io, "\n    ")
+        print(io, repr(c.first), " => ", repr(c.second))
+    end
 end
 
 function readsegment end
@@ -144,11 +163,18 @@ subject(sr::SegmentResult) = subject(sr.segment)
 conditions(sr::SegmentResult) = conditions(sr.segment)
 results(sr::SegmentResult) = sr.results
 
-Base.show(io::IO, sr::SegmentResult) = print(io, "SegmentResult(",sr.segment,",", sr.results,")")
+function Base.show(io::IO, sr::SegmentResult)
+    print(IOContext(io, :compact=>true, :limit=>true), "SegmentResult(",sr.segment,", ")
+    if isempty(results(sr))
+        print(io, "No results)")
+    else
+        print(IOContext(io, :limit=>true), "Results keys: ", keys(sr.results), ')')
+    end
+end
 
 function Base.show(io::IO, ::MIME"text/plain", sr::SegmentResult{S,ID}) where {S,ID}
     println(io, "SegmentResult{$S,$ID}")
-    show(io, sr.segment)
+    print(io, ' ', sr.segment)
     println(io)
     show(io, MIME("text/plain"), sr.results)
 end
