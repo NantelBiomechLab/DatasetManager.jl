@@ -14,13 +14,13 @@ DataSubset("events", EventsSource, "path/to/subset", "Subject [0-9]*/events/*.ts
 """
 struct DataSubset
     name::String
-    source::Type
+    source::Function
     dir::String
     pattern::String
+end
 
-    function DataSubset(name, source::Type{S}, dir, pattern) where S <: AbstractSource
-        return new(name, source, dir, pattern)
-    end
+function DataSubset(name, source::Type{S}, dir, pattern) where S <: AbstractSource
+    return DataSubset(name, (s) -> source(s), dir, pattern)
 end
 
 """
