@@ -337,3 +337,28 @@ function findtrials(
 
     return trials
 end
+
+function analyzedataset(
+    fun, trials::AbstractVector{Trial{I}}, ::Type{SRC}
+) where I where SRC <: AbstractSource
+    srs = Vector{SegmentResult{SRC,I}}(undef, length(trials))
+    p = Progress(length(trials)+1; output=stdout, desc="Analyzing trials... ")
+
+    @qthreads for i in eachindex(trials)
+        srs[i] = try
+            fun(trials[i])
+        catch e
+            bt = catch_backtrace()
+            io = IOBuffer()
+            print(io, e)
+            Base.show_backtrace(IOContext(io, IOContext(stderr)), bt)
+            err = replace(String(take!(io)), "\n" => "\n│ ")
+            @error trials[i] err
+            SegmentResult(Segment(trials[i], SRC("")))
+        end
+        next!(p)
+    end
+    finish!(p)
+
+    return srs
+end
