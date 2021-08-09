@@ -28,7 +28,7 @@ function summarize(io::IO, trials::AbstractVector{T}; verbosity=5) where T <: Tr
     for (j,i) in enumerate(ex[1:min(end,verbosity)])
         num = Ntrialsdist[i]
         str = @sprintf "%i: %i/%i (%2.f%%)" i num Nsubs num/Nsubs*100
-        sep = j === min(length(ex),4) ? '└' : '├'
+        sep = j < min(length(ex),verbosity) ? '├' : '└'
         if j ≥ verbosity
             altstr = @sprintf "≤%i: %i/%i (%2.f%%)" i num Nsubs sum(Ntrialsdist[ex[j:end]]./Nsubs)*100
             println(io, "   $sep ", altstr)
@@ -60,7 +60,7 @@ function summarize(io::IO, trials::AbstractVector{T}; verbosity=5) where T <: Tr
 
     # Sources
     println(io, "Sources:")
-    srcs = reduce(vcat, unique(keys.(sources.(trials))))
+    srcs = unique(reduce(vcat, collect.(unique(keys.(sources.(trials))))))
     foreach(enumerate(srcs)) do (i, src)
         trialswithsrc = count(x -> hassource(x, src), trials)
         sep = i === length(srcs) ? '└' : '├'
