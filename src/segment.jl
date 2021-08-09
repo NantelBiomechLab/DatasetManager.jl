@@ -60,9 +60,9 @@ function Segment(
     sourcename::String;
     kwargs...
 ) where ID
-    haskey(trial.sources, sourcename) || throw(DomainError("source $sourcename not found in trial"))
-    source = trial.sources[sourcename]
-    S = typeof(source)
+    hassource(trial, sourcename) ||
+        throw(ArgumentError("source \"$sourcename\" not found in trial"))
+    source = sources(trial)[sourcename]
 
     return Segment(trial, source; kwargs...)
 end
