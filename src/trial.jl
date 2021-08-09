@@ -112,8 +112,20 @@ function Trial(
 end
 
 function Base.show(io::IO, t::Trial)
-    print(io, "Trial(", repr(t.subject), ", ", repr(t.name), ", ",
-        t.conditions, ", ")
+    print(io, "Trial(", repr(t.subject), ", ", repr(t.name), ", ")
+    if get(io, :limit, false)
+        print(io, '(')
+        _io = IOContext(io, :typeinfo=>eltype(t.conditions))
+        first = true
+        for p in pairs(t.conditions)
+            first || print(_io, ", ")
+            first = false
+            print(_io, p)
+        end
+        print(io, "), ")
+    else
+        print(io, length(t.conditions), " conditions, ")
+    end
     numsources = length(t.sources)
     if numsources == 1
         print(io, numsources, " source", ')')
