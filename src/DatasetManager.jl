@@ -4,11 +4,11 @@ using Glob, DataFrames, CategoricalArrays, PrettyTables, StatsBase, Printf, Thre
     ProgressMeter, Crayons
 
 export DataSubset, TrialConditions, Trial, DuplicateSourceError, Segment, SegmentResult,
-    AbstractSource
+    AbstractSource, Source, MissingSourceError, UnknownDeps
 
-export findtrials, analyzedataset, readsource, readsegment, sourcepath, trial, segment,
-    subject, sources, hassource, conditions, results, summarize
-
+export findtrials, summarize, analyzedataset, subject, conditions, sources, hassource,
+    getsource, sourcepath, readsource, requiresource!, generatesource, dependencies,
+    segment, readsegment, trial, results
 
 include("source.jl")
 include("trial.jl")
