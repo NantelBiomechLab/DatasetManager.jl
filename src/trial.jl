@@ -164,6 +164,8 @@ function Base.hash(x::Trial{I}, h::UInt) where I
     return h
 end
 
+Base.copy(x::Trial) = deepcopy(x)
+
 struct DuplicateSourceError <: Exception
     trial
     datasubset
@@ -181,7 +183,7 @@ struct DuplicateSourceError <: Exception
     end
 end
 
-function Base.show(io::IO, e::DuplicateSourceError)
+function Base.showerror(io::IO, e::DuplicateSourceError)
     numfolders = count(r"[/\\]", string(e.datasubset.pattern))
     _original = joinpath("…", splitpath(e.original)[(end-numfolders):end]...)
     _dup = joinpath("…", splitpath(e.dup)[(end-numfolders):end]...)
@@ -203,9 +205,17 @@ hassource(trial::Trial, src::String) = haskey(sources(trial), src)
 hassource(trial::Trial, src::S) where S <: AbstractSource = src ∈ values(sources(trial))
 hassource(trial::Trial, ::Type{S}) where S <: AbstractSource = S ∈ typeof.(values(sources(trial)))
 
+getsource(trial::Trial, src::String) = sources(trial)[src]
+function getsource(trial::Trial, ::Type{S}) where S <: AbstractSource
+    only(filter(v -> v isa S, collect(values(sources(trial)))))
+end
+function getsource(trial::Trial, srcpair::Pair{String,Type{S}}) where S <: AbstractSource
+    name, src = srcpair
+    return get(sources(trial), name, getsource(trial, src))
+end
+
 function readsource(trial::Trial, src; kwargs...)
-    hassource(trial, src) || throw(KeyError(src))
-    readsource(sources(trial)[src]; kwargs...)
+    readsource(getsource(trial, src); kwargs...)
 end
 
 const red = Crayon(foreground=:black, background=(234, 121, 113))
