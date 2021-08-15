@@ -7,9 +7,9 @@ all of the same `AbstractSource` subtype.
 
 # Examples
 
-```jldoctest; setup = :(struct EventsSource <: AbstractSource; end)
-julia> DataSubset("events", EventsSource, "path/to/subset", "Subject [0-9]*/events/*.tsv")
-DataSubset("events", EventsSource, "path/to/subset", "Subject [0-9]*/events/*.tsv")
+```jldoctest; setup = :(struct Events; end)
+julia> DataSubset("events", Source{Events}, "path/to/subset", "Subject [0-9]*/events/*.tsv")
+DataSubset("events", Source{Events}, "path/to/subset", "Subject [0-9]*/events/*.tsv")
 ```
 """
 struct DataSubset
@@ -198,13 +198,54 @@ function duplicatesourceerror_show(io, trial, datasubset, original, dup)
     print(io, " which already has a $(repr(datasubset.name)) source at ", repr(original))
 end
 
+"""
+    subject(trial::Trial{ID}) -> subject::ID
+
+Get the subject identifier for `trial`
+"""
 subject(trial::Trial{ID}) where {ID} = trial.subject
+
+"""
+    conditions(trial::Trial{ID}) -> Dict{Symbol,Any}
+
+Get the conditions for `trial`
+"""
 conditions(trial::Trial) = trial.conditions
+
+"""
+    sources(trial::Trial{ID}) -> Dict{String,AbstractSource}
+
+Get the sources for `trial`
+"""
 sources(trial::Trial) = trial.sources
+
+"""
+    hassource(trial, src::Union{String,S<:AbstractSource}) -> Bool
+
+Check if `trial` has a source with key or type `src`.
+
+# Examples
+```julia
+julia> hassource(trial, "model")
+false
+
+julia> hassource(trial, Source{Events})
+true
+```
+"""
 hassource(trial::Trial, src::String) = haskey(sources(trial), src)
 hassource(trial::Trial, src::S) where S <: AbstractSource = src ∈ values(sources(trial))
 hassource(trial::Trial, ::Type{S}) where S <: AbstractSource = S ∈ typeof.(values(sources(trial)))
 
+"""
+    getsource(trial, src::Union{String,Type{<:AbstractSource}}) -> <:AbstractSource
+    getsource(trial, name::String => src::Type{<:AbstractSource}) -> <:AbstractSource
+
+Return a source from `trial` with key or type `src`. When the second argument is a pair, a
+source with key `name` will returned, or of type `src` if no source `name` is present.
+
+If multiple sources of type `src` are present, the desired source must be accessed by name/key only or an error will be thrown.
+"""
 getsource(trial::Trial, src::String) = sources(trial)[src]
 function getsource(trial::Trial, ::Type{S}) where S <: AbstractSource
     only(filter(v -> v isa S, collect(values(sources(trial)))))
@@ -232,11 +273,13 @@ Find all the trials matching `conditions` which can be found in `subsets`.
 # Keyword arguments:
 
 - `subject_fmt=r"(?<=Subject )(?<subject>\\d+)"`: The format that the subject identifier
-    will appear in file paths.
+   will appear in file paths.
 - `ignorefiles::Union{Nothing, Vector{String}}=nothing`: A list of files, given in the form
-    of an absolute path, that are in any of the `subsets` folders which are to be ignored.
+   of an absolute path, that are in any of the `subsets` folders which are to be ignored.
 - `defaultconds::Union{Nothing, Dict{Symbol}}=nothing`: Any conditions which have a default
-    level if the condition is not found in the file path.
+   level if the condition is not found in the file path.
+- `debug=false`: Show Regex and files that did not match for each subset. Use to debug
+   `TrialConditions` definitions or issues with `subject_fmt` failing to match subject ID's.
 """
 function findtrials(
     subsets::AbstractVector{DataSubset},
@@ -348,13 +391,41 @@ function findtrials(
     return trials
 end
 
+"""
+    analyzedataset(f, trials, Type{<:AbstractSource}; kwargs...) -> Vector{SegmentResult}
+
+Call function `f` on every trial in `trials` in parallel (multi-threaded). If `f` errors for
+a given trial, the `SegmentResult` for that trial will be empty (no results), and the trial
+and error will be shown after the analysis has finished.
+
+# Keyword arguments
+- `threaded=true`: Analyze `trials` using multiple threads
+- `enable_progress=true`: Enable the progress meter
+"""
 function analyzedataset(
-    fun, trials::AbstractVector{Trial{I}}, ::Type{SRC}
+    fun, trials::AbstractVector{Trial{I}}, ::Type{SRC};
+    threaded=true, enable_progress=true
 ) where I where SRC <: AbstractSource
     srs = Vector{SegmentResult{SRC,I}}(undef, length(trials))
-    p = Progress(length(trials)+1; output=stdout, desc="Analyzing trials... ")
+    p = Progress(length(trials)+1; output=stdout, enabled=enable_progress,
+        desc="Analyzing trials... ")
 
-    @qthreads for i in eachindex(trials)
+    if threaded
+        @qthreads for i in eachindex(trials)
+            srs[i] = try
+                fun(trials[i])
+            catch e
+                bt = catch_backtrace()
+                io = IOBuffer()
+                print(io, e)
+                Base.show_backtrace(IOContext(io, IOContext(stderr)), bt)
+                err = replace(String(take!(io)), "\n" => "\n│ ")
+                @error trials[i] err
+                SegmentResult(Segment(trials[i], SRC()))
+            end
+            next!(p)
+        end
+    else
         srs[i] = try
             fun(trials[i])
         catch e
@@ -364,7 +435,7 @@ function analyzedataset(
             Base.show_backtrace(IOContext(io, IOContext(stderr)), bt)
             err = replace(String(take!(io)), "\n" => "\n│ ")
             @error trials[i] err
-            SegmentResult(Segment(trials[i], SRC("")))
+            SegmentResult(Segment(trials[i], SRC()))
         end
         next!(p)
     end
