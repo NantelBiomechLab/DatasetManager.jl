@@ -60,11 +60,12 @@ function summarize(io::IO, trials::AbstractVector{T}; verbosity=5) where T <: Tr
 
     # Sources
     println(io, "Sources:")
-    srcs = unique(reduce(vcat, collect.(unique(keys.(sources.(trials))))))
+    srcs = unique(reduce(vcat, collect.(unique(
+    broadcast(d -> keys(d) .=> typeof.(values(d)), sources.(trials))))))
     foreach(enumerate(srcs)) do (i, src)
-        trialswithsrc = count(x -> hassource(x, src), trials)
+        trialswithsrc = count(x -> hassource(x, src.first), trials)
         sep = i === length(srcs) ? '└' : '├'
-        println(io, @sprintf " %s \"%s\", %i trials (%2.f%%)" sep src trialswithsrc trialswithsrc/N*100)
+        println(io, @sprintf " %s %s, %i trials (%2.f%%)" sep src trialswithsrc trialswithsrc/N*100)
     end
 
 
