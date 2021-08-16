@@ -1,3 +1,14 @@
+"""
+    summarize([io,] trials; verbosity=5)
+
+Summarize a vector of `Trial`s.
+
+Summarizes:
+- Number of unique subjects and lists IDs
+- Total number of trials and trials per subject
+- Unique conditions and observed levels, unique combinations of conditions
+- Unique sources and source types
+"""
 function summarize(trials::AbstractVector{T}; kwargs...) where T <: Trial
     summarize(stdout, trials; kwargs...)
 end
