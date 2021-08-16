@@ -95,7 +95,7 @@ end
 Describes a single trial, including a reference to the subject, trial name, trial
 conditions, and relevant sources of data.
 """
-struct Trial{I}
+mutable struct Trial{I}
     subject::I
     name::String
     conditions::Dict{Symbol,Any}
