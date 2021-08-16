@@ -174,8 +174,12 @@ SegmentResult(seg::Segment) = SegmentResult(seg, Dict{String,Any}())
 trial(sr::SegmentResult) = trial(sr.segment)
 subject(sr::SegmentResult) = subject(sr.segment)
 source(sr::SegmentResult) = source(sr.segment)
+
+"Get the segment of a `SegmentResult`"
 segment(sr::SegmentResult) = sr.segment
 conditions(sr::SegmentResult) = conditions(sr.segment)
+
+"Get the results of a `SegmentResult`"
 results(sr::SegmentResult) = sr.results
 
 function Base.show(io::IO, sr::SegmentResult)
