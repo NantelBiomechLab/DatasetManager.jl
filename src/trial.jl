@@ -19,6 +19,10 @@ struct DataSubset
     pattern::String
 end
 
+function Base.show(io::IO, ds::DataSubset)
+    print(io, "DataSubset($(ds.name), $(typeof(ds.source())), $(ds.dir), $(ds.pattern))")
+end
+
 function DataSubset(name, source::Type{S}, dir, pattern) where S <: AbstractSource
     return DataSubset(name, (s) -> source(s), dir, pattern)
 end
