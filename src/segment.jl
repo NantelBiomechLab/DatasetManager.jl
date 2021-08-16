@@ -1,10 +1,10 @@
 """
-    Segment(trial, source::Union{AbstractSource,String}; [start, finish, conditions])
+    Segment(trial, src::Union{S,Type{S},String}; [start, finish, conditions])
 
 Describes a portion of a source in `trial` from time `start` to `finish` with segment
 specific `conditions`, if applicable.
 
-If `source isa String`, it must refer to a source that exists in `trial`.
+If `src` is a String or AbstractSource, it must refer to a source that exists in `trial`.
 If the `start` is omitted, the segment will start at the beginning of the source/trial.
 If the `finish` is omitted, the segment will be from time `start` to the end of the
 source/trial.
@@ -67,6 +67,10 @@ function Segment(
     return Segment(trial, source; kwargs...)
 end
 
+function Segment(trial, src::Type{<:AbstractSource}; kwargs...)
+    Segment(trial, getsource(trial, src); kwargs...)
+end
+
 function Base.show(io::IO, s::Segment{S,ID}) where {S,ID}
     print(IOContext(io, :limit=>true), "Segment{$S,$ID}($(s.trial), ", typeof(s.source), "(…), ")
     print(io, isnothing(s.start) ? "begin" : s.start, ":")
@@ -101,19 +105,20 @@ function Base.show(io::IO, mimet::MIME"text/plain", s::Segment{S,ID}) where {S,I
     end
 end
 
-function readsegment end
-
 """
-    readsegment(seg::Segment; kwargs...)
+    readsegment(seg::Segment{S}; warn=true, kwargs...) where S <: AbstractSource
 
-Return the portion of `seg.source` from `seg.start` to `seg.finish`.
-
-# Extended help
-
-Subtypes of `AbstractSource` must implement this function to enable reading
-`Segment{MySource}` with this function.
+If defined for `S`, returns the portion of `seg.source` from `seg.start` to `seg.finish`.
+Otherwise, equivalent to `readsource` (i.e. no trimming of time-series occurs). Warns by
+default if the main method is called.
 """
-function readsegment end
+function readsegment(seg::Segment; warn=true, kwargs...)
+    if warn
+        @warn "A method of `readsegment` has not been defined for `$(typeof(source(seg)))`;"*
+            "this means that `seg.start` and `seg.finish` will be ignored"
+    end
+    readsource(source(seg); kwargs...)
+end
 
 """
     trial(seg::Union{Segment,SegmentResults}) -> Trial
@@ -129,6 +134,14 @@ Return the subject reference for the parent `Trial` of the given `Segment` or
 `SegmentResult`
 """
 subject(seg::Segment) = subject(seg.trial)
+
+"""
+    source(seg::Union{Segment,SegmentResults}) -> AbstractSource
+
+Return the source for the parent `Trial` of the given `Segment` or
+`SegmentResult`
+"""
+source(seg::Segment) = seg.source
 
 """
     conditions(seg::Union{Segment,SegmentResults}) -> Dict{Symbol}
@@ -159,8 +172,9 @@ end
 SegmentResult(seg::Segment) = SegmentResult(seg, Dict{String,Any}())
 
 trial(sr::SegmentResult) = trial(sr.segment)
-segment(sr::SegmentResult) = sr.segment
 subject(sr::SegmentResult) = subject(sr.segment)
+source(sr::SegmentResult) = source(sr.segment)
+segment(sr::SegmentResult) = sr.segment
 conditions(sr::SegmentResult) = conditions(sr.segment)
 results(sr::SegmentResult) = sr.results
 
