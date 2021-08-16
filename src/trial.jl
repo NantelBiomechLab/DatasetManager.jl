@@ -341,33 +341,54 @@ function findtrials(
                 seenall = findall(trials) do trial
                     trial.subject == sid &&
                     all(enumerate(conditions.condnames)) do (i, cond)
+                        T = get(conditions.types,
+                            something(findfirst(==(cond), conditions.condnames), 0),
+                            String)
                         trialcond = get(trial.conditions, cond,
                             get(defaultconds, cond, nothing))
                         if isnothing(m[cond])
                             return defaultconds[cond] == trialcond
-                        elseif conditions.types[i] === String
+                        elseif T === String
                             return m[cond] == trialcond
                         else
-                            parse(conditions.types[i], m[cond]) == trialcond
+                            parse(T, m[cond]) == trialcond
                         end
                     end
                 end
 
                 if isempty(seenall)
-                    conds = Dict(cond => String(m[cond]) for cond in reqcondnames)
-                    foreach(defaultconds) do (k,v)
-                        if isnothing(m[k])
-                            conds[k] = String(v)
+                    conds = Dict{Symbol,Any}()
+                    foreach(reqcondnames) do cond
+                        T = get(conditions.types,
+                            something(findfirst(==(cond), conditions.condnames), 0),
+                            String)
+                        if T === String
+                            conds[cond] = String(m[cond])
                         else
+                            conds[cond] = parse(T, m[cond])
+                        end
+                    end
+                    foreach(defaultconds) do (k,v)
+                        T = get(conditions.types,
+                            something(findfirst(==(k), conditions.condnames), 0),
+                            String)
+                        if isnothing(m[k])
+                            conds[k] = parse(T, v)
+                        elseif T === String
                             conds[k] = String(m[k])
+                        else
+                            conds[k] = parse(T, m[k])
                         end
                     end
                     foreach(enumerate(optcondnames)) do (i, cond)
+                        T = get(conditions.types,
+                            something(findfirst(==(cond), conditions.condnames), 0),
+                            String)
                         if !isnothing(m[cond])
-                            if conditions.types[i] === String
+                            if T === String
                                 conds[cond] = String(m[cond])
                             else
-                                conds[cond] = parse(conditions.types[i], m[cond])
+                                conds[cond] = parse(T, m[cond])
                             end
                         end
                     end
