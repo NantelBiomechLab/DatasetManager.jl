@@ -8,7 +8,7 @@ export DataSubset, TrialConditions, Trial, DuplicateSourceError, Segment, Segmen
 
 export findtrials, summarize, analyzedataset, subject, conditions, sources, hassource,
     getsource, sourcepath, readsource, requiresource!, generatesource, dependencies,
-    segment, readsegment, trial, results
+    segment, source, readsegment, trial, results
 
 include("source.jl")
 include("trial.jl")
