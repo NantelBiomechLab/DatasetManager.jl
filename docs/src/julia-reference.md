@@ -4,8 +4,14 @@
 
 ```@docs
 AbstractSource
-sourcepath
+Source
 readsource
+sourcepath
+requiresource!
+generatesource
+dependencies
+DatasetManager.srcext
+DatasetManager.srcname_default
 ```
 
 ## Trials
@@ -14,7 +20,11 @@ readsource
 DataSubset
 TrialConditions
 Trial
+hassource
+getsource
+sources
 findtrials
+analyzedataset
 ```
 
 ## Segments
@@ -25,5 +35,15 @@ SegmentResult
 readsegment
 trial
 subject
+segment
+source
 conditions
+results
+```
+
+## Utilities
+
+```@docs
+summarize
+DatasetManager.stack
 ```
