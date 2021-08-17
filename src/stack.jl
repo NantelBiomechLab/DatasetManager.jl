@@ -13,7 +13,7 @@ function stack(rs::Vector{<:SegmentResult}, conds;
     end
 
     for var in variables
-        insertcols!(df, var => getindex.(getfield.(rs, :results), var))
+        insertcols!(df, var => get.(getfield.(rs, :results), var, missing))
     end
 
     return sort!(DataFrames.stack(df, Not([:subject, conds...])),
