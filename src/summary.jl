@@ -8,6 +8,32 @@ Summarizes:
 - Total number of trials and trials per subject
 - Unique conditions and observed levels, unique combinations of conditions
 - Unique sources and source types
+
+# Examples
+```julia
+julia> summarize(trials)
+Subjects:
+ └ 15: 1  2  3  4  5  6  7  8  9  10  11  12  13  14  15
+Trials:
+ ├ Number of trials: 90
+ └ Number of trials per subject:
+   └ 6: 15/15 (100%)
+Conditions:
+ ├ Observed levels:
+ │ ├ sym => ["asym", "sym"]
+ │ └ arms => ["active", "held", "norm"]
+ └ Unique level combinations observed: 6 (full factorial)
+    │  sym │   arms │
+    ├──────┼────────┤
+    │ asym │ active │
+    │ asym │   held │
+    │ asym │   norm │
+    │  sym │ active │
+    │  ⋮   │   ⋮    │
+Sources:
+ └ "events" => Source{Events}, 90 trials (100%)
+
+```
 """
 function summarize(trials::AbstractVector{T}; kwargs...) where T <: Trial
     summarize(stdout, trials; kwargs...)
