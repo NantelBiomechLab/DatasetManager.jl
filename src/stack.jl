@@ -4,7 +4,7 @@
 Compile the results into a stacked, long form DataFrame
 """
 function stack(rs::Vector{<:SegmentResult}, conds;
-    variables=sort(collect(keys(first(rs).results)))
+    variables=resultsvariables(rs)
 )
     df = DataFrame(subject = categorical(subject.(rs)))
 
