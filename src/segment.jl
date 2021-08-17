@@ -182,6 +182,11 @@ conditions(sr::SegmentResult) = conditions(sr.segment)
 "Get the results of a `SegmentResult`"
 results(sr::SegmentResult) = sr.results
 
+"""
+    resultsvariables(sr::Union{SegmentResult,Vector{SegmentResult}})
+
+Get the unique variables for `SegmentResult`s.
+"""
 resultsvariables(sr::SegmentResult) = collect(keys(results(sr)))
 function resultsvariables(srs::Vector{<:SegmentResult})
     ks = reduce(vcat, collect.(unique(keys.(results.(srs)))))

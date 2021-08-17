@@ -39,6 +39,7 @@ segment
 source
 conditions
 results
+resultsvariables
 ```
 
 ## Utilities
