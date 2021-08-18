@@ -23,13 +23,13 @@ Conditions:
  │ ├ sym => ["asym", "sym"]
  │ └ arms => ["active", "held", "norm"]
  └ Unique level combinations observed: 6 (full factorial)
-    │  sym │   arms │
-    ├──────┼────────┤
-    │ asym │ active │
-    │ asym │   held │
-    │ asym │   norm │
-    │  sym │ active │
-    │  ⋮   │   ⋮    │
+      sym │   arms │ # trials
+    ──────┼────────┼──────────
+     asym │ active │ 15
+     asym │   held │ 15
+     asym │   norm │ 15
+      sym │ active │ 15
+      ⋮   │   ⋮    │ ⋮
 Sources:
  └ "events" => Source{Events}, 90 trials (100%)
 
@@ -86,12 +86,19 @@ function summarize(io::IO, trials::AbstractVector{T}; verbosity=5) where T <: Tr
         println(io, " │ $sep $k => ", repr(v))
     end
 
-    unq_conds = unique(conditions.(trials))
+    unq_conds = copy.(unique(conditions.(trials)))
     Nunq_conds = length(unq_conds)
     println(io, " └ Unique level combinations observed: $(Nunq_conds)",
         Nunq_conds === prod(length.(values(obs_levels))) ? " (full factorial)" : "")
+    foreach(unq_conds) do conds
+        conds[Symbol("# trials")] = count(==(conds), conditions.(trials))
+    end
+    unq_condsdf = DataFrame(unq_conds)
+    unq_condsdf = unq_condsdf[!, [collect(keys(obs_levels)); Symbol("# trials")]]
+    sort!(unq_condsdf, Symbol("# trials"))
     tmpio = IOBuffer()
-    pretty_table(tmpio, unq_conds; hlines=[:header], display_size=(verbosity+3,w),
+    pretty_table(tmpio, unq_condsdf; hlines=[:header], display_size=(verbosity+3,w-4),
+        vlines=1:ncol(unq_condsdf)-1, alignment=[fill(:r, ncol(unq_condsdf)-1); :l],
         nosubheader=true, crop=:both, newline_at_end=false, show_omitted_cell_summary=false)
     println(io, "    ", replace(String(take!(tmpio)), "\n" => "\n    "))
 
