@@ -378,7 +378,11 @@ function findtrials(
                             something(findfirst(==(k), conditions.condnames), 0),
                             String)
                         if isnothing(m[k])
-                            conds[k] = parse(T, v)
+                            if T === String
+                                conds[k] = String(v)
+                            else
+                                conds[k] = parse(T, v)
+                            end
                         elseif T === String
                             conds[k] = String(m[k])
                         else
