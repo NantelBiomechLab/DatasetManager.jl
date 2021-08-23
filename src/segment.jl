@@ -64,7 +64,14 @@ function Segment(
         throw(ArgumentError("source \"$sourcename\" not found in trial"))
     source = sources(trial)[sourcename]
 
-    return Segment(trial, source; kwargs...)
+    if (start = get(kwargs, :start, nothing)) isa Function
+        start = start(trial)
+    end
+    if (finish = get(kwargs, :finish, nothing)) isa Function
+        finish = finish(trial)
+    end
+
+    return Segment(trial, source; kwargs..., start, finish)
 end
 
 function Segment(trial, src::Type{<:AbstractSource}; kwargs...)
