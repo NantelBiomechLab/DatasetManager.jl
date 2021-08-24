@@ -122,7 +122,7 @@ default if the main method is called.
 function readsegment(seg::Segment; warn=true, kwargs...)
     if warn
         @warn "A method of `readsegment` has not been defined for `$(typeof(source(seg)))`;"*
-            "this means that `seg.start` and `seg.finish` will be ignored"
+            "this means that `seg.start` and `seg.finish` will be ignored" maxlog=1
     end
     readsource(source(seg); kwargs...)
 end
