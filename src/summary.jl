@@ -95,7 +95,7 @@ function summarize(io::IO, trials::AbstractVector{T}; verbosity=5) where T <: Tr
     end
     unq_condsdf = DataFrame(unq_conds)
     unq_condsdf = unq_condsdf[!, [collect(keys(obs_levels)); Symbol("# trials")]]
-    sort!(unq_condsdf, Symbol("# trials"))
+    sort!(unq_condsdf, order(Symbol("# trials"); rev=true))
     tmpio = IOBuffer()
     pretty_table(tmpio, unq_condsdf; hlines=[:header], display_size=(verbosity+3,w-4),
         vlines=1:ncol(unq_condsdf)-1, alignment=[fill(:r, ncol(unq_condsdf)-1); :l],
