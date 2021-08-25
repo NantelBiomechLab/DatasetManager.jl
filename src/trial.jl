@@ -352,7 +352,7 @@ function findtrials(
                         trialcond = get(trial.conditions, cond,
                             get(defaultconds, cond, nothing))
                         if isnothing(m[cond])
-                            return defaultconds[cond] == trialcond
+                            return get(defaultconds, cond, nothing) == trialcond
                         elseif T === String
                             return m[cond] == trialcond
                         else
