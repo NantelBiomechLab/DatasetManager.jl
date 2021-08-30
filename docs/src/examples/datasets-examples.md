@@ -18,6 +18,7 @@ Consider a dataset organized as follows:
 │ │ └ 📂 import
 │ ├ 📂 Subject 2
 │ ┊
+│
 └ 📂 DFlow
   ├ 📂 Subject 1
   │ ├ park-none.csv
@@ -38,7 +39,13 @@ Consider a dataset organized as follows:
 ┊
 ```
 
-The dataset is organized into 3 separate folders, but all the trials use the same naming scheme between the different folders. Therefore, we can group the data into 3 different data subsets (`rawpath`, `genpath/Visual3D`, and `genpath/DFlow`) for this analysis based on their location and filetype. Each `DataSubset` gets a name, a source type, a parent directory, and a [glob](https://en.wikipedia.org/wiki/Glob_(programming)) which describes the structure and location, and possibly more (eg extension), of the files specified by the `DataSubset`.
+The dataset is organized into 3 separate folders, but all the trials use the same naming
+scheme between the different folders. Therefore, we can group the data into 3 different data
+subsets (`genpath/Visual3D`, `genpath/DFlow`, and `rawpath`) for this analysis based on
+their location and filetype. Each `DataSubset` gets a name, a source type, a parent
+directory, and a [glob](https://en.wikipedia.org/wiki/Glob_(programming)) which describes
+the structure and location, and possibly more (eg extension), of the files specified by the
+`DataSubset`.
 
 ```@raw html
 <div class="admonition">
@@ -153,10 +160,7 @@ The `findtrials` function will search every `DataSubset` for trials which match 
 
 ```julia
 # Read all perturbations
-parktrials = findtrials(parksubsets, parkconds; ignorefiles=[
-    joinpath(genpath, "DFlow/Subject 01/park-norm.csv"),
-    joinpath(rawpath, "Subject 01/_/park-norm-01.c3d")
-])
+parktrials = findtrials(parksubsets, parkconds)
 ```
 
 ```@raw html
@@ -172,10 +176,7 @@ parktrials = findtrials(parksubsets, parkconds; ignorefiles=[
 ```
 
 ```matlab
-parktrials = DataSet.findtrials(parksubsets, parkconds, 'IgnoreFiles', { ...
-    fullfile(genpath, 'DFlow/Subject 01/park-norm.csv'),
-    fullfile(rawpath, 'Subject 01/_/park-norm-01.c3d')
-})
+parktrials = DataSet.findtrials(parksubsets, parkconds)
 ```
 
 ```@raw html
@@ -184,23 +185,47 @@ parktrials = DataSet.findtrials(parksubsets, parkconds, 'IgnoreFiles', { ...
 </p>
 ```
 
-!!! note
+!!! tip "Dealing with duplicate or unwanted files"
 
-    In this case, there are 2 files that will match respective files in each `DataSubset` for the same trial. Suppose the first of attempt for this trial had an issue, and so it was repeated with a `'-02'` added after the trial name (eg `"…/Subject 01/_/park-norm-02.c3d"`). Without adding the files to `ignorefiles`, the two trials will appear identical (due to having the same conditions without anything, such as a trial number condition, to
-    distinguish the two trials), and produce a `DuplicateSourceError`.
+    In some cases, there are duplicate (e.g. a trial was redone due to technical
+    difficulties, etc) or unwanted (e.g. corrupted data, etc) files that will match the same
+    set of conditions in a particular `DataSubset`, and the `findtrials` function will be
+    unable to determine which file should be used for that `DataSubset` source. Suppose the
+    first of attempt for a trial, `"Subject 01/_/park-norm.c3d"` had an issue, and it was
+    repeated with a `'-02'` added after the trial name (`"Subject 01/_/park-norm-02.c3d"`).
+
     ```julia-repl
-    julia> parktrials = findtrials(parksubsets, parkconds; ignorefiles=[
-        joinpath(genpath, "DFlow/Subject 01/park-norm.csv"),
-        joinpath(rawpath, "Subject 01/_/park-norm-01.c3d")
-    ])
+    julia> parktrials = findtrials(parksubsets, parkconds)
 
-    ERROR: DuplicateSourceError: Found "vicon" source file "…/Subject 01/_/park-norm.c3d" for 
-     Trial(1, "park-norm", Dict{Symbol,Any}(:arms => "norm"), 3 sources) which already has 
-     a "vicon" source at "…/Subject 01/_/park-norm-01.c3d"
+    ERROR: DuplicateSourceError: Found "vicon" source file "…/Subject 01/_/park-norm-02.c3d" for
+     Trial(1, "park-norm", Dict{Symbol,Any}(:arms => "norm"), 3 sources) which already has
+     a "vicon" source at "…/Subject 01/_/park-norm.c3d"
     Stacktrace:
      [1] findtrials(::Array{DataSubset,1}, ::TrialConditions; I::Type{T} where T, subject_fmt::Regex, ignorefiles::Array{String,1}, defaultconds::Nothing) at /home/user/.julia/dev/DatasetManager/src/trial.jl:232
      [2] top-level scope at REPL[7]:1
     ```
+
+    This `DuplicateSourceError` alerts you that, for `Trial(1, "park-norm",
+    Dict{Symbol,Any}(:arms => "norm"))` there are conflicting files for the `"vicon"`
+    source, and gives you the names of the two files.  The solution is to add any duplicate
+    or unwanted files to the `ignorefiles` keyword argument (or the `'IgnoreFiles'` optional
+    argument in MATLAB).
+
+    **Julia:**
+    ```julia
+    # Read all perturbations
+    parktrials = findtrials(parksubsets, parkconds; ignorefiles=[
+        joinpath(rawpath, "Subject 01/_/park-norm-01.c3d")
+    ])
+    ```
+
+    **MATLAB:**
+    ```matlab
+    parktrials = DataSet.findtrials(parksubsets, parkconds, 'IgnoreFiles', { ...
+        fullfile(rawpath, 'Subject 01/_/park-norm-01.c3d')
+    })
+    ```
+
 
 
 ## Dataset with different naming schemes
@@ -212,24 +237,25 @@ Consider a different dataset, organized as follows:
 ├ 📂 Subject 1
 │ ├ 📂 Export
 │ │ ├ 20181204_1400_NORMS_TR03.mat
-│ │ ├ 20181204_1400_NONEC_TR03.mat
 │ │ ├ 20181204_1400_NORMC_TR03.mat
+│ │ ├ 20181204_1400_NORM_PARK_TR03.mat
 │ │ ┊
 │ └ 📂 import
 ├ 📂 Subject 2
 │ └ 📂 Export
 │   ├ norm-singletask.mat
-│   ├ held-dualtask.mat
-│   ├ norm_dual.mat
+│   ├ Norm-dualtask.mat
+│   ├ park-norm.mat
 │   ┊
 ┊
 
 📂 dflowpath
 ├ 📂 N01
 │ ├ 20181204_1400_1448_AS_BA_NP_N01_TR01.txt
-│ ├ 20181204_1400_1501_NA_CO_NP_N01_TR01.txt
-│ ├ 20181204_1400_1506_AS_CO_NP_N01_TR01.txt
+│ ├ 20181204_1400_1501_AS_CO_NP_N01_TR01.txt
+│ ├ 20181204_1400_1646_NA_TR_NP_N05_TR01.txt
 │ ┊
+├ 📂 N02
 ┊
 ```
 
@@ -279,15 +305,30 @@ parkdatafiles = [
 </p>
 ```
 
-This dataset has several issues which make the level filters more complex and require the use of [Regex](https://en.wikipedia.org/wiki/Regular_expression) to properly find the conditions.
+This dataset has several issues which make the level filters more complex and require the
+use of [Regex](https://en.wikipedia.org/wiki/Regular_expression) to properly find the
+conditions.
 
-- The `"visual3d"` subset isn't completely consistent in the naming. For example `"Norm"` was sometimes used instead of `"norm"`, and `"dual"` was sometimes used instead of `"dualtask"`.
-- The `"dflow"` subset used a completely different trial naming scheme. `"NA"` was used instead of `"held"`, `"RT"` instead of `"rtrip"`, etc.
+- The `"visual3d"` subset isn't completely consistent in the naming. For example `"Norm"`
+  was sometimes used instead of `"norm"`, and `"dual"` was sometimes used instead of
+- `"dualtask"`.  The `"dflow"` subset used a completely different trial naming scheme.
+  `"AS"` was used instead of `"norm"`, `"BA"` instead of `"singletask"`, etc.
 
-Such conversions can be dealt with simply. However, a more difficult issue is that the `"singletask"` condition in the `"dflow"` subset is denoted by an "S" following the "arms" factor. Just matching an "S" could match the "S" in "Subject", or in the "RS" condition. We need to only match an "S" that follows the "arms" factor, which can be specified by a [positive lookbehind group](https://en.wikipedia.org/wiki/Perl_Compatible_Regular_Expressions#Features) in Regex,
-like so `"(?<=NONE|NORM)S"`. A similar Regex can be used to deal with the "C" for "dualtask".
+Such conversions can be dealt with simply. However, a slightly more complex issue is that
+the `"singletask"` condition in the `"visual3d"` subset is denoted by an `"S"` following the
+`"arms"` factor. Just matching an `"S"` could match either the `"S"` in `"Subject"` or in
+`"RS"`; we need to only match an `"S"` that follows the `"arms"` factor, which can be
+specified by a [positive lookbehind
+group](https://en.wikipedia.org/wiki/Perl_Compatible_Regular_Expressions#Features) in Regex,
+like this: `"(?<=NONE|NORM)S"`. A similar Regex can be used to deal with the `"C"` for
+`"dualtask"`.
 
-Additionally, you may not the `"(?<=_)TR(?=_)"` for the "park" condition. This was necessary because the `"dflow"` subset naming scheme separately contained "TR" for *every* trial. This regex requires the presence of underscores on either side of "TR" for it to match.
+A similar technique can be used to find the `"TR"` denoting the `"park"` condition, by using
+lookbehind and lookahead Regex groups. The naming scheme for the `"dflow"` subset contains
+`"TR"` for *every* trial ("20181204\_1400\_1646\_AS\_*TR*\_NP\_N05\_*TR*01.txt"), unrelated
+to the `"park"` condition. However, we notice that the `"TR"` denoting the `"park"`
+condition has underscores on either side; based on that observation, we can write a Regex
+for these requirements as `"(?<=_)TR(?=_)"`.
 
 ```@raw html
 <div class="admonition">
@@ -296,12 +337,13 @@ Additionally, you may not the `"(?<=_)TR(?=_)"` for the "park" condition. This w
 ```
 
 ```julia
-labels = Dict(:arms => [ ["NONE", "NA"] => "held", ["AS", "Norm", "NORM"] => "norm"],
-                 :kind => [ ["(?<=NONE|NORM|held|norm)S", "BA", "single"] => "singletask", ["(?<=NONE|NORM|norm|held)C", "CO", "dual"]=> "dualtask",
-                           "PO" => "pert", "CP" => "dualtask", ["PARK", "(?<=_)TR(?=_)"] => "park" ],
-                 :pert_type => ["NP" => "steadystate", "RT" => "rtrip", "RS" => "rslip",
-                                "LT" => "ltrip", "LS" => "lslip"])
-conds = TrialConditions((:arms,:kind,:pert_type), labels; required=(:arms,:kind))
+labels = Dict(:arms => [["NONE", "NA"] => "held", ["AS", "Norm", "NORM"] => "norm"],
+              :kind => [["(?<=NONE|NORM|held|norm)S", "BA", "single"] => "singletask",
+                        ["(?<=NONE|NORM|norm|held)C", "CO",, "CP", "dual"] => "dualtask",
+                        "PO" => "pert", ["PARK", "(?<=_)TR(?=_)"] => "park"],
+              :pert_side => ["R(?=[ST]|slip|trip)" => "right", "L(?=[ST]|slip|trip)" => "left"],
+              :pert_type => ["NP" => "steadystate", "(?<=[RL]|right|left)T" => "trip", "(?<=[RL]|right|left)S" => "slip"])
+conds = TrialConditions((:arms,:kind,:pert_side,:pert_type), labels; required=(:arms,:kind))
 ```
 
 ```@raw html
@@ -324,27 +366,26 @@ labels.arms(2).to = 'norm';
 
 labels.kind(1).from = {'(?<=NONE|NORM|held|norm)S', 'BA', 'single'};
 labels.kind(1).to = 'singletask';
-labels.kind(2).from = {'(?<=NONE|NORM|norm|held)C', 'CO', 'dual'};
+labels.kind(2).from = {'(?<=NONE|NORM|norm|held)C', 'CO', 'CP', 'dual'};
 labels.kind(2).to = 'dualtask';
 labels.kind(3).from = 'PO';
 labels.kind(3).to = 'pert';
-labels.kind(4).from = 'CP' ;
-labels.kind(4).to = 'dualtask';
-labels.kind(5).from = {'park', '(?<=_)TR(?=_)'};
-labels.kind(5).to = 'park' ;
+labels.kind(4).from = {'park', '(?<=_)TR(?=_)'};
+labels.kind(4).to = 'park' ;
+
+labels.pert_side(1).from = 'R(?=[ST]|slip|trip)';
+labels.pert_side(1).to = 'right';
+labels.pert_side(2).from = 'L(?=[ST]|slip|trip)';
+labels.pert_side(2).to = 'left';
 
 labels.pert_type(1).from = 'NP';
 labels.pert_type(1).to = 'steadystate';
-labels.pert_type(2).from = 'RT';
-labels.pert_type(2).to = 'rtrip';
-labels.pert_type(3).from = 'RS';
-labels.pert_type(3).to = 'rslip';
-labels.pert_type(4).from = 'LT';
-labels.pert_type(4).to = 'ltrip';
-labels.pert_type(5).from = 'LS';
-labels.pert_type(5).to = 'lslip';
+labels.pert_type(2).from = '(?<=[RL]|right|left)T';
+labels.pert_type(2).to = 'trip';
+labels.pert_type(3).from = '(?<=[RL]|right|left)S';
+labels.pert_type(3).to = 'slip';
 
-conds = TrialConditions.generate({'arms','kind','pert_type'}, labels, 'Required', {'arms', 'kind'})
+conds = TrialConditions.generate({'arms','kind','pert_side','pert_type'}, labels, 'Required', {'arms', 'kind'})
 ```
 
 ```@raw html
@@ -355,7 +396,10 @@ conds = TrialConditions.generate({'arms','kind','pert_type'}, labels, 'Required'
 
 !!! note
 
-    These `TrialConditions` also include the optional factor of `:pert_type`. When the `required` keyword arg is not specified, it is assumed that all factors are required. In this case, the `"visual3d"` subset only included a `:pert_type` level for trials that included a perturbation.
+    These `TrialConditions` also include the optional factors of `pert_side` and
+    `pert_type`. When the `required` (`'Required'` in MATLAB) keyword arg is not specified,
+    it is assumed that all factors are required. In this case, the `"visual3d"` subset only
+    included the `pert_side` and `pert_type` levels for trials that included a perturbation.
 
 As always, the `findtrials` function will locate trials and sources within each subset which match the given conditions.
 

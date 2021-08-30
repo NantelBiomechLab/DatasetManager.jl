@@ -28,4 +28,5 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/NantelBiomechLab/DatasetManager.jl",
+    push_preview=true
 )
