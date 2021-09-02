@@ -6,7 +6,7 @@ using Glob, DataFrames, CategoricalArrays, PrettyTables, StatsBase, Printf, Thre
 export DataSubset, TrialConditions, Trial, DuplicateSourceError, Segment, SegmentResult,
     AbstractSource, Source, MissingSourceError, UnknownDeps
 
-export findtrials, summarize, analyzedataset, subject, conditions, sources, hassource,
+export findtrials, summarize, analyzedataset, export_trials, subject, conditions, sources, hassource,
     getsource, sourcepath, readsource, requiresource!, generatesource, dependencies,
     segment, source, readsegment, trial, results, resultsvariables
 

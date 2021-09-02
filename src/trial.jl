@@ -255,7 +255,7 @@ getsource(trial::Trial, src::String) = sources(trial)[src]
 function getsource(trial::Trial, ::Type{S}) where S <: AbstractSource
     only(filter(v -> v isa S, collect(values(sources(trial)))))
 end
-function getsource(trial::Trial, srcpair::Pair{String,Type{S}}) where S <: AbstractSource
+function getsource(trial::Trial, srcpair::Pair{String,T}) where T
     name, src = srcpair
     return get(sources(trial), name, getsource(trial, src))
 end
@@ -421,6 +421,9 @@ function findtrials(
     return trials
 end
 
+unique_sources(trials) = unique(reduce(vcat, collect.(unique(
+        broadcast(d -> keys(d) .=> typeof.(values(d)), sources.(trials))))))
+
 """
     analyzedataset(f, trials, Type{<:AbstractSource}; kwargs...) -> Vector{SegmentResult}
 
@@ -473,3 +476,33 @@ function analyzedataset(
 
     return srs
 end
+
+function default_rename(trial, source)
+    srcname = srcname_default(source)
+    return string("$(subject(trial))_$(srcname)_", basename(sourcepath(getsource(trial, source))))
+end
+
+"""
+    export_trials([f,] trials, dir[, sources])
+
+Export (copy) `sources` in `trials` to `outdir`. When left unspecified, `sources` is set to
+all unique sources found in `trials`. Optionally can be given a function `f`, which must
+accept 2 arguments (a trial and a src which is of `eltype(sources)`), to control the names of
+the exported data. The default behavior exports all sources to `dir` with no
+subdirectories, using the naming schema "\$trial.subject_\$srcname_\$basename(sourcepath)"
+(pseudo-code).
+"""
+function export_trials(trials::Vector{<:Trial}, outdir, srcs=unique_sources(trials))
+    export_trials(default_rename, trials, outdir, srcs)
+end
+
+function export_trials(rename, trials::Vector{<:Trial}, outdir, srcs=unique_sources(trials))
+    isdir(outdir) || mkpath(outdir)
+    # TODO: Generate and print/save code to read exported data (e.g. DataSubset's,
+    # TrialConditions, etc)
+    for trial in trials, src in srcs
+        @debug "Copying $(sourcepath(getsource(trial, src))) to $(joinpath(outdir, rename(trial, src)))"
+        cp(sourcepath(getsource(trial, src)), joinpath(outdir, rename(trial, src)); follow_symlinks=true)
+    end
+end
+

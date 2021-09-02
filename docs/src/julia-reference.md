@@ -25,6 +25,7 @@ getsource
 sources
 findtrials
 analyzedataset
+export_trials
 ```
 
 ## Segments
