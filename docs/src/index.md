@@ -4,6 +4,35 @@ CurrentModule = DatasetManager
 
 # DatasetManager
 
+Find your data, summarize high-level characteristics, analyze, and collect results for statistical testing!
+
+```@setup simplefakedata
+using Revise, DatasetManager, DataFrames, CSV
+include(joinpath(pkgdir(DatasetManager), "test", "makedata.jl"))
+gensimpledata()
+datadir = relpath(joinpath(pkgdir(DatasetManager), "test/data/simple"))
+struct GaitEvents; end
+subsets = [ DataSubset("events", Source{GaitEvents}, datadir, "*.csv") ]
+conds = TrialConditions((:session,:stim), Dict(:session => r"\d", :stim => ["stim", "placebo"]); types=[Int,String])
+ENV["LINES"] = 17
+```
+
+```@repl simplefakedata
+using DatasetManager, DataFrames, CSV, Statistics
+trials = findtrials(subsets, conds;
+    subject_fmt=r"ID(?<subject>\d+)",
+    ignorefiles=[joinpath(datadir, "ID4_3_stim-02.csv")]);
+summarize(trials)
+analysis_results = analyzedataset(trials, Source{GaitEvents}) do trial
+    events = CSV.File(sourcepath(getsource(trial, "events"))) |> DataFrame
+    res = SegmentResult(Segment(trial, "events"))
+    results(res)["avg_stride"] = mean(diff(events[!, "RHS"]))
+
+    return res
+end;
+df = DatasetManager.stack(analysis_results, conds)
+```
+
 DatasetManager was designed to solve several common problems when working with new datasets
 from human subjects research studies with the overall goal of reducing the amount of
 repetitive and custom code needed for new research.
