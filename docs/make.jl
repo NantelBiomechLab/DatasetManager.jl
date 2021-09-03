@@ -19,7 +19,7 @@ makedocs(;
         "Home" => "index.md",
         "Examples" => [
             "Describing datasets" => "examples/datasets-examples.md",
-            "Defining `AbstractSource` subtypes" => "examples/abstractsource-subtypes.md"
+            "Working with sources" => "examples/sources.md"
         ],
         "Julia Reference" => "julia-reference.md",
         "MATLAB Reference" => "matlab-reference.md"
