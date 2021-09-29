@@ -17,15 +17,19 @@ struct DataSubset
     source::Function
     dir::String
     pattern::String
+    ext::String
+
+    DataSubset(name, source, dir, pattern, ext=raw"(?:.*)?\.") = new(name, source, dir, pattern, ext)
+end
+
+
+function DataSubset(name, source::Type{S}, dir, pattern, ext="(?:.*)?"*srcext(source)) where S <: AbstractSource
+    return DataSubset(name, (s) -> source(s), dir, pattern, ext)
 end
 
 function Base.show(io::IO, ds::DataSubset)
     print(io, "DataSubset(", repr(ds.name), ", ", typeof(ds.source("")), ", ",
         repr(ds.dir), ", ", repr(ds.pattern), ')')
-end
-
-function DataSubset(name, source::Type{S}, dir, pattern) where S <: AbstractSource
-    return DataSubset(name, (s) -> source(s), dir, pattern)
 end
 
 """
@@ -77,7 +81,8 @@ function TrialConditions(
         else
             labels_rg *= join((x isa Pair ? x.second : x for x in labels[cond]), '|')
 
-            optchar = cond in required ? "" : "?"
+            # optchar = cond in required ? "" : "?"
+            optchar = '?'
             labels_rg *= string(')', optchar)
             i < length(conditions) && (labels_rg *= sep)
             foreach(labels[cond]) do condlabel
@@ -95,7 +100,7 @@ function TrialConditions(
 end
 
 """
-    Trial(subject, name, [conditions[, sources]])
+    Trial(subject, name, [conditions, sources])
 
 Describes a single trial, including a reference to the subject, trial name, trial
 conditions, and relevant sources of data.
@@ -290,14 +295,13 @@ function findtrials(
     subsets::AbstractVector{DataSubset},
     conditions::TrialConditions;
     I::Type=Int,
-    subject_fmt=r"Subject (?<subject>\d+)",
+    subject_fmt=r"Subject (?<subject>\d+)?",
     debug=false,
     ignorefiles::Union{Nothing, Vector{String}}=nothing,
-    defaultconds::Union{Nothing, Dict{Symbol}}=nothing
+    defaultconds::Union{Nothing, Dict{Symbol}}=nothing,
+    rsearch = Regex(subject_fmt.pattern*".*?"*conditions.labels_rg.pattern)
 )
     trials = Vector{Trial{I}}()
-    rg = Regex(subject_fmt.pattern*".*?"*conditions.labels_rg.pattern)
-    debug && println(stderr, "Searching using regex: ", rg)
     reqcondnames = conditions.required
     if isnothing(defaultconds)
         defaultconds = Dict{Symbol,String}()
@@ -308,7 +312,11 @@ function findtrials(
     end
 
     for set in subsets
-        debug && println(stderr, "┌ Subset ", repr(set.name))
+        rsearchext = Regex(rsearch.pattern*set.ext)
+        if debug
+            println(stderr, "┌ Subset ", repr(set.name))
+            println(stderr, "│ Searching using regex: ", rsearchext)
+        end
         pattern = set.pattern
         files = normpath.(glob(pattern, set.dir))
         if !isnothing(ignorefiles)
@@ -317,7 +325,7 @@ function findtrials(
 
         for file in files
             _file = foldl((str, pat) -> replace(str, pat), conditions.subst; init=file)
-            m = match(rg, _file)
+            m = match(rsearchext, _file)
 
             if isnothing(m)
                 if debug
