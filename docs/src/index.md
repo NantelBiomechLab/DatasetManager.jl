@@ -7,7 +7,7 @@ CurrentModule = DatasetManager
 Find your data, summarize high-level characteristics, analyze it, and collect the results for statistical testing!
 
 ```@setup simplefakedata
-using Revise, DatasetManager, DataFrames, CSV
+using DatasetManager, DataFrames, CSV
 include(joinpath(pkgdir(DatasetManager), "test", "makedata.jl"))
 gensimpledata()
 datadir = relpath(joinpath(pkgdir(DatasetManager), "test/data/simple"))
