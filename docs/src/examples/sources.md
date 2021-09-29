@@ -4,9 +4,10 @@
 
     This feature has not been implemented yet in MATLAB.
 
-A single trial will likely have multiple files which contain data associated with that trial.
-In such a case, different code will most likely be needed to read each file (e.g. due to
-different file types or formatting).
+It is common for data to be stored in different ways, such as text-delimited files and
+binary files. Therefore, different code will most likely be needed to read the different
+formats. DatasetManager calls these different data storage formats 'sources', and different
+functions can be written specific to each type of source.
 
 A simple implementation of a source for an OpenSim `.mot` file follows:
 

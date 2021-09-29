@@ -14,6 +14,8 @@ makedocs(;
             "assets/css/custom.css"
         ],
         highlights=["matlab"],
+        highlightjs=joinpath(@__DIR__, "src/assets/js/highlight.min.js"),
+        prerender=true
     ),
     pages=[
         "Home" => "index.md",

@@ -4,7 +4,7 @@ CurrentModule = DatasetManager
 
 # DatasetManager
 
-Find your data, summarize high-level characteristics, analyze, and collect results for statistical testing!
+Find your data, summarize high-level characteristics, analyze it, and collect the results for statistical testing!
 
 ```@setup simplefakedata
 using Revise, DatasetManager, DataFrames, CSV
@@ -62,12 +62,12 @@ of data using the correct method based on the type of data.
   generation) a particular type of data (e.g. a file type/extension, or a specifically
   formatted `.csv`, etc).
   - Datasets often have more than one source of data per trial (e.g. if multiple systems were
-  used to collect different kinds of data, such as EMG and motion capture). These different
-  kinds of data require special code to load them for analysis. Furthermore, even within the
-  same file extension (e.g. `.csv`), files can have different data organization (e.g. the
-  number of lines in the header); these differences can challenge the use of file
-  extension as the basis for choosing which function is appropriate for reading a
-  particular file.
+    used to collect different kinds of data, such as EMG and motion capture). These different
+    kinds of data require special code to load them for analysis. Furthermore, even within the
+    same file extension (e.g. `.csv`), files can have different data organization (e.g. the
+    number of lines in the header); these differences can challenge the use of file
+    extension as the basis for choosing which function is appropriate for reading a
+    particular file.
 
 - `Segment`s describe a specific interval (the start time and end time) within a given
   trial and any experimental conditions specific to that interval of time.
@@ -90,12 +90,12 @@ stored in separate files) is a feature we plan to add in the future.
 
 Different sources are collated into a single trial when the subject identifier and all
 experiemental conditions match. Duplicate trials (in terms of identical experimental
-conditions and subject ID) are not currently supported.
+conditions and subject ID with no other distinguishing elements) are not currently supported.
 
 Please open an [issue](https://github.com/NantelBiomechLab/DatasetManager.jl/issues/new) if
 you have a request for a feature that would be a good fit for this package, or if you have
 any issues using this package.
 
-[1]: `DatasetManager.stack` is not exported due to a naming conflict with the `stack`
+[^1]: `DatasetManager.stack` is not exported due to a naming conflict with the `stack`
 function in `DataFrames.jl`.
 
