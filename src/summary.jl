@@ -39,7 +39,12 @@ function summarize(trials::AbstractVector{T}; kwargs...) where T <: Trial
     summarize(stdout, trials; kwargs...)
 end
 
-function summarize(io::IO, trials::AbstractVector{T}; verbosity=5) where T <: Trial
+using Crayons.Box: BOLD
+using Crayons.Box: ITALICS
+using Crayons.Box
+
+function summarize(oio::IO, trials::AbstractVector{T}; verbosity=5) where T <: Trial
+    io = IOBuffer()
     N = length(trials)
     if N === 0
         println(io, "0 trials present")
@@ -48,29 +53,32 @@ function summarize(io::IO, trials::AbstractVector{T}; verbosity=5) where T <: Tr
     subs = sort(unique(subject.(trials)))
     Nsubs = length(subs)
     h, w = displaysize(io)
+    LG = Crayon(foreground=:light_gray)
+    BMGNTA = Crayon(foreground=:magenta, bold=true)
+    BLU = Crayon(foreground=:cyan)
 
     # Subjects
-    println(io, "Subjects:")
+    println(io, BOLD("Subjects:"))
     substr = repr("text/plain", permutedims(subs), context=IOContext(io, :displaysize => (h, w-5), :limit => true))
-    println(io, " └ $Nsubs:", split(substr, '\n')[2])
+    println(io, " └ ", BLU("$Nsubs"), ':', LG(split(substr, '\n')[2]))
 
     # Trials
-    println(io, "Trials:")
-    println(io, " ├ Number of trials: $N")
-    println(io, " └ Number of trials per subject:")
+    println(io, BOLD("Trials:"))
+    println(io, " ├ ", BLU("$N"), " trials")
+    println(io, " └ Trials per subject:")
     Ntrials= [ count(==(sub) ∘ subject, trials) for sub in subs ]
     maxNtrials = maximum(Ntrials)
     Ntrialsdist = counts(Ntrials, maxNtrials)
     ex = reverse!(findall(!iszero, Ntrialsdist))
     for (j,i) in enumerate(ex[1:min(end,verbosity)])
         num = Ntrialsdist[i]
-        str = @sprintf "%i: %i/%i (%2.f%%)" i num Nsubs num/Nsubs*100
         sep = j < min(length(ex),verbosity) ? '├' : '└'
         if j ≥ verbosity
-            altstr = @sprintf "≤%i: %i/%i (%2.f%%)" i num Nsubs sum(Ntrialsdist[ex[j:end]]./Nsubs)*100
-            println(io, "   $sep ", altstr)
+            println(io, "   $sep ", BLU("≤$i"), ": $num/$Nsubs ",
+                LG(@sprintf("(%3.f%%)", sum(Ntrialsdist[ex[j:end]]./Nsubs)*100)))
         else
-            println(io, "   $sep ", str)
+            println(io, "   $sep ", BLU("$i"), ": $num/$Nsubs ",
+                LG(@sprintf("(%3.f%%)", num/Nsubs*100)))
         end
     end
 
@@ -79,17 +87,17 @@ function summarize(io::IO, trials::AbstractVector{T}; verbosity=5) where T <: Tr
         for factor in reduce(vcat, unique(keys.(conditions.(trials)))))
     Nconds = length(obs_levels)
 
-    println(io, "Conditions:")
+    println(io, BOLD("Conditions:"))
     println(io, " ├ Observed levels:")
     foreach(enumerate(obs_levels)) do (i, (k, v))
         sep = i === Nconds ? '└' : '├'
-        println(io, " │ $sep $k => ", repr(v))
+        println(io, " │ $sep ", BMGNTA("$k"), " => ", ITALICS(repr(v)))
     end
 
     unq_conds = copy.(unique(conditions.(trials)))
     Nunq_conds = length(unq_conds)
-    println(io, " └ Unique level combinations observed: $(Nunq_conds)",
-        Nunq_conds === prod(length.(values(obs_levels))) ? " (full factorial)" : "")
+    println(io, " └ Unique level combinations observed: ", BLU("$(Nunq_conds)"),
+        Nunq_conds === prod(length.(values(obs_levels))) ? LG(" (full factorial)") : "")
     foreach(unq_conds) do conds
         conds[Symbol("# trials")] = count(==(conds), conditions.(trials))
     end
@@ -97,21 +105,24 @@ function summarize(io::IO, trials::AbstractVector{T}; verbosity=5) where T <: Tr
     unq_condsdf = unq_condsdf[!, [collect(keys(obs_levels)); Symbol("# trials")]]
     sort!(unq_condsdf, order(Symbol("# trials"); rev=true))
     tmpio = IOBuffer()
-    pretty_table(tmpio, unq_condsdf; hlines=[:header], display_size=(verbosity+3,w-4),
+    pretty_table(IOContext(tmpio, :color => true), unq_condsdf; hlines=[:header], display_size=(verbosity+3,w-4),
         vlines=1:ncol(unq_condsdf)-1, alignment=[fill(:r, ncol(unq_condsdf)-1); :l],
-        nosubheader=true, crop=:both, newline_at_end=false, show_omitted_cell_summary=false)
+        nosubheader=true, crop=:both, newline_at_end=false, backend=Val(:text),
+        header_crayon=[fill(BMGNTA, ncol(unq_condsdf)-1); LG],
+        highlighters=Highlighter((v,i,j) -> j === ncol(unq_condsdf), LG),
+        show_omitted_cell_summary=false)
     println(io, "    ", replace(String(take!(tmpio)), "\n" => "\n    "))
 
     # Sources
-    println(io, "Sources:")
-    srcs = unique(reduce(vcat, collect.(unique(
-    broadcast(d -> keys(d) .=> typeof.(values(d)), sources.(trials))))))
+    println(io, BOLD("Sources:"))
+    srcs = unique_sources(trials)
     foreach(enumerate(srcs)) do (i, src)
         trialswithsrc = count(x -> hassource(x, src.first), trials)
         sep = i === length(srcs) ? '└' : '├'
-        println(io, @sprintf " %s %s, %i trials (%2.f%%)" sep src trialswithsrc trialswithsrc/N*100)
+        println(io, " $sep ", GREEN_FG(repr(src.first)), " => $(src.second)", LG(@sprintf(", %i trials (%2.f%%)", trialswithsrc, trialswithsrc/N*100)))
     end
 
+    print(oio, String(take!(io)))
 
     return nothing
 end
