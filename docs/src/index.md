@@ -43,8 +43,8 @@ researcher to describe the dataset (e.g. the locations of the various sources or
 naming formats, etc) and then finding all the trials and associated metadata (e.g. subject
 identifier, trial conditions) in the dataset. Additional functionality includes the ability
 to define segments of the timeseries of a trial and attach experimental conditions specific
-to those segments, and a user-extensible common interface for reading/loading different sources
-of data using the correct method based on the type of data.
+to those segments, and a user-extensible common interface for reading/loading different
+sources of data using the correct method based on the type of data.
 
 ### Key functionality
 
@@ -52,22 +52,22 @@ of data using the correct method based on the type of data.
   description of how and where the data is stored, paving the way for batch processing of
   the dataset.
   - Most datasets have a unique organization and structure to how and where the data is
-    stored on disk. Similarly, many datasets will use different naming schemes for trials and
-    experimental conditions, based on the needs of the study and the preferences of the
+    stored on disk. Similarly, many datasets will use different naming schemes for trials
+    and experimental conditions, based on the needs of the study and the preferences of the
     researcher. These unique aspects of each dataset normally require writing custom code to
     find and interpret the naming for every new dataset, which wastes valuable time the
     researcher could be spending developing analyses or interpreting results.
 
 - Data `Source`s allow the researcher to define a standard function for reading (and even
-  generation) a particular type of data (e.g. a file type/extension, or a specifically
-  formatted `.csv`, etc).
-  - Datasets often have more than one source of data per trial (e.g. if multiple systems were
-    used to collect different kinds of data, such as EMG and motion capture). These different
-    kinds of data require special code to load them for analysis. Furthermore, even within the
-    same file extension (e.g. `.csv`), files can have different data organization (e.g. the
-    number of lines in the header); these differences can challenge the use of file
-    extension as the basis for choosing which function is appropriate for reading a
-    particular file.
+  generating/transforming) a particular type of data (e.g. a file type/extension, or a
+  specifically formatted `.csv`, etc).
+  - Datasets often have more than one source of data per trial (e.g. if multiple systems
+    were used to collect different kinds of data, such as EMG and motion capture). These
+    different kinds of data require special code to load them for analysis. Furthermore,
+    even within the same file extension (e.g. `.csv`), files can have different data
+    organization (e.g. the number of lines in the header) which would benefit from special
+    handling; these differences can challenge the use of file extension as the basis for
+    choosing which function is appropriate for reading a particular file.
 
 - `Segment`s describe a specific interval (the start time and end time) within a given
   trial and any experimental conditions specific to that interval of time.
@@ -90,12 +90,12 @@ stored in separate files) is a feature we plan to add in the future.
 
 Different sources are collated into a single trial when the subject identifier and all
 experiemental conditions match. Duplicate trials (in terms of identical experimental
-conditions and subject ID with no other distinguishing elements) are not currently supported.
+conditions and subject ID with no other distinguishing elements) are not currently
+supported.
 
 Please open an [issue](https://github.com/NantelBiomechLab/DatasetManager.jl/issues/new) if
 you have a request for a feature that would be a good fit for this package, or if you have
 any issues using this package.
 
-[^1]: `DatasetManager.stack` is not exported due to a naming conflict with the `stack`
-function in `DataFrames.jl`.
+[^1]: `DatasetManager.stack` is not exported due to a naming conflict with the `stack` function in `DataFrames.jl`.
 
