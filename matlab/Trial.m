@@ -162,6 +162,99 @@ methods(Static)
             end
         end
     end
+
+    function summarize(trials)
+        verbosity = 5;
+        N = length(trials);
+        if N == 0
+            disp('0 trials present')
+        end
+
+        subs = unique({trials.subject});
+        Nsubs = length(subs);
+
+        fprintf('Subjects:\n')
+        fprintf(' └ %d: ', Nsubs)
+        disp(strjoin(cellfun(@(s) sprintf('''%s''',s), subs, 'UniformOutput', false), ', '))
+
+        fprintf('Trials:\n')
+        fprintf(' ├ %d trials\n', N)
+        fprintf(' └ Trials per subject:\n')
+
+        Ntrials = cellfun(@(ID) sum(strcmp({trials.subject}, ID)), subs);
+        [C,~,ic] = unique(Ntrials);
+        Ntrialsdist = accumarray(ic, 1);
+        [Ntrialsdist, ord] = sort(Ntrialsdist, 'descend');
+
+        for j = 1:min(length(Ntrialsdist),verbosity)
+            num = Ntrialsdist(ord(j));
+            if j < min(length(Ntrialsdist),verbosity)
+                sep = '├';
+            else
+                sep = '└';
+            end
+
+            if j >= verbosity
+                fprintf('   %s ≤%d: %d/%d (%3.f%%)\n', sep, ord(j), num, Nsubs, ...
+                    sum(Ntrialsdist(ord(j:end))./Nsubs)*100)
+            else
+                fprintf('   %s %d: %d/%d (%3.f%%)\n', sep, ord(j), num, Nsubs, ...
+                    num/Nsubs*100)
+            end
+        end
+
+        fprintf('Conditions:\n')
+        fprintf(' ├ Observed levels:\n')
+
+        factors = cellfun(@keys, {trials.conditions}, 'UniformOutput', false);
+        factors = unique(vertcat(factors{:}));
+
+        levels = cellfun(@values, {trials.conditions}, 'UniformOutput', false);
+        levels = vertcat(levels{:});
+
+        condsTable = table(categorical(levels(:,1)),'VariableNames',factors(1));
+        for i = 2:length(factors)
+            T = table(categorical(levels(:,i)),'VariableNames',factors(i));
+            condsTable = [condsTable T];
+        end
+
+        [unq_conds,~,ic] = unique(condsTable);
+        cats = varfun(@categories, unq_conds);
+        for i = 1:length(factors)
+            if i == length(factors)
+                sep = '└';
+            else
+                sep = '├';
+            end
+
+            fprintf(' │ %s %s => ', sep, factors{i})
+            disp(strcat('{', strjoin(cellfun(@(s) sprintf('''%s''',s), ...
+                cats{:,i}, 'UniformOutput', false), ', '), '}'))
+        end
+
+        fprintf(' └ Unique level combinations observed: %d', height(unq_conds))
+        if height(unq_conds) == prod(varfun(@length, cats, 'OutputFormat', 'uniform'))
+            fprintf(' (full factorial)\n')
+        else
+            fprintf('\n')
+        end
+        unq_conds = [ unq_conds table(accumarray(ic,1),'VariableNames',{'num_trials'}) ];
+        unq_conds = sortrows(unq_conds, 'num_trials', 'descend');
+        disp(unq_conds)
+
+        fprintf('Sources:\n')
+        sources = fieldnames([trials.sources]);
+        for i = 1:length(sources)
+            if i == length(sources)
+                sep = '└';
+            else
+                sep = '├';
+            end
+
+            fprintf(' %s ''%s''\n', sep, sources{i})
+        end
+
+    end
 end % methods
 
 end
