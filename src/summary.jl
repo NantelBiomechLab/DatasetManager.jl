@@ -48,6 +48,7 @@ function summarize(oio::IO, trials::AbstractVector{T}; verbosity=5) where T <: T
     N = length(trials)
     if N === 0
         println(io, "0 trials present")
+        print(oio, String(take!(io)))
         return nothing
     end
     subs = sort(unique(subject.(trials)))
