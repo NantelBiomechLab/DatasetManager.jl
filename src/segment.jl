@@ -128,14 +128,14 @@ function readsegment(seg::Segment; warn=true, kwargs...)
 end
 
 """
-    trial(seg::Union{Segment,SegmentResults}) -> Trial
+    trial(seg::Union{Segment,SegmentResult}) -> Trial
 
 Return the parent `Trial` for the given `Segment` or `SegmentResult`
 """
 trial(seg::Segment) = seg.trial
 
 """
-    subject(seg::Union{Segment,SegmentResults})
+    subject(seg::Union{Segment,SegmentResult})
 
 Return the subject reference for the parent `Trial` of the given `Segment` or
 `SegmentResult`
@@ -143,7 +143,7 @@ Return the subject reference for the parent `Trial` of the given `Segment` or
 subject(seg::Segment) = subject(seg.trial)
 
 """
-    source(seg::Union{Segment,SegmentResults}) -> AbstractSource
+    source(seg::Union{Segment,SegmentResult}) -> AbstractSource
 
 Return the source for the parent `Trial` of the given `Segment` or
 `SegmentResult`
@@ -151,7 +151,7 @@ Return the source for the parent `Trial` of the given `Segment` or
 source(seg::Segment) = seg.source
 
 """
-    conditions(seg::Union{Segment,SegmentResults}) -> Dict{Symbol}
+    conditions(seg::Union{Segment,SegmentResult}) -> Dict{Symbol}
 
 Return the conditions for the given `Segment` or `SegmentResult`
 """
