@@ -97,7 +97,7 @@ function Base.show(io::IO, s::Segment{S,ID}) where {S,ID}
     end
 end
 
-function Base.show(io::IO, mimet::MIME"text/plain", s::Segment{S,ID}) where {S,ID}
+function Base.show(io::IO, ::MIME"text/plain", s::Segment{S,ID}) where {S,ID}
     println(IOContext(io, :limit=>true), "Segment{$S,$ID}\n Trial: $(s.trial)")
     println(io, " Source: ", s.source)
     print(io, " Time: ", isnothing(s.start) ? "beginning" : s.start)
