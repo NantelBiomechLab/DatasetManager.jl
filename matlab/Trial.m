@@ -317,8 +317,6 @@ methods(Static)
                 srs(i,1) = fun(trials(i));
             end
         end
-
-
     end
 end % methods
 
