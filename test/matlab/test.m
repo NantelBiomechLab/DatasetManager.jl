@@ -1,33 +1,71 @@
-%% Simple example
+%% Simple example #1
 %-----------------------
 
 %% setup conditions
-clear labels parkconds
+clear labels conds
 
-labels.arms(1).from = 'none';
-labels.arms(1).to = 'held';
-labels.arms(2).to = 'norm';
-labels.arms(3).from = 'excess';
-labels.arms(3).to = 'active';
+% labels.session(1).to = '\d';
+% labels.stim(1).to = 'stim';
+% labels.stim(2).to = 'placebo';
 
-parkconds = TrialConditions.generate({'arms'}, labels)
+labels.session.to = '\d';
+labels.stim = struct('to', { 'stim', 'placebo' });
+
+conds = TrialConditions.generate({'session','stim'}, labels)
 
 %% setup subsets
-clear parksubsets
+clear subsets
+
+datapath = '../test/data/simple';
+
+subsets = [
+    DataSubset('events', @GaitEvents, fullfile(datapath, '*.csv')),
+]
+
+%% find trials
+clear trials
+
+trials = Trial.findtrials(subsets, conds, 'IgnoreFiles', ...
+    { fullfile(datapath, 'ID4_3_stim-02.csv') }, 'SubjectFormat', ...
+    'ID(?<subject>\d+)')
+
+%% analyze
+clear segres
+
+segres = Trial.analyzetrials(@simpleanalysis, trials)
+
+%% Simple example #2
+%-----------------------
+
+%% setup conditions
+clear labels conds
+
+% labels.arms(1).from = 'none';
+% labels.arms(1).to = 'held';
+% labels.arms(2).to = 'norm';
+% labels.arms(3).from = 'excess';
+% labels.arms(3).to = 'active';
+
+labels.arms = struct('to', {'held', 'norm', 'active'}, 'from', {'none', '', 'excess'});
+
+conds = TrialConditions.generate({'arms'}, labels)
+
+%% setup subsets
+clear subsets
 
 genpath = '/media/allen/Seagate Backup Plus Drive/projects/Arm-role-stability/data/generated';
 rawpath = '/media/allen/Seagate Backup Plus Drive/projects/Arm-role-stability/data/raw/ARMS_STAB';
 
-parksubsets = [
+subsets = [
     DataSubset('visual3d', 'V3DExportSource', fullfile(genpath, 'ARMS_STAB/Subject */export/park/park-*.mat')), ...
     DataSubset('dflow', 'DFlowSource', fullfile(genpath, 'DFlow/Subject */park-*.csv')), ...
     DataSubset('vicon', 'C3DSource', fullfile(rawpath, 'Subject */_/park-*.c3d'))
 ]
 
 %% find trials matching conditions
-clear parktrials
+clear trials
 
-parktrials = DataSet.findtrials(parksubsets, parkconds, 'IgnoreFiles', { ...
+trials = DataSet.findtrials(subsets, conds, 'IgnoreFiles', { ...
     fullfile(genpath, 'DFlow/Subject 01/park-norm.csv'), ... ...
     fullfile(rawpath, 'Subject 01/_/park-norm-01.c3d') ...
 })
@@ -38,41 +76,56 @@ parktrials = DataSet.findtrials(parksubsets, parkconds, 'IgnoreFiles', { ...
 %% setup conditions
 clear labels conditions
 
-labels.arms(1).from = {'NONE', 'NA'};
-labels.arms(1).to = 'held';
-labels.arms(2).from = {'AS', 'Norm', 'NORM'};
-labels.arms(2).to = 'norm';
+% labels.arms(1).from = {'NONE', 'NA'};
+% labels.arms(1).to = 'held';
+% labels.arms(2).from = {'AS', 'Norm', 'NORM'};
+% labels.arms(2).to = 'norm';
 
-labels.kind(1).from = {'(?<=NONE|NORM|held|norm)S', 'BA', 'single'};
-labels.kind(1).to = 'singletask';
-labels.kind(2).from = {'(?<=NONE|NORM|norm|held)C', 'CO', 'dual'};
-labels.kind(2).to = 'dualtask';
-labels.kind(3).from = 'PO';
-labels.kind(3).to = 'pert';
-labels.kind(4).from = 'CP' ;
-labels.kind(4).to = 'dualtask';
-labels.kind(5).from = {'PARK', '(?<=_)TR(?=_)'};
-labels.kind(5).to = 'park' ;
+labels.arms = struct('from', {{'NONE', 'NA'}, {'AS', 'Norm', 'NORM'}}, ...
+    'to', {'held', 'norm'});
 
-labels.pert_type(1).from = 'NP';
-labels.pert_type(1).to = 'steadystate';
-labels.pert_type(2).from = '(?<=[RL]|right|left)T';
-labels.pert_type(2).to = 'trip';
-labels.pert_type(3).from = '(?<=[RL]|right|left)S';
-labels.pert_type(3).to = 'slip';
+% labels.kind(1).from = {'(?<=NONE|NORM|held|norm)S', 'BA', 'single'};
+% labels.kind(1).to = 'singletask';
+% labels.kind(2).from = {'(?<=NONE|NORM|norm|held)C', 'CO', 'dual', 'CP'};
+% labels.kind(2).to = 'dualtask';
+% labels.kind(3).from = 'PO';
+% labels.kind(3).to = 'pert';
+% labels.kind(4).from = {'PARK', '(?<=_)TR(?=_)'};
+% labels.kind(4).to = 'park' ;
 
-labels.pert_side(1).from = 'R(?=[ST]|slip|trip)';
-labels.pert_side(1).to = 'right';
-labels.pert_side(2).from = 'L(?=[ST]|slip|trip)';
-labels.pert_side(2).to = 'left';
+labels.kind = struct('from', ...
+    { {'(?<=NONE|NORM|held|norm)S', 'BA', 'single'}, ...
+      {'(?<=NONE|NORM|norm|held)C', 'CO', 'dual', 'CP'}, ...
+      'PO', ...
+      {'PARK', '(?<=_)TR(?=_)'} }, ...
+    'to', { 'singletask', 'dualtask', 'pert', 'park' } );
 
-conds = TrialConditions.generate({'arms','kind','pert_side','pert_type'}, labels, 'Required', {'arms', 'kind'})
+% labels.pert_type(1).from = 'NP';
+% labels.pert_type(1).to = 'steadystate';
+% labels.pert_type(2).from = '(?<=[RL]|right|left)T';
+% labels.pert_type(2).to = 'trip';
+% labels.pert_type(3).from = '(?<=[RL]|right|left)S';
+% labels.pert_type(3).to = 'slip';
+
+labels.pert_type = struct('from', { 'NP', '(?<=[RL]|right|left)T', ...
+    '(?<=[RL]|right|left)S' }, 'to', { 'steadystate', 'trip', 'slip' });
+
+% labels.pert_side(1).from = 'R(?=[ST]|slip|trip)';
+% labels.pert_side(1).to = 'right';
+% labels.pert_side(2).from = 'L(?=[ST]|slip|trip)';
+% labels.pert_side(2).to = 'left';
+
+labels.pert_side = struct('from', { 'R(?=[ST]|slip|trip)', 'L(?=[ST]|slip|trip)' }, ...
+    'to', { 'right', 'left' });
+
+conds = TrialConditions.generate({'arms','kind','pert_side','pert_type'}, ...
+    labels, 'Required', {'arms', 'kind'})
 
 %% setup subsets
 clear subsets
 
-genpath = '/media/allen/Seagate Backup Plus Drive/projects/unorganized-datasets/CAREN-PD/PD Project/Data/Generated';
-dflowpath = '/media/allen/Seagate Backup Plus Drive/projects/unorganized-datasets/CAREN-PD/parkinsons/raw/D-Flow';
+genpath = '/mnt/data/projects/unorganized-datasets/CAREN-PD/PD Project/Data/Generated';
+dflowpath = '/mnt/data/projects/unorganized-datasets/CAREN-PD/parkinsons/raw/D-Flow';
 
 subsets = [
     DataSubset('visual3d', 'V3DExportSource', fullfile(genpath, 'Subject */Export/*.mat')), ...
@@ -123,6 +176,16 @@ ignorefiles = { ...
 };
 
 trials = Trial.findtrials(subsets, conds, ...
-    'SubjectFormat', '(?<=Subject |N)0*(?<subject>\d+)', ...
+    'SubjectFormat', '(Subject |N)0*(?<subject>\d+)', ...
     'IgnoreFiles', ignorefiles, ...
     'DefaultConditions', containers.Map({'pert_type', 'pert_side'}, {'steadystate','NA'}))
+
+
+%% function defs
+
+
+function segres = simpleanalysis(trial)
+    seg = Segment(trial, 'events');
+    data = readtable(seg.source.path);
+    segres = SegmentResult(seg, struct('avg_stride', mean(diff(data.('RHS')))));
+end

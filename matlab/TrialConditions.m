@@ -14,7 +14,7 @@ classdef TrialConditions
                 obj.condnames = condnames;
                 obj.required = required;
                 obj.labels_rg = labels_rg;
-                obj.subst    = subst;
+                obj.subst = subst;
             end
         end
     end
@@ -44,18 +44,24 @@ classdef TrialConditions
 
             parse(p, conditions, labels, varargin{:})
             required = p.Results.Required;
-            sep = p.Results.Separator;
+            sep = strcat(p.Results.Separator, '?');
 
             labels_rg = '';
             subst = cell(0,2);
 
-            for cond = conditions
-                cond = cond{1};
+            for condi = 1:length(conditions)
+                cond = conditions{condi};
 
                 labels_rg = strcat(labels_rg, '(?<', cond, '>');
 
-                tmp = struct2cell(getfield(labels, cond));
-                labels_rg = strcat(labels_rg, strjoin({ tmp{2,:} }, '|'));
+                if ~isfield(labels, cond)
+                    error('Error: ''%s'' was not found in ''labels''', cond)
+                end
+                if ~isfield(labels.(cond), 'to')
+                    error('Error: ''to'' was not found in ''labels.%s''', cond)
+                end
+
+                labels_rg = strcat(labels_rg, strjoin({ labels.(cond).('to') }, '|'));
 
                 if any(strcmp(required,cond))
                     optchar = '';
@@ -63,19 +69,27 @@ classdef TrialConditions
                     optchar = '?';
                 end
 
-                labels_rg = strcat(labels_rg, ')', optchar, sep, '?');
+                if condi == length(conditions)
+                    SEP = '';
+                else
+                    SEP = sep;
+                end
 
-                for i = 1:length(getfield(labels, cond))
-                    condpair = getfield(labels, cond);
-                    condlabel = getfield(condpair(i), 'from');
-                    if ~isempty(condlabel)
-                        if isa(condlabel, 'char')
-                            altlabels = {condlabel};
-                        else
-                            altlabels = condlabel;
+                labels_rg = strcat(labels_rg, ')', optchar, SEP);
+
+                for i = 1:length(labels.(cond))
+                    condpair = labels.(cond);
+                    if isfield(condpair(i), 'from')
+                        condlabel = condpair(i).('from');
+                        if ~isempty(condlabel)
+                            if isa(condlabel, 'char')
+                                altlabels = {condlabel};
+                            else
+                                altlabels = condlabel;
+                            end
+                            subst = [ subst; { strcat('(?:', strjoin(altlabels, '|'), ')'), ...
+                                condpair(i).('to') } ];
                         end
-                        subst = [ subst; { strcat('(?:', strjoin(altlabels, '|'), ')'), ...
-                            getfield(condpair(i), 'to') } ];
                     end
                 end
             end
