@@ -206,6 +206,7 @@ function Base.show(io::IO, sr::SegmentResult)
     if isempty(results(sr))
         print(io, "No results)")
     else
+        # TODO: Add compact aware printing to only print the number of keys
         print(IOContext(io, :limit=>true), "Results keys: ", keys(sr.results), ')')
     end
 end

@@ -437,7 +437,7 @@ and error will be shown after the analysis has finished.
 """
 function analyzedataset(
     fun, trials::AbstractVector{Trial{I}}, ::Type{SRC};
-    threaded=true, enable_progress=true
+    threaded=(Threads.nthreads() > 1), enable_progress=true
 ) where I where SRC <: AbstractSource
     srs = Vector{SegmentResult{SRC,I}}(undef, length(trials))
     p = Progress(length(trials)+1; output=stdout, enabled=enable_progress,
@@ -459,18 +459,20 @@ function analyzedataset(
             next!(p)
         end
     else
-        srs[i] = try
-            fun(trials[i])
-        catch e
-            bt = catch_backtrace()
-            io = IOBuffer()
-            print(io, e)
-            Base.show_backtrace(IOContext(io, IOContext(stderr)), bt)
-            err = replace(String(take!(io)), "\n" => "\n│ ")
-            @error trials[i] err
-            SegmentResult(Segment(trials[i], SRC()))
+        for i in eachindex(trials)
+            srs[i] = try
+                fun(trials[i])
+            catch e
+                bt = catch_backtrace()
+                io = IOBuffer()
+                print(io, e)
+                Base.show_backtrace(IOContext(io, IOContext(stderr)), bt)
+                err = replace(String(take!(io)), "\n" => "\n│ ")
+                @error trials[i] err
+                SegmentResult(Segment(trials[i], SRC()))
+            end
+            next!(p)
         end
-        next!(p)
     end
     finish!(p)
 
