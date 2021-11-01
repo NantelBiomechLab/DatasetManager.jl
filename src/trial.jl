@@ -493,6 +493,15 @@ accept 2 arguments (a trial and a src which is of `eltype(sources)`), to control
 the exported data. The default behavior exports all sources to `dir` with no
 subdirectories, using the naming schema "\$trial.subject_\$srcname_\$basename(sourcepath)"
 (pseudo-code).
+
+# Examples
+
+```julia
+julia> export_trials(trials, pwd()) do trial, source
+    "\$(subject(trial))_\$(conditions(trial)[:group]).\$(srcext(source))"
+end
+
+```
 """
 function export_trials(trials::Vector{<:Trial}, outdir, srcs=unique_sources(trials))
     export_trials(default_rename, trials, outdir, srcs)
@@ -504,7 +513,7 @@ function export_trials(rename, trials::Vector{<:Trial}, outdir, srcs=unique_sour
     # TrialConditions, etc)
     for trial in trials, src in srcs
         @debug "Copying $(sourcepath(getsource(trial, src))) to $(joinpath(outdir, rename(trial, src)))"
-        cp(sourcepath(getsource(trial, src)), joinpath(outdir, rename(trial, src)); follow_symlinks=true)
+        cp(sourcepath(getsource(trial, src)), joinpath(outdir, rename(trial, getsource(trial, src))); follow_symlinks=true)
     end
 end
 
