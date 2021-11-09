@@ -513,7 +513,9 @@ function export_trials(rename, trials::Vector{<:Trial}, outdir, srcs=unique_sour
     # TrialConditions, etc)
     for trial in trials, src in srcs
         @debug "Copying $(sourcepath(getsource(trial, src))) to $(joinpath(outdir, rename(trial, src)))"
-        cp(sourcepath(getsource(trial, src)), joinpath(outdir, rename(trial, getsource(trial, src))); follow_symlinks=true)
+        exppath = joinpath(outdir, rename(trial, getsource(trial, src)))
+        mkpath(dirname(exppath))
+        cp(sourcepath(getsource(trial, src)), exppath; follow_symlinks=true)
     end
 end
 
