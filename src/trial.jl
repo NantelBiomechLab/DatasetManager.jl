@@ -303,11 +303,12 @@ function findtrials(
         defaultconds = Dict{Symbol,String}()
     end
     optcondnames = setdiff(conditions.condnames, reqcondnames, keys(defaultconds))
+    ignorefiles .= normpath.(ignorefiles)
 
     for set in subsets
         debug && println(stderr, "┌ Subset ", repr(set.name))
         pattern = set.pattern
-        files = glob(pattern, set.dir)
+        files = normpath.(glob(pattern, set.dir))
         if !isnothing(ignorefiles)
             setdiff!(files, ignorefiles)
         end
