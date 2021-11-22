@@ -26,16 +26,7 @@ classdef Segment
         end
 
         function data = readsegment(obj, varargin)
-            data = readsource(obj.source, varargin{:});
-            st = obj.start;
-            fin = obj.finish;
-            if st ~= -Inf && fin ~= Inf
-                data = data(st:fin, :);
-            elseif st ~= -Inf
-                data = data(st:end);
-            elseif fin ~= Inf
-                data = data(1:fin);
-            end
+            data = readsource(obj.source, 'Start', obj.start, 'Finish', obj.finish, varargin{:});
         end
 
         function s = subject(obj)
