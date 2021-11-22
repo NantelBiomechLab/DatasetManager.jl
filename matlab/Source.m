@@ -30,6 +30,11 @@ classdef Source
                 class(obj))
         end
 
+        function generatesource(obj)
+            error('Error: A `generatesource` function has not been implemented yet for %s', ...
+                class(obj))
+        end
+
         function deps = dependencies(obj)
             deps = false;
         end
