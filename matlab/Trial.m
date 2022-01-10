@@ -209,6 +209,7 @@ methods(Static)
         N = length(trials);
         if N == 0
             disp('0 trials present')
+            return
         end
 
         subs = unique({trials.subject});
@@ -247,11 +248,11 @@ methods(Static)
         fprintf('Conditions:\n')
         fprintf(' ├ Observed levels:\n')
 
-        factors = cellfun(@keys, {trials.conditions}, 'UniformOutput', false);
+        factors = cellfun(@fieldnames, {trials.conditions}, 'UniformOutput', false);
         factors = unique(vertcat(factors{:}));
 
-        levels = cellfun(@values, {trials.conditions}, 'UniformOutput', false);
-        levels = vertcat(levels{:});
+        levels = cellfun(@struct2cell, {trials.conditions}, 'UniformOutput', false);
+        levels = horzcat(levels{:})';
 
         condsTable = table(categorical(levels(:,1)),'VariableNames',factors(1));
         for i = 2:length(factors)
@@ -260,7 +261,7 @@ methods(Static)
         end
 
         [unq_conds,~,ic] = unique(condsTable);
-        cats = varfun(@categories, unq_conds);
+        cats = varfun(@categories, unq_conds, 'OutputFormat', 'cell');
         for i = 1:length(factors)
             if i == length(factors)
                 sep = '└';
@@ -274,7 +275,7 @@ methods(Static)
         end
 
         fprintf(' └ Unique level combinations observed: %d', height(unq_conds))
-        if height(unq_conds) == prod(varfun(@length, cats, 'OutputFormat', 'uniform'))
+        if height(unq_conds) == prod(cellfun(@length, cats))
             fprintf(' (full factorial)\n')
         else
             fprintf('\n')
@@ -284,7 +285,8 @@ methods(Static)
         disp(unq_conds)
 
         fprintf('Sources:\n')
-        sources = fieldnames([trials.sources]);
+        sources = cellfun(@fieldnames, {trials.sources}, 'UniformOutput', false);
+        sources = unique(vertcat(sources{:}));
         for i = 1:length(sources)
             if i == length(sources)
                 sep = '└';
