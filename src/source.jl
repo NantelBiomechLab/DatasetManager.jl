@@ -134,8 +134,8 @@ function requiresource!(trial, namesrc::Pair, parent=nothing;
 )
     name, src = namesrc
     if !force
-        if hassource(trial, name) || hassource(trial, src) ||
-            (parent !== nothing && hassource(trial, typeof(src)))
+        if (parent !== nothing && hassource(trial, typeof(src))) ||
+            hassource(trial, name) || hassource(trial, src)
             return nothing
         elseif isfile(sourcepath(src))
             sources(trial)[name] = src
