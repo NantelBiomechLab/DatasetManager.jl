@@ -246,6 +246,7 @@ true
 hassource(trial::Trial, src::String) = haskey(sources(trial), src)
 hassource(trial::Trial, src::S) where S <: AbstractSource = src ∈ values(sources(trial))
 hassource(trial::Trial, ::Type{S}) where S <: AbstractSource = S ∈ typeof.(values(sources(trial)))
+hassource(s) = Base.Fix2(hassource, s)
 
 """
     getsource(trial, src::Union{String,Type{<:AbstractSource}}) -> <:AbstractSource
