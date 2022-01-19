@@ -222,6 +222,12 @@ Get the conditions for `trial`
 """
 conditions(trial::Trial) = trial.conditions
 
+hascondition(trial::Trial, cond::Pair{Symbol,<:Any}) = conditions(trial)[cond.first] == cond.second
+hascondition(cond::Pair{Symbol,<:Any}) = Base.Fix2(hascondition, cond)
+hascondition(trial::Trial, conds::Vararg{Pair{Symbol,T} where T <: Any}) = mapreduce(Base.Fix1(hascondition, trial), &, conds)
+hascondition(trial::Trial, conds::NTuple{N, Pair{Symbol,T} where T <: Any}) where N = hascondition(trial, conds...)
+hascondition(conds::Vararg{Pair{Symbol,T} where T <: Any}) = Base.Fix2(hascondition, conds)
+
 """
     sources(trial::Trial{ID}) -> Dict{String,AbstractSource}
 
