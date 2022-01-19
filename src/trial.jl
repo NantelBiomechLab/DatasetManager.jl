@@ -269,9 +269,10 @@ function readsource(trial::Trial, src; kwargs...)
     readsource(getsource(trial, src); kwargs...)
 end
 
-const red = Crayon(foreground=:black, background=(234, 121, 113))
-const green = Crayon(foreground=:black, background=(131, 177, 129))
-const lgry = Crayon(foreground=:light_gray, background=:nothing)
+const red = Crayon(foreground=:black, background=1)
+const green = Crayon(foreground=:black, background=2)
+const lgry = Crayon(foreground=:light_gray)
+const bold = Crayon(bold=true)
 const rst = Crayon(reset=true)
 
 """
@@ -299,7 +300,8 @@ function findtrials(
     debug=false,
     ignorefiles::Union{Nothing, Vector{String}}=nothing,
     defaultconds::Union{Nothing, Dict{Symbol}}=nothing,
-    rsearch = Regex(subject_fmt.pattern*".*?"*conditions.labels_rg.pattern)
+    rsearch = Regex(subject_fmt.pattern*".*?"*conditions.labels_rg.pattern),
+    maxlogs=100,
 )
     trials = Vector{Trial{I}}()
     reqcondnames = conditions.required
@@ -310,12 +312,17 @@ function findtrials(
     if !isnothing(ignorefiles)
         ignorefiles .= normpath.(ignorefiles)
     end
+    if debug
+        pretty_subst = [ pat => SubstitutionString(string(red, "\\1", green, rep, rst, lgry))
+            for (pat, rep) in conditions.subst ]
+        num_debugs = 0
+    end
 
     for set in subsets
         rsearchext = Regex(rsearch.pattern*set.ext)
         if debug
-            println(stderr, "┌ Subset ", repr(set.name))
-            println(stderr, "│ Searching using regex: ", rsearchext)
+            print(stderr, "┌ Subset ", repr(set.name))
+            println(stderr, " Searching using regex: ", rsearchext)
         end
         pattern = set.pattern
         files = normpath.(glob(pattern, set.dir))
@@ -324,32 +331,27 @@ function findtrials(
         end
 
         for file in files
-            _file = foldl((str, pat) -> replace(str, pat), conditions.subst; init=file)
+            _file = replace(file, conditions.subst...)
             m = match(rsearchext, _file)
 
-            if isnothing(m)
-                if debug
-                    pretty_file = foldl((str, pat) -> replace(str, first(pat) =>
-                        SubstitutionString(string(red, "\\1", green, last(pat), rst, lgry))),
-                        conditions.subst; init=string(lgry, file, rst))*string(rst)
+            if debug && num_debugs ≤ maxlogs
+                pretty_file = replace(string(lgry, file, rst), pretty_subst...)*string(rst)
+                if isnothing(m)
                     println(stderr, "│ ╭ No match")
-                    println(stderr, "│ ╰ @ \"", pretty_file, '"')
+                else
+                    mstr = repr(m.match)
+                    pretty_mstr = replace(mstr, (cap .=> string(BOLD*GREEN_FG, cap, rst)
+                        for cap in filter(!isnothing, m.captures))...)
+                    if any(isnothing, m)
+                        pretty_mstr *= " (not found: "*join(RED_FG.(first.(filter(kv -> isnothing(kv[2]), collect(pairs(m))))), ", ")*')'
+                    end
+                    println(stderr, "│ ╭ Match: ", pretty_mstr)
                 end
-                continue
+                println(stderr, "│ ╰ @ \"", pretty_file, '"')
+                num_debugs += 1
             end
 
-            if isnothing(m[:subject]) || any(isnothing.(m[cond] for cond in reqcondnames))
-                if debug
-                    pretty_file = foldl((str, pat) -> replace(str, first(pat) =>
-                        SubstitutionString(string(red, "\\1", green, last(pat), rst, lgry))),
-                        conditions.subst; init=string(lgry, file, rst))*string(rst)
-                    mstr = repr(m)
-                    _rgx = Regex("(("*join(reqcondnames,'|')*")=nothing)")
-                    pretty_mstr = replace(mstr, _rgx =>
-                        SubstitutionString(string(crayon"bold", "\\1", crayon"!bold")))
-                    println(stderr, "│ ╭ Match: ", pretty_mstr)
-                    println(stderr, "│ ╰ @ \"", pretty_file, "\"")
-                end
+            if isnothing(m) || isnothing(m[:subject]) || any(isnothing.(m[cond] for cond in reqcondnames))
                 continue
             else
                 name = splitext(basename(file))[1]

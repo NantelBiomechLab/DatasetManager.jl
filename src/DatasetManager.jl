@@ -2,6 +2,7 @@ module DatasetManager
 
 using Glob, DataFrames, CategoricalArrays, PrettyTables, StatsBase, Printf, ThreadPools,
     ProgressMeter, Crayons
+using Crayons.Box
 
 export DataSubset, TrialConditions, Trial, DuplicateSourceError, Segment, SegmentResult,
     AbstractSource, Source, MissingSourceError, UnknownDeps
