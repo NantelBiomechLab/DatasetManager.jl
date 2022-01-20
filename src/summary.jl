@@ -39,10 +39,6 @@ function summarize(trials::AbstractVector{T}; kwargs...) where T <: Trial
     summarize(stdout, trials; kwargs...)
 end
 
-using Crayons.Box: BOLD
-using Crayons.Box: ITALICS
-using Crayons.Box
-
 function summarize(oio::IO, trials::AbstractVector{T}; verbosity=5) where T <: Trial
     io = IOBuffer()
     N = length(trials)
@@ -92,7 +88,7 @@ function summarize(oio::IO, trials::AbstractVector{T}; verbosity=5) where T <: T
     println(io, " ├ Observed levels:")
     foreach(enumerate(obs_levels)) do (i, (k, v))
         sep = i === Nconds ? '└' : '├'
-        println(io, " │ $sep ", BMGNTA("$k"), " => ", ITALICS(repr(v)))
+        println(io, " │ $sep ", BMGNTA("$k"), " => ", repr(v))
     end
 
     unq_conds = copy.(unique(conditions.(trials)))
