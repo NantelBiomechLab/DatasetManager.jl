@@ -458,41 +458,57 @@ and error will be shown after the analysis has finished.
 """
 function analyzedataset(
     fun, trials::AbstractVector{Trial{I}}, ::Type{SRC};
-    threaded=(Threads.nthreads() > 1), enable_progress=true
+    threaded=(Threads.nthreads() > 1), enable_progress=true, show_errors=true
 ) where I where SRC <: AbstractSource
     srs = Vector{SegmentResult{SRC,I}}(undef, length(trials))
     p = Progress(length(trials)+1; output=stdout, enabled=enable_progress,
         desc="Analyzing trials... ")
 
     if threaded
-        @qthreads for i in eachindex(trials)
-            srs[i] = try
-                fun(trials[i])
+        @qbthreads for i in eachindex(trials)
+            local sr
+            try
+                sr = fun(trials[i])
             catch e
-                bt = catch_backtrace()
-                io = IOBuffer()
-                print(io, e)
-                Base.show_backtrace(IOContext(io, IOContext(stderr)), bt)
-                err = replace(String(take!(io)), "\n" => "\n│ ")
-                @error trials[i] err
-                SegmentResult(Segment(trials[i], SRC()))
+                if e isa InterruptException
+                    break
+                else
+                    bt = catch_backtrace()
+                    io = IOBuffer()
+                    print(io, e)
+                    Base.show_backtrace(IOContext(io, IOContext(stderr)), bt)
+                    err = replace(String(take!(io)), "\n" => "\n│ ")
+                    show_errors && @error trials[i] err
+                    sr = SegmentResult(Segment(trials[i], SRC()))
+                end
             end
+            srs[i] = sr
             next!(p)
+            flush(stdout)
+            flush(stderr)
         end
     else
         for i in eachindex(trials)
-            srs[i] = try
-                fun(trials[i])
+            local sr
+            try
+                sr = fun(trials[i])
             catch e
-                bt = catch_backtrace()
-                io = IOBuffer()
-                print(io, e)
-                Base.show_backtrace(IOContext(io, IOContext(stderr)), bt)
-                err = replace(String(take!(io)), "\n" => "\n│ ")
-                @error trials[i] err
-                SegmentResult(Segment(trials[i], SRC()))
+                if e isa InterruptException
+                    break
+                else
+                    bt = catch_backtrace()
+                    io = IOBuffer()
+                    print(io, e)
+                    Base.show_backtrace(IOContext(io, IOContext(stderr)), bt)
+                    err = replace(String(take!(io)), "\n" => "\n│ ")
+                    show_errors && @error trials[i] err
+                    sr = SegmentResult(Segment(trials[i], SRC()))
+                end
             end
+            srs[i] = sr
             next!(p)
+            flush(stdout)
+            flush(stderr)
         end
     end
     finish!(p)
