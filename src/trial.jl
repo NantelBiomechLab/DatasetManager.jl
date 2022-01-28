@@ -306,10 +306,11 @@ function findtrials(
     I::Type=Int,
     subject_fmt=r"Subject (?<subject>\d+)?",
     debug=false,
+    verbose=false,
     ignorefiles::Union{Nothing, Vector{String}}=nothing,
     defaultconds::Union{Nothing, Dict{Symbol}}=nothing,
     rsearch = Regex(subject_fmt.pattern*".*?"*conditions.labels_rg.pattern),
-    maxlogs=100,
+    maxlogs=50,
 )
     trials = Vector{Trial{I}}()
     reqcondnames = conditions.required
@@ -323,7 +324,6 @@ function findtrials(
     if debug
         pretty_subst = [ pat => SubstitutionString(string(red, "\\1", green, rep, rst, lgry))
             for (pat, rep) in conditions.subst ]
-        num_debugs = 0
     end
 
     for set in subsets
@@ -331,6 +331,7 @@ function findtrials(
         if debug
             print(stderr, "┌ Subset ", repr(set.name))
             println(stderr, " Searching using regex: ", rsearchext)
+            num_debugs = 0
         end
         pattern = set.pattern
         files = normpath.(glob(pattern, set.dir))
@@ -343,20 +344,22 @@ function findtrials(
             m = match(rsearchext, _file)
 
             if debug && num_debugs ≤ maxlogs
-                pretty_file = replace(string(lgry, file, rst), pretty_subst...)*string(rst)
-                if isnothing(m)
-                    println(stderr, "│ ╭ No match")
-                else
-                    mstr = repr(m.match)
-                    pretty_mstr = replace(mstr, (cap .=> string(BOLD*GREEN_FG, cap, rst)
-                        for cap in filter(!isnothing, m.captures))...)
-                    if any(isnothing, m)
-                        pretty_mstr *= " (not found: "*join(RED_FG.(first.(filter(kv -> isnothing(kv[2]), collect(pairs(m))))), ", ")*')'
+                if verbose || any(isnothing.(m[cond] for cond in reqcondnames))
+                    pretty_file = replace(string(lgry, file, rst), pretty_subst...)*string(rst)
+                    if isnothing(m)
+                        println(stderr, "│ ╭ No match")
+                    else
+                        mstr = repr(m.match)
+                        pretty_mstr = replace(mstr, (cap .=> string(BOLD*GREEN_FG, cap, rst)
+                            for cap in filter(!isnothing, m.captures))...; count=1)
+                        if any(isnothing, m)
+                            pretty_mstr *= " (not found: "*join(RED_FG.(first.(filter(kv -> isnothing(kv[2]), collect(pairs(m))))), ", ")*')'
+                        end
+                        println(stderr, "│ ╭ Match: ", pretty_mstr)
                     end
-                    println(stderr, "│ ╭ Match: ", pretty_mstr)
+                    println(stderr, "│ ╰ @ \"", pretty_file, '"')
+                    num_debugs += 1
                 end
-                println(stderr, "│ ╰ @ \"", pretty_file, '"')
-                num_debugs += 1
             end
 
             if isnothing(m) || isnothing(m[:subject]) || any(isnothing.(m[cond] for cond in reqcondnames))
