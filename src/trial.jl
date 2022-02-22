@@ -19,14 +19,14 @@ struct DataSubset
     pattern::String
     ext::String
 
-    DataSubset(name, source, dir, pattern, ext=raw"(?:.*)?\.") = new(name, source, dir, pattern, ext)
+    DataSubset(name, source, dir, pattern, ext=raw"(?(2)\w*?|)\.") = new(name, source, dir, pattern, ext)
 end
 
 function escape_period(ext)
     return replace(ext, r"^\\?\.?" => "\\.")
 end
 
-function DataSubset(name, source::Type{S}, dir, pattern, ext="(?:\\w*?)"*escape_period(srcext(source))) where S <: AbstractSource
+function DataSubset(name, source::Type{S}, dir, pattern, ext="(?(2)\\w*?|)"*escape_period(srcext(source))) where S <: AbstractSource
     return DataSubset(name, (s) -> source(s), dir, pattern, ext)
 end
 
@@ -312,7 +312,7 @@ function findtrials(
     verbose=false,
     ignorefiles::Union{Nothing, Vector{String}}=nothing,
     defaultconds::Union{Nothing, Dict{Symbol}}=nothing,
-    rsearch = Regex(subject_fmt.pattern*"(?:.*?)"*conditions.labels_rg.pattern),
+    rsearch = "(?|"*subject_fmt.pattern*"(?:.*?))(?:"*conditions.labels_rg.pattern*")",
     maxlogs=50,
 )
     trials = Vector{Trial{I}}()
@@ -330,7 +330,7 @@ function findtrials(
     end
 
     for set in subsets
-        rsearchext = Regex(rsearch.pattern*set.ext)
+        rsearchext = Regex(rsearch*set.ext)
         if debug
             print(stderr, "┌ Subset ", repr(set.name))
             println(stderr, " Searching using regex: ", rsearchext)
