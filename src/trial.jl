@@ -347,7 +347,7 @@ function findtrials(
             m = match(rsearchext, _file)
 
             if debug && num_debugs ≤ maxlogs
-                if verbose || any(isnothing.(m[cond] for cond in reqcondnames))
+                if verbose || isnothing(m) || any(isnothing.(m[cond] for cond in reqcondnames))
                     pretty_file = replace(string(lgry, file, rst), pretty_subst...)*string(rst)
                     if isnothing(m)
                         println(stderr, "│ ╭ No match")
