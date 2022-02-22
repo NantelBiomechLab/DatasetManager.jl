@@ -22,8 +22,11 @@ struct DataSubset
     DataSubset(name, source, dir, pattern, ext=raw"(?:.*)?\.") = new(name, source, dir, pattern, ext)
 end
 
+function escape_period(ext)
+    return replace(ext, r"^\\?\.?" => "\\.")
+end
 
-function DataSubset(name, source::Type{S}, dir, pattern, ext="(?:.*)?"*srcext(source)) where S <: AbstractSource
+function DataSubset(name, source::Type{S}, dir, pattern, ext="(?:\\w*?)"*escape_period(srcext(source))) where S <: AbstractSource
     return DataSubset(name, (s) -> source(s), dir, pattern, ext)
 end
 
@@ -309,7 +312,7 @@ function findtrials(
     verbose=false,
     ignorefiles::Union{Nothing, Vector{String}}=nothing,
     defaultconds::Union{Nothing, Dict{Symbol}}=nothing,
-    rsearch = Regex(subject_fmt.pattern*".*?"*conditions.labels_rg.pattern),
+    rsearch = Regex(subject_fmt.pattern*"(?:.*?)"*conditions.labels_rg.pattern),
     maxlogs=50,
 )
     trials = Vector{Trial{I}}()

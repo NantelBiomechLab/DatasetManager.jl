@@ -61,7 +61,7 @@ sourcepath(src::AbstractSource) = src.path::String
 """
     srcext(src::Union{S,Type{S}})
 
-Actual file extension or default file extension for a `src` or `src` type
+    Actual file extension or default file extension for a `src` or `src` type. Period (.) should be the first letter.
 """
 srcext(src::AbstractSource) = splitext(sourcepath(src))[2]
 srcext(::Type{<:AbstractSource}) = ""
