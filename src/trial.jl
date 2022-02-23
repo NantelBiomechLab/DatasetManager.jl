@@ -286,6 +286,20 @@ const lgry = Crayon(foreground=:light_gray)
 const bold = Crayon(bold=true)
 const rst = Crayon(reset=true)
 
+function highlight_matches(str, m)
+    hstr = ""
+    firsti = m.offset - 1
+    prev = firstindex(str) + 1
+    for (m,i) in zip(filter(!isnothing, m.captures), filter(!isnothing, m.offsets))
+        i -= firsti
+        hstr *= str[prev:i]*string(BOLD*GREEN_BG, m, rst)
+        prev = i + length(m) + 1
+    end
+    hstr *= str[prev:end]
+
+    hstr
+end
+
 """
     findtrials(subsets::AbstractVector{DataSubset}, conditions::TrialConditions;
         <keyword arguments>) -> Vector{Trial}
@@ -353,8 +367,7 @@ function findtrials(
                         println(stderr, "│ ╭ No match")
                     else
                         mstr = repr(m.match)
-                        pretty_mstr = replace(mstr, (cap .=> string(BOLD*GREEN_FG, cap, rst)
-                            for cap in filter(!isnothing, m.captures))...; count=1)
+                        pretty_mstr = highlight_matches(mstr, m)
                         if any(isnothing, m)
                             pretty_mstr *= " (not found: "*join(RED_FG.(first.(filter(kv -> isnothing(kv[2]), collect(pairs(m))))), ", ")*')'
                         end
