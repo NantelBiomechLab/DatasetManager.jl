@@ -348,11 +348,7 @@ function findtrials(
 
     for set in subsets
         rsearchext = Regex(rsearch*set.ext)
-        if debug
-            print(stderr, "┌ Subset ", repr(set.name))
-            println(stderr, " Searching using regex: ", rsearchext)
-            num_debugs = 0
-        end
+        debugheader, num_debugs = false, 0
         pattern = set.pattern
         files = normpath.(glob(pattern, set.dir))
         if !isnothing(ignorefiles)
@@ -365,6 +361,11 @@ function findtrials(
 
             if debug && num_debugs ≤ maxlogs
                 if verbose || isnothing(m) || any(isnothing.(m[cond] for cond in reqcondnames))
+                    if !debugheader
+                        debugheader = true
+                        print(stderr, "┌ Subset ", repr(set.name))
+                        println(stderr, " Searching using regex: ", rsearchext)
+                    end
                     pretty_file = replace(string(lgry, file, rst), pretty_subst...)*string(rst)
                     if isnothing(m)
                         println(stderr, "│ ╭ No match")
@@ -458,8 +459,9 @@ function findtrials(
                 end
             end
         end
-        debug && println(stderr, "└ End subset: ", repr(set.name))
+        debugheader && println(stderr, "└ End subset: ", repr(set.name))
     end
+    flush(stderr)
 
     return trials
 end
