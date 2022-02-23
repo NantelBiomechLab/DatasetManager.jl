@@ -23,7 +23,7 @@ end
 stack(rs::Vector{<:SegmentResult}, conds::TrialConditions; kwargs...) = stack(rs, conds.condnames; kwargs...)
 
 function flatten_dims(df, col; axes=["X","Y","Z"])
-    df.axis = fill(categorical(axes), nrow(df))
+    df.axis = fill(categorical(string.(axes)), nrow(df))
     flatten(df, [col, :axis])
 end
 
