@@ -289,7 +289,7 @@ const rst = Crayon(reset=true)
 function highlight_matches(str, m)
     hstr = ""
     firsti = m.offset - 1
-    prev = firstindex(str) + 1
+    prev = firstindex(str)
     for (m,i) in zip(filter(!isnothing, m.captures), filter(!isnothing, m.offsets))
         i -= firsti
         hstr *= str[prev:i]*string(BOLD*GREEN_BG, m, rst)
