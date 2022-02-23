@@ -1,7 +1,7 @@
 module DatasetManager
 
 using Glob, DataFrames, CategoricalArrays, PrettyTables, StatsBase, Printf, ThreadPools,
-    ProgressMeter, Crayons
+    ProgressMeter, Crayons, NaturalSort, CSV
 using Crayons.Box
 
 export DataSubset, TrialConditions, Trial, DuplicateSourceError, Segment, SegmentResult,
@@ -16,6 +16,7 @@ include("source.jl")
 include("trial.jl")
 include("segment.jl")
 include("stack.jl")
+include("print.jl")
 include("summary.jl")
 
 end
