@@ -300,6 +300,9 @@ function highlight_matches(str, m)
     hstr
 end
 
+str_rgx(r::Regex) = r.pattern
+str_rgx(str::String) = str
+
 """
     findtrials(subsets::AbstractVector{DataSubset}, conditions::TrialConditions;
         <keyword arguments>) -> Vector{Trial}
@@ -326,7 +329,7 @@ function findtrials(
     verbose=false,
     ignorefiles::Union{Nothing, Vector{String}}=nothing,
     defaultconds::Union{Nothing, Dict{Symbol}}=nothing,
-    rsearch = "(?|"*subject_fmt.pattern*"(?:.*?))(?:"*conditions.labels_rg.pattern*")",
+    rsearch = "(?|(?:"*str_rgx(subject_fmt)*")(?:.*?))(?:"*str_rgx(conditions.labels_rg)*")",
     maxlogs=50,
 )
     trials = Vector{Trial{I}}()
