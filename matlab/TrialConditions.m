@@ -63,11 +63,7 @@ classdef TrialConditions
 
                 labels_rg = strcat(labels_rg, strjoin({ labels.(cond).('to') }, '|'));
 
-                if any(strcmp(required,cond))
-                    optchar = '';
-                else
-                    optchar = '?';
-                end
+                optchar = '?';
 
                 if condi == length(conditions)
                     SEP = '';

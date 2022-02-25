@@ -95,24 +95,38 @@ methods(Static)
         addRequired(p, 'conditions', @(x) isa(x, 'TrialConditions'));
         addParameter(p, 'SubjectFormat', 'Subject (?<subject>\d+)', @ischar);
         addParameter(p, 'IgnoreFiles', {}, @iscell);
-
         addParameter(p, 'DefaultConditions', struct());
+        addParameter(p, 'Debug', false);
+        addParameter(p, 'MaxLog', 25);
+        addParameter(p, 'Verbose', false);
 
         parse(p, subsets, conditions, varargin{:});
         subject_fmt = p.Results.SubjectFormat;
         ignorefiles = GetFullPath(p.Results.IgnoreFiles);
         defaultconds = p.Results.DefaultConditions;
+        debug = p.Results.Debug;
+        maxlog = p.Results.MaxLog;
+        verbose = p.Results.Verbose;
 
         trials = Trial.empty;
 
-        rg = strcat(subject_fmt, '.*', conditions.labels_rg);
+        rg = strcat(subject_fmt, '(?:.*?)', conditions.labels_rg);
 
         reqcondnames = conditions.required;
         optcondnames = setdiff(setdiff(conditions.condnames, reqcondnames), ...
             fieldnames(defaultconds));
 
+        if ~isempty(ignorefiles)
+            ignorefiles = regexprep(ignorefiles, '([^/\\]*)[/\\]\.\.[/\\]', '');
+            ignorefiles = regexprep(ignorefiles, '^(?!([A-Z]:|[/\\]))', pwd);
+        end
+
+
         for seti = 1:length(subsets)
+            debugheader = false;
+            num_debugs = 0;
             set = subsets(seti);
+            rsearchext = strcat(rg, regexprep(set.ext, 'lastreqgroup', reqcondnames(end)));
             pattern = set.pattern;
             files = dir(pattern);
             files = fullfile({files.folder}, {files.name});
@@ -123,14 +137,37 @@ methods(Static)
 
             for filei = 1:length(files)
                 file = files{filei};
-                priv_file = multregexprep(file, conditions.subst(:,1), conditions.subst(:,2));
+                priv_file = regexprep(file, conditions.subst(:,1), conditions.subst(:,2));
 
-                m = regexp(priv_file, rg, 'names');
-                if isempty(m)
-                    continue
+                m = regexp(priv_file, rsearchext, 'names');
+
+                if debug && num_debugs <= maxlog
+                    if verbose || isempty(m) || any(selectstructfun(@isempty, m, reqcondnames))
+                        if ~debugheader
+                            debugheader = true;
+                            fprintf('┌ Subset ''%s'' Searching using regex: ''%s''\n', set.name, rsearchext);
+                        end
+
+                        if isempty(m)
+                            fprintf('│ ╭ No match\n')
+                        else
+                            newm = regexp(priv_file, rsearchext, 'match');
+                            str = sprintf('''%s''', newm{:});
+                            if any(selectstructfun(@isempty, m, reqcondnames))
+                                fns = fieldnames(m);
+                                is = ismember(fns, reqcondnames);
+                                is = structfun(@isempty, m) & is;
+                                notfields_joined = join(fns(is), ', ');
+                                str = strcat(str, sprintf(' (not found: %s)', notfields_joined{:}));
+                            end
+                            fprintf('│ ╭ Match: %s\n', str);
+                        end
+                        fprintf('│ ╰ @ ''%s''\n', file);
+                        num_debugs = num_debugs + 1;
+                    end
                 end
 
-                if isempty(m.('subject')) || any(selectstructfun(@isempty, m, reqcondnames))
+                if isempty(m) || isempty(m.('subject')) || any(selectstructfun(@isempty, m, reqcondnames))
                     continue
                 else
                     [~, name, ~] = fileparts(file);
@@ -190,6 +227,9 @@ methods(Static)
                         end
                     end
                 end
+            end
+            if debugheader
+                fprintf('└ End subset: ''%s''', set.name);
             end
         end
     end
@@ -317,14 +357,6 @@ methods(Static)
     end
 end % methods
 
-end
-
-function newstr = multregexprep(str, regex, rep)
-    newstr = str;
-    length(regex) == length(rep);
-    for i = 1:length(regex)
-        newstr = regexprep(newstr, regex{i}, rep{i});
-    end
 end
 
 function bool = selectstructfun(fun, s, fields)
