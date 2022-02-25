@@ -194,8 +194,14 @@ methods(Static)
         end
     end
 
-    function summarize(trials)
-        verbosity = 5;
+    function summarize(trials, varargin)
+        p = inputParser;
+
+        addRequired(p, 'trials');
+        addParameter(p, 'Verbosity', 5);
+        parse(p, trials, varargin{:});
+        verbosity = p.Results.Verbosity;
+
         N = length(trials);
         if N == 0
             disp('0 trials present')
@@ -215,11 +221,10 @@ methods(Static)
 
         Ntrials = cellfun(@(ID) sum(strcmp({trials.subject}, ID)), subs);
         [C,~,ic] = unique(Ntrials);
-        Ntrialsdist = accumarray(ic, 1);
-        [Ntrialsdist, ord] = sort(Ntrialsdist, 'descend');
+        Ntrialsdist = sort(accumarray(ic, 1), 'descend');
 
         for j = 1:min(length(Ntrialsdist),verbosity)
-            num = Ntrialsdist(ord(j));
+            num = C(length(C) + 1 - j);
             if j < min(length(Ntrialsdist),verbosity)
                 sep = '├';
             else
@@ -227,11 +232,11 @@ methods(Static)
             end
 
             if j >= verbosity
-                fprintf('   %s ≤%d: %d/%d (%3.f%%)\n', sep, ord(j), num, Nsubs, ...
-                    sum(Ntrialsdist(ord(j:end))./Nsubs)*100)
+                fprintf('   %s ≤%d: %d/%d (%.f%%)\n', sep, num, sum(Ntrialsdist(j:end)),  Nsubs, ...
+                    sum(Ntrialsdist(j:end))/Nsubs*100)
             else
-                fprintf('   %s %d: %d/%d (%3.f%%)\n', sep, ord(j), num, Nsubs, ...
-                    num/Nsubs*100)
+                fprintf('   %s %d: %d/%d (%.f%%)\n', sep, num, Ntrialsdist(j), Nsubs, ...
+                    Ntrialsdist(j)/Nsubs*100)
             end
         end
 
