@@ -28,27 +28,17 @@ classdef Trial
                 arrayfun(@isequal, repmat(obj.conditions, 1, length(y)), [y.conditions]);
         end
 
-        function bool = hassource(trial, varargin)
-            p = inputParser;
-
-            addRequired(p, 'trial', @(x) isa(x, 'Trial'));
-            addOptional(p, 'name', '');
-            addOptional(p, 'src', Source(), @(x) isa(x, 'Source'));
-            addParameter(p, 'OfClass', false, @islogical);
-
-            parse(p, trial, varargin{:});
-            name = p.Results.name;
-            src = p.Results.src;
-            ofclass = p.Results.OfClass;
-
+        function bool = hassource(trial, src)
             bool = false;
 
-            bool = bool | isfield(trial.sources, name);
-
-            bool = bool | any(structfun(@(x) x == src, trial.sources));
-            
-            if ofclass
-                bool = bool | structfun(@(x) isa(x, class(src)), trial.sources);
+            if isa(src, 'Source')
+                bool = bool | any(structfun(@(x) x == namesrc, trial.sources));
+            elseif ischar(src)
+                if exist(src, 'class') == 8
+                    bool = bool | structfun(@(x) isa(x, src), trial.sources);
+                else
+                    bool = bool | isfield(trial.sources, namesrc);
+                end
             end
         end
 
