@@ -288,9 +288,9 @@ const rst = Crayon(reset=true)
 
 function highlight_matches(str, m)
     hstr = ""
-    firsti = m.offset - 1
+    firsti = m.offset
     prev = firstindex(str)
-    for (m,i) in zip(filter(!isnothing, m.captures), filter(!isnothing, m.offsets))
+    for (m,i) in zip(filter(!isnothing, m.captures), filter(!iszero, m.offsets))
         i -= firsti
         hstr *= str[prev:i]*string(BOLD*GREEN_BG, m, rst)
         prev = i + length(m) + 1
@@ -370,8 +370,7 @@ function findtrials(
                     if isnothing(m)
                         println(stderr, "│ ╭ No match")
                     else
-                        mstr = repr(m.match)
-                        pretty_mstr = highlight_matches(mstr, m)
+                        pretty_mstr = '"'*highlight_matches(m.match, m)*'"'
                         if any(isnothing, m)
                             pretty_mstr *= " (not found: "*join(RED_FG.(first.(filter(kv -> isnothing(kv[2]), collect(pairs(m))))), ", ")*')'
                         end
