@@ -78,13 +78,12 @@ function TrialConditions(
         if labels[cond] isa Regex
             labels_rg *= labels[cond].pattern
 
-            optchar = cond in required ? "" : "?"
+            optchar = '?'
             labels_rg *= string(')', optchar)
             i < length(conditions) && (labels_rg *= sep)
         else
             labels_rg *= join((x isa Pair ? x.second : x for x in labels[cond]), '|')
 
-            # optchar = cond in required ? "" : "?"
             optchar = '?'
             labels_rg *= string(')', optchar)
             i < length(conditions) && (labels_rg *= sep)
