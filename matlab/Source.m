@@ -7,6 +7,8 @@ classdef Source
         function obj = Source(path)
             if nargin > 0
                 obj.path = path;
+            else
+                obj.path = tempname;
             end
         end
 
