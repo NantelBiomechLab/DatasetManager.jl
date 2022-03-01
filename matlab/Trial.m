@@ -32,12 +32,12 @@ classdef Trial
             bool = false;
 
             if isa(src, 'Source')
-                bool = bool | any(structfun(@(x) x == namesrc, trial.sources));
+                bool = bool | any(structfun(@(x) x == src, trial.sources));
             elseif ischar(src)
                 if exist(src, 'class') == 8
                     bool = bool | structfun(@(x) isa(x, src), trial.sources);
                 else
-                    bool = bool | isfield(trial.sources, namesrc);
+                    bool = bool | isfield(trial.sources, src);
                 end
             end
         end
