@@ -337,7 +337,7 @@ methods(Static)
         p = inputParser;
         addRequired(p, 'fun');
         addRequired(p, 'trials', @(x) isa(x, 'Trial'));
-        addParameter(p, 'Parallel', false, @isbool);
+        addParameter(p, 'Parallel', false, @islogical);
 
         parse(p, fun, trials, varargin{:});
         parallel = p.Results.Parallel;
