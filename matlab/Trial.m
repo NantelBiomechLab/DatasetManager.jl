@@ -347,11 +347,23 @@ methods(Static)
         if parallel
             parpool('local');
             parfor i = 1:length(trials)
-                srs(i) = fun(trials(i));
+                try
+                    srs(i,1) = fun(trials(i));
+                catch e
+                    fprintf('Error at index (%i)', i)
+                    disp(trials(i))
+                    warning(e.message)
+                end
             end
         else
             for i = 1:length(trials)
-                srs(i,1) = fun(trials(i));
+                try
+                    srs(i,1) = fun(trials(i));
+                catch e
+                    fprintf('Error at index (%i)', i)
+                    disp(trials(i))
+                    warning(e.message)
+                end
             end
         end
     end
