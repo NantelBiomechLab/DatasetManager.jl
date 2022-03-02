@@ -255,13 +255,14 @@ methods(Static)
                         end
                         trial = trials(seen);
                         if isfield(trial.sources, set.name)
-                            [~, short_file, ext] = fileparts(file);
-                            [~, short_orig, o_ext] = fileparts(trial.sources.(set.name));
+                            compath = sharedpath(file, trial.sources.(set.name).path);
+                            short_file = ['.../', regexprep(file, compath, '')];
+                            short_orig = ['.../', regexprep(trial.sources.(set.name).path, compath, '')];
                             trialdisp = sprintf("Trial('%s','%s', %i conditions, %i sources)", ...
                                 trial.subject, trial.name, length(trial.conditions), ...
                                 length(trial.sources));
-                            error("Error: Duplicate source. Found '%s' source file\n'%s'\nfor %s which already has\na '%s' source at '%s'.", ...
-                                set.name, [short_file, ext], trialdisp, set.name, [short_orig, o_ext])
+                            error('Trial:DuplicateSource', "  Duplicate source. Found '%s' source file '%s'\n  for %s which already\n  has a source '%s' at '%s'.", ...
+                                set.name, short_file, trialdisp, set.name, short_orig)
                         else
                             trial.sources.(set.name) = srcfun(file);
                         end
@@ -411,6 +412,14 @@ methods(Static)
     end
 end % methods
 
+end
+
+function dir = sharedpath(file1, file2)
+    ms = regexp({file1, file2}, '(?<dir>[^\.\\\/:*?"<>|\r\n]+[\/\\])', 'end');
+    li = max(ms{1}(ms{1} == ms{2}));
+
+    assert(strcmp(file1(1:li), file2(1:li)));
+    dir = file1(1:li);
 end
 
 function bool = selectstructfun(fun, s, fields)
