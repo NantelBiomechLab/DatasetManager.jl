@@ -390,6 +390,8 @@ methods(Static)
 
         srs = SegmentResult.empty(length(trials),0);
 
+        warning('on', 'Trial:analyzetrials')
+
         if parallel
             parpool('local');
             parfor i = 1:length(trials)
@@ -398,7 +400,7 @@ methods(Static)
                 catch e
                     fprintf('Error at index (%i)', i)
                     disp(trials(i))
-                    warning(e.message)
+                    warning('Trial:analyzetrials', e.message)
                 end
             end
         else
@@ -408,7 +410,7 @@ methods(Static)
                 catch e
                     fprintf('Error at index (%i)', i)
                     disp(trials(i))
-                    warning(e.message)
+                    warning('Trial:analyzetrials', e.message)
                 end
             end
         end
