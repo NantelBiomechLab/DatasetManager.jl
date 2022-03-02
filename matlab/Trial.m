@@ -163,12 +163,6 @@ methods(Static)
         optcondnames = setdiff(setdiff(conditions.condnames, reqcondnames), ...
             fieldnames(defaultconds));
 
-        if ~isempty(ignorefiles)
-            ignorefiles = regexprep(ignorefiles, '([^/\\]*)[/\\]\.\.[/\\]', '');
-            ignorefiles = regexprep(ignorefiles, '^(?!([A-Z]:|[/\\]))', pwd);
-        end
-
-
         for seti = 1:length(subsets)
             debugheader = false;
             num_debugs = 0;
