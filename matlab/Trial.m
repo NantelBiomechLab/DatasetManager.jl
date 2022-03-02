@@ -1,4 +1,4 @@
-classdef Trial
+classdef Trial < handle
     % Trial Describes a single trial, including a reference to the subject, trial name, trial
     % conditions, and relevant sources of data.
     properties
@@ -35,7 +35,7 @@ classdef Trial
                 bool = bool | any(structfun(@(x) x == src, trial.sources));
             elseif ischar(src)
                 if exist(src, 'class') == 8
-                    bool = bool | structfun(@(x) isa(x, src), trial.sources);
+                    bool = bool | any(structfun(@(x) isa(x, src), trial.sources));
                 else
                     bool = bool | isfield(trial.sources, src);
                 end
@@ -74,6 +74,53 @@ classdef Trial
                     src = src{1};
                 end
             end
+        end
+
+        function requiresource(trial, src, varargin)
+            p = inputParser;
+            p.KeepUnmatched = true;
+            addRequired(p, 'trial', @(x) isa(x, 'Trial'));
+            addRequired(p, 'src', @(x) isa(x, 'Source'));
+            addOptional(p, 'parent', false, @islogical);
+            addParameter(p, 'Name', srcname_default(src), @ischar);
+            addParameter(p, 'Force', false, @islogical);
+            addParameter(p, 'Dependencies', dependencies(src));
+
+            parse(p, trial, src, varargin{:});
+            parent = p.Results.parent;
+            name = p.Results.Name;
+            force = p.Results.Force;
+            deps = p.Results.Dependencies;
+
+            if ~force
+                if (~parent && hassource(trial, class(src))) || hassource(trial, name) || hassource(trial, src)
+                    return
+                elseif isfile(src.path)
+                    trial.sources.(name) = src
+                    return
+                end
+            end
+
+            % TODO: Decide if `false` is an acceptable design choice (in lieu of the Julia
+            % version's `UnknownDeps`
+            if islogical(deps) && deps == false
+                trialstr = evalc('display(trial)');
+                srcstr = evalc('display(src)');
+                error('unable to generate missing source %s\nfor %s', srcstr(12:end-1), trialstr(14:end-2))
+            else
+                for i = 1:length(deps)
+                    requiresource(trial, deps{i}, true, 'Force', false);
+                end
+            end
+
+            new_src = generatesource(src, trial, deps, p.Unmatched);
+            if ~isfile(new_src.path)
+                trialstr = evalc('display(trial)');
+                srcstr = evalc('display(new_src)');
+                error('unable to generate missing source %s\nfor %s', srcstr(15:end-1), trialstr(14:end-2))
+            end
+
+            trial.sources.(name) = new_src;
         end
     end
 
@@ -223,7 +270,6 @@ methods(Static)
                                 set.name, [short_file, ext], trialdisp, set.name, [short_orig, o_ext])
                         else
                             trial.sources.(set.name) = srcfun(file);
-                            trials(seen) = trial;
                         end
                     end
                 end
