@@ -363,6 +363,16 @@ methods(Static)
         fprintf('Sources:\n')
         sources = cellfun(@fieldnames, {trials.sources}, 'UniformOutput', false);
         sources = unique(vertcat(sources{:}));
+        classes = structfun(@class, trials(1).sources, 'UniformOutput', false);
+        if all(ismember(sources, fieldnames(classes)))
+            missing = ismember(sources, fieldnames(classes));
+            missing = {sources{~missing}};
+
+            for i = 1:length(missing)
+                idx = find(hassource(trials, missing{i}))
+                classes.(missing{i}) = class(trials(idx(1)).sources.(missing{i}));
+            end
+        end
         for i = 1:length(sources)
             if i == length(sources)
                 sep = '└';
@@ -370,7 +380,8 @@ methods(Static)
                 sep = '├';
             end
 
-            fprintf(' %s ''%s''\n', sep, sources{i})
+            c = sum(hassource(trials, sources{i}));
+            fprintf(" %s '%s' => @%s, %i trials (%.0f%%)\n", sep, sources{i}, classes.(sources{i}), c, c/length(trials)*100)
         end
     end
 
