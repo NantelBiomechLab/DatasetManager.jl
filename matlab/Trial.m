@@ -29,15 +29,15 @@ classdef Trial < handle
         end
 
         function bool = hassource(trial, src)
-            bool = false;
+            bool = false(size(trial));
 
             if isa(src, 'Source')
-                bool = bool | any(structfun(@(x) x == src, trial.sources));
+                bool = bool | reshape(cellfun(@(s) any(structfun(@(x) x == src, s)), {trial.sources}), size(trial));
             elseif ischar(src)
                 if exist(src, 'class') == 8
-                    bool = bool | any(structfun(@(x) isa(x, src), trial.sources));
+                    bool = bool | reshape(cellfun(@(s) any(structfun(@(x) isa(x, src), s)), {trial.sources}), size(trial));
                 else
-                    bool = bool | isfield(trial.sources, src);
+                    bool = bool | reshape(cellfun(@(s) isfield(s, src), {trial.sources}), size(trial));
                 end
             end
         end
