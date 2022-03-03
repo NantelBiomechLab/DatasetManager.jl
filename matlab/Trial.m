@@ -369,7 +369,7 @@ methods(Static)
             missing = {sources{~missing}};
 
             for i = 1:length(missing)
-                idx = find(hassource(trials, missing{i}))
+                idx = find(hassource(trials, missing{i}));
                 classes.(missing{i}) = class(trials(idx(1)).sources.(missing{i}));
             end
         end
