@@ -32,21 +32,33 @@ classdef SegmentResult
         function resvar = resultsvariables(obj)
             resvar = {};
             for i = 1:length(obj)
-                resvar = [resvar, fieldnames(obj(i).results)];
+                resvar = [resvar; fieldnames(obj(i).results)];
             end
 
             resvar = unique(resvar);
         end
 
-        function data = stack(obj)
-            sub = subject(obj)';
-            conds = struct2cell(conditions(obj)')';
-            condnames = fieldnames(obj(1).segment.conditions);
-            data = struct2table([obj.results]);
+        function data = stack(srs)
+            sub = subject(srs)';
+            conds = struct2cell(conditions(srs)')';
+            condnames = fieldnames(srs(1).segment.conditions);
+            vars = resultsvariables(srs);
+            for vari = 1:length(vars)
+                var = vars{vari};
+                for i = find(cellfun(@(s) ~isfield(s, var), {srs.results}))
+                    srs(i).results.(var) = NaN;
+                end
+            end
+            data = struct2table([srs.results]);
             data = addvars(data, sub, 'Before', 1, 'NewVariableNames', {'subject'});
             for i = size(conds, 2):-1:1
                 data = addvars(data, conds(:,i), 'After', 1, 'NewVariableNames', ...
                     condnames(i));
+            end
+
+            data.subject = categorical(data.subject);
+            for i = 1:length(condnames)
+                data.(condnames{i}) = categorical(data.(condnames{i}));
             end
         end
     end
