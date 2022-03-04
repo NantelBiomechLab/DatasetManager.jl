@@ -364,7 +364,7 @@ methods(Static)
         sources = cellfun(@fieldnames, {trials.sources}, 'UniformOutput', false);
         sources = unique(vertcat(sources{:}));
         classes = structfun(@class, trials(1).sources, 'UniformOutput', false);
-        if all(ismember(sources, fieldnames(classes)))
+        if ~all(ismember(sources, fieldnames(classes)))
             missing = ismember(sources, fieldnames(classes));
             missing = {sources{~missing}};
 
