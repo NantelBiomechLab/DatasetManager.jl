@@ -449,8 +449,11 @@ function findtrials(
                     seen = only(seenall)
                     t = trials[seen]
                     if haskey(t.sources, set.name)
-                        throw(DuplicateSourceError(t, set, sourcepath(t.sources[set.name]),
-                            file))
+                        let io = IOBuffer()
+                            showerror(io, DuplicateSourceError(t, set,
+                                sourcepath(t.sources[set.name]), file))
+                            @error String(take!(io))
+                        end
                     else
                         t.sources[set.name] = set.source(file)
                     end
