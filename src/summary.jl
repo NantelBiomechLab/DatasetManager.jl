@@ -111,16 +111,21 @@ function summarize(oio::IO, trials::AbstractVector{T}; verbosity=5) where T <: T
         Nunq_conds === prod(length.(values(obs_levels))) ? LG(" (full factorial)") : "")
     foreach(unq_conds) do conds
         conds[Symbol("# trials")] = count(==(conds), conditions.(trials))
+        miss_conds = setdiff(keys(obs_levels), keys(conds))
+        if !isempty(miss_conds)
+            get!.(Ref(conds), miss_conds, missing)
+        end
     end
     unq_condsdf = DataFrame(unq_conds)
     unq_condsdf = unq_condsdf[!, [collect(keys(obs_levels)); Symbol("# trials")]]
     sort!(unq_condsdf, order(Symbol("# trials"); rev=true))
     tmpio = IOBuffer()
-    pretty_table(IOContext(tmpio, :color => true), unq_condsdf; hlines=[:header], display_size=(verbosity+3,w-4),
+    pretty_table(IOContext(tmpio, :color => true), unq_condsdf; hlines=[:header], display_size=(verbosity+4,w-4),
         vlines=1:ncol(unq_condsdf)-1, alignment=[fill(:r, ncol(unq_condsdf)-1); :l],
         nosubheader=true, crop=:both, newline_at_end=false, backend=Val(:text),
         header_crayon=[fill(BMGNTA, ncol(unq_condsdf)-1); LG],
         highlighters=Highlighter((v,i,j) -> j === ncol(unq_condsdf), LG),
+        formatters=PrettyTables.ft_nomissing,
         show_omitted_cell_summary=false)
     println(io, "    ", replace(String(take!(tmpio)), "\n" => "\n    "))
 
