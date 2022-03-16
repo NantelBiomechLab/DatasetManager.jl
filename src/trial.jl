@@ -19,14 +19,14 @@ struct DataSubset
     pattern::String
     ext::String
 
-    DataSubset(name, source, dir, pattern, ext=raw"(?(2)\w*?|)\.") = new(name, source, dir, pattern, ext)
+    DataSubset(name, source, dir, pattern, ext=raw"(?(2).*?|)\.") = new(name, source, dir, pattern, ext)
 end
 
 function escape_period(ext)
     return replace(ext, r"^\\?\.?" => "\\.")
 end
 
-function DataSubset(name, source::Type{S}, dir, pattern, ext="(?(2)\\w*?|)"*escape_period(srcext(source))) where S <: AbstractSource
+function DataSubset(name, source::Type{S}, dir, pattern, ext="(?(2).*?|)"*escape_period(srcext(source))) where S <: AbstractSource
     return DataSubset(name, (s) -> source(s), dir, pattern, ext)
 end
 
