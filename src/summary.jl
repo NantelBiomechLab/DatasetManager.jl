@@ -80,13 +80,17 @@ function summarize(oio::IO, trials::AbstractVector{T}; verbosity=5) where T <: T
     ex = reverse!(findall(!iszero, Ntrialsdist))
     for (j,i) in enumerate(ex[1:min(end,verbosity)])
         num = Ntrialsdist[i]
+        plural = num > 1 ? "s" : ""
         sep = j < min(length(ex),verbosity) ? '├' : '└'
         if j ≥ verbosity
-            println(io, "   $sep ", BLU("≤$i"), ": $num/$Nsubs ",
-                LG(@sprintf("(%3.f%%)", sum(Ntrialsdist[ex[j:end]]./Nsubs)*100)))
+            num = sum(Ntrialsdist[ex[j:end]])
+            plural = num > 1 ? "s" : ""
+            le = num > 1 ? "≤" : ""
+            println(io, "   $sep ", BLU("$le$i"), ": $num subject$plural ",
+                LG(@sprintf("(%.f%%)", num/Nsubs*100)))
         else
-            println(io, "   $sep ", BLU("$i"), ": $num/$Nsubs ",
-                LG(@sprintf("(%3.f%%)", num/Nsubs*100)))
+            println(io, "   $sep ", BLU("$i"), ": $num subject$plural ",
+                LG(@sprintf("(%.f%%)", num/Nsubs*100)))
         end
     end
 
