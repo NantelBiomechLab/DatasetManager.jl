@@ -1,3 +1,14 @@
+unique_sources(trials) = unique(reduce(vcat,
+        broadcast(d -> keys(d) .=> typeof.(values(d)), sources.(trials))))
+
+unique_subjects(trials::Vector{Trial{String}}) = sort(unique(subject.(trials)); lt=natural)
+unique_subjects(trials::Vector{Trial{I}}) where {I} = sort(unique(subject.(trials)))
+
+unique_conditions(trials) = unique(reduce(vcat, collect.(unique(keys.(conditions.(trials))))))
+observed_levels(trials) = Dict( factor => unique(skipmissing(get.(conditions.(trials), factor, missing)))
+    for factor in unique_conditions(trials))
+
+
 """
     summarize([io,] trials; verbosity=5)
 
@@ -47,7 +58,7 @@ function summarize(oio::IO, trials::AbstractVector{T}; verbosity=5) where T <: T
         print(oio, String(take!(io)))
         return nothing
     end
-    subs = sort(unique(subject.(trials)))
+    subs = unique_subjects(trials)
     Nsubs = length(subs)
     h, w = displaysize(io)
     LG = Crayon(foreground=:light_gray)
@@ -80,8 +91,7 @@ function summarize(oio::IO, trials::AbstractVector{T}; verbosity=5) where T <: T
     end
 
     # Conditions
-    obs_levels = Dict( factor => unique(getindex.(conditions.(trials), factor))
-        for factor in reduce(vcat, unique(keys.(conditions.(trials)))))
+    obs_levels = observed_levels(trials)
     Nconds = length(obs_levels)
 
     println(io, BOLD("Conditions:"))

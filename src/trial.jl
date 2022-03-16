@@ -464,9 +464,6 @@ function findtrials(
     return trials
 end
 
-unique_sources(trials) = unique(reduce(vcat, collect.(unique(
-        broadcast(d -> keys(d) .=> typeof.(values(d)), sources.(trials))))))
-
 """
     analyzedataset(f, trials, Type{<:AbstractSource}; kwargs...) -> Vector{SegmentResult}
 
