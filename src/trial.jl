@@ -436,9 +436,10 @@ function findtrials(
                     push!(trials, Trial(sid, name, conds,
                         Dict{String,AbstractSource}(set.name => set.source(file))))
                 else
+                    @assert length(seenall) == 1
                     seen = only(seenall)
                     t = trials[seen]
-                    if haskey(t.sources, set.name)
+                    if hassource(t, set.name)
                         let io = IOBuffer()
                             showerror(io, DuplicateSourceError(t, set,
                                 sourcepath(t.sources[set.name]), file))
