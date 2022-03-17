@@ -286,17 +286,19 @@ const bold = Crayon(bold=true)
 const rst = Crayon(reset=true)
 
 function highlight_matches(str, m)
-    hstr = ""
+    io = IOBuffer()
+    hstr = IOContext(io, :color => true)
+
     firsti = m.offset
     prev = firstindex(str)
     for (m,i) in zip(filter(!isnothing, m.captures), filter(!iszero, m.offsets))
         i -= firsti
-        hstr *= str[prev:i]*string(BOLD*GREEN_BG, m, rst)
+        print(hstr, @view(str[prev:i]), BOLD*GREEN_BG, m, rst)
         prev = i + length(m) + 1
     end
-    hstr *= str[prev:end]
+    print(hstr, @view(str[prev:end]))
 
-    hstr
+    return String(take!(io))
 end
 
 str_rgx(r::Regex) = r.pattern
