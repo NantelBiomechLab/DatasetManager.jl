@@ -378,20 +378,25 @@ function findtrials(
                 if verbose || isnothing(m) || any(isnothing.(m[cond] for cond in requiredconds))
                     if !debugheader
                         debugheader = true
-                        print(stderr, "┌ Subset ", repr(set.name))
-                        println(stderr, " Searching using regex: ", rsearchext)
+                        println(stderr, "┌ Subset ", repr(set.name),
+                            " Searching using regex: ", rsearchext)
                     end
                     pretty_file = replace(string(lgry, file, rst), pretty_subst...)*string(rst)
-                    if isnothing(m)
-                        println(stderr, "│ ╭ No match")
-                    else
-                        pretty_mstr = '"'*highlight_matches(m.match, m)*'"'
-                        if any(isnothing, m)
-                            pretty_mstr *= " (not found: "*join(RED_FG.(first.(filter(kv -> isnothing(kv[2]), collect(pairs(m))))), ", ")*')'
+
+                    let io = IOBuffer(), ioc = IOContext(io, IOContext(stderr))
+                        if isnothing(m)
+                            println(ioc, "│ ╭ No match")
+                        else
+                            pretty_mstr = '"'*highlight_matches(m.match, m)*'"'
+                            if any(isnothing, m)
+                                pretty_mstr *= " (not found: "*join(RED_FG.(first.(
+                                    filter(kv -> isnothing(kv[2]), collect(pairs(m))))), ", ")*')'
+                            end
+                            println(ioc, "│ ╭ Match: ", pretty_mstr)
                         end
-                        println(stderr, "│ ╭ Match: ", pretty_mstr)
+                        println(ioc, "│ ╰ @ \"", pretty_file, '"')
+                        print(stderr, String(take!(io)))
                     end
-                    println(stderr, "│ ╰ @ \"", pretty_file, '"')
                     num_debugs += 1
                 end
             end
