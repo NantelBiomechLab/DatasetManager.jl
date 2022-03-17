@@ -60,14 +60,21 @@ struct TrialConditions
     required::Vector{Symbol}
     labels_rg::Regex
     subst::Vector{Pair{Regex,String}}
-    types::Vector{Type}
+    types::Dict{Symbol,DataType}
+
+    function TrialConditions(conds, required, labels_rg, subst, types)
+        get!.(Ref(types), setdiff(conds, keys(types)), String)
+        @assert Set(conds) == Set(collect(keys(types)))
+
+        return new(conds, required, labels_rg, subst, types)
+    end
 end
 
 function TrialConditions(
     conditions,
     labels;
     required=conditions,
-    types=fill(String, length(conditions)),
+    types=Dict(conditions .=> String),
     sep="[_-]?"
 )
     labels_rg = ""
@@ -304,6 +311,13 @@ end
 str_rgx(r::Regex) = r.pattern
 str_rgx(str::String) = str
 
+optionalparse(T, ::Nothing) = nothing
+optionalparse(::Type{T}, x::T) where T = x
+optionalparse(T, x::U) where {U} = T <: String ? String(x) : parse(T, x)
+
+_get(collection, key, default) = haskey(collection, key) ? collection[key] : default
+_get(default::Base.Callable, collection, key) = haskey(collection, key) ? collection[key] : default()
+
 """
     findtrials(subsets::AbstractVector{DataSubset}, conditions::TrialConditions;
         <keyword arguments>) -> Vector{Trial}
@@ -323,28 +337,28 @@ Find all the trials matching `conditions` which can be found in `subsets`.
 """
 function findtrials(
     subsets::AbstractVector{DataSubset},
-    conditions::TrialConditions;
+    trialconds::TrialConditions;
     I::Type=Int,
     subject_fmt=r"Subject (?<subject>\d+)?",
     debug=false,
     verbose=false,
     ignorefiles::Union{Nothing, Vector{String}}=nothing,
     defaultconds::Union{Nothing, Dict{Symbol}}=nothing,
-    rsearch = "(?|(?:"*str_rgx(subject_fmt)*")(?:.*?))(?:"*str_rgx(conditions.labels_rg)*")",
+    rsearch = "(?|(?:"*str_rgx(subject_fmt)*")(?:.*?))(?<conditions>"*str_rgx(trialconds.labels_rg)*")",
     maxlogs=50,
 )
     trials = Vector{Trial{I}}()
-    reqcondnames = conditions.required
+    requiredconds = trialconds.required
     if isnothing(defaultconds)
         defaultconds = Dict{Symbol,String}()
     end
-    optcondnames = setdiff(conditions.condnames, reqcondnames, keys(defaultconds))
+    optionalconds = setdiff(trialconds.condnames, requiredconds, keys(defaultconds))
     if !isnothing(ignorefiles)
         ignorefiles .= normpath.(ignorefiles)
     end
     if debug
         pretty_subst = [ pat => SubstitutionString(string(red, "\\1", green, rep, rst, lgry))
-            for (pat, rep) in conditions.subst ]
+            for (pat, rep) in trialconds.subst ]
     end
 
     for set in subsets
@@ -357,11 +371,11 @@ function findtrials(
         end
 
         for file in files
-            _file = replace(file, conditions.subst...)
+            _file = replace(file, trialconds.subst...)
             m = match(rsearchext, _file)
 
             if debug && num_debugs ≤ maxlogs
-                if verbose || isnothing(m) || any(isnothing.(m[cond] for cond in reqcondnames))
+                if verbose || isnothing(m) || any(isnothing.(m[cond] for cond in requiredconds))
                     if !debugheader
                         debugheader = true
                         print(stderr, "┌ Subset ", repr(set.name))
@@ -382,67 +396,36 @@ function findtrials(
                 end
             end
 
-            if isnothing(m) || isnothing(m[:subject]) || any(isnothing.(m[cond] for cond in reqcondnames))
+            if isnothing(m) || any(isnothing.(m[cond] for cond in [:subject; requiredconds]))
                 continue
             else
-                name = splitext(basename(file))[1]
-                sid = !(I <: String) ? parse(I, m[:subject]) : String(m[:subject])
+                sid = optionalparse(I, m[:subject])
                 seenall = findall(trials) do trial
                     trial.subject == sid &&
-                    all(enumerate(conditions.condnames)) do (i, cond)
-                        T = get(conditions.types,
-                            something(findfirst(==(cond), conditions.condnames), 0),
-                            String)
-                        trialcond = get(trial.conditions, cond,
-                            get(defaultconds, cond, nothing))
-                        if isnothing(m[cond])
-                            return get(defaultconds, cond, nothing) == trialcond
-                        elseif T === String
-                            return m[cond] == trialcond
-                        else
-                            parse(T, m[cond]) == trialcond
-                        end
+                    all(trialconds.condnames) do cond
+                        T = trialconds.types[cond]
+                        actual = get(conditions(trial), cond, get(defaultconds, cond, nothing))
+                        candidate = optionalparse(T, _get(m, cond, get(defaultconds, cond, nothing)))
+
+                        return actual == candidate
                     end
                 end
 
                 if isempty(seenall)
+                    name = splitext(basename(file))[1]
                     conds = Dict{Symbol,Any}()
-                    foreach(reqcondnames) do cond
-                        T = get(conditions.types,
-                            something(findfirst(==(cond), conditions.condnames), 0),
-                            String)
-                        if T === String
-                            conds[cond] = String(m[cond])
-                        else
-                            conds[cond] = parse(T, m[cond])
-                        end
+                    foreach(requiredconds) do cond
+                        T = trialconds.types[cond]
+                        get!(() -> optionalparse(T, m[cond]), conds, cond)
                     end
                     foreach(defaultconds) do (k,v)
-                        T = get(conditions.types,
-                            something(findfirst(==(k), conditions.condnames), 0),
-                            String)
-                        if isnothing(m[k])
-                            if T === String
-                                conds[k] = String(v)
-                            else
-                                conds[k] = parse(T, v)
-                            end
-                        elseif T === String
-                            conds[k] = String(m[k])
-                        else
-                            conds[k] = parse(T, m[k])
-                        end
+                        T = trialconds.types[k]
+                        get!(() -> optionalparse(T, _get(m, k, v)), conds, k)
                     end
-                    foreach(enumerate(optcondnames)) do (i, cond)
-                        T = get(conditions.types,
-                            something(findfirst(==(cond), conditions.condnames), 0),
-                            String)
+                    foreach(optionalconds) do cond
+                        T = trialconds.types[cond]
                         if !isnothing(m[cond])
-                            if T === String
-                                conds[cond] = String(m[cond])
-                            else
-                                conds[cond] = parse(T, m[cond])
-                            end
+                            get!(conds, cond, optionalparse(T, m[cond]))
                         end
                     end
                     push!(trials, Trial(sid, name, conds,
