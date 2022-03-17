@@ -110,7 +110,7 @@ function summarize(oio::IO, trials::AbstractVector{T}; verbosity=5) where T <: T
     println(io, " └ Unique level combinations observed: ", BLU("$(Nunq_conds)"),
         Nunq_conds === prod(length.(values(obs_levels))) ? LG(" (full factorial)") : "")
     foreach(unq_conds) do conds
-        conds[Symbol("# trials")] = count(==(conds), conditions.(trials))
+        conds[Symbol("# trials")] = count(isequal(conds), conditions.(trials))
         miss_conds = setdiff(keys(obs_levels), keys(conds))
         if !isempty(miss_conds)
             get!.(Ref(conds), miss_conds, missing)
