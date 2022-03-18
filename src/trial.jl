@@ -315,8 +315,10 @@ optionalparse(T, ::Nothing) = nothing
 optionalparse(::Type{T}, x::T) where T = x
 optionalparse(T, x::U) where {U} = T <: String ? String(x) : parse(T, x)
 
-_get(collection, key, default) = haskey(collection, key) ? collection[key] : default
-_get(default::Base.Callable, collection, key) = haskey(collection, key) ? collection[key] : default()
+_get(collection::RegexMatch, key, default) = haskey(collection, key) ? collection[key] : default
+_get(default::Base.Callable, collection::RegexMatch, key) = haskey(collection, key) ? collection[key] : default()
+_get(collection, key, default) = get(collection, key, default)
+_get(default::Base.Callable, collection, key) = get(default, collection, key)
 
 """
     findtrials(subsets::AbstractVector{DataSubset}, conditions::TrialConditions;
@@ -338,7 +340,7 @@ Find all the trials matching `conditions` which can be found in `subsets`.
 function findtrials(
     subsets::AbstractVector{DataSubset},
     trialconds::TrialConditions;
-    I::Type=Int,
+    I::Type=String,
     subject_fmt=r"Subject (?<subject>\d+)?",
     debug=false,
     verbose=false,
@@ -409,8 +411,8 @@ function findtrials(
                     trial.subject == sid &&
                     all(trialconds.condnames) do cond
                         T = trialconds.types[cond]
-                        actual = get(conditions(trial), cond, get(defaultconds, cond, nothing))
-                        candidate = optionalparse(T, _get(m, cond, get(defaultconds, cond, nothing)))
+                        actual = _get(conditions(trial), cond, _get(defaultconds, cond, nothing))
+                        candidate = optionalparse(T, _get(m, cond, _get(defaultconds, cond, nothing)))
 
                         return actual == candidate
                     end
@@ -430,7 +432,7 @@ function findtrials(
                     foreach(optionalconds) do cond
                         T = trialconds.types[cond]
                         if !isnothing(m[cond])
-                            get!(conds, cond, optionalparse(T, m[cond]))
+                            get!(() -> optionalparse(T, m[cond]), conds, cond)
                         end
                     end
                     push!(trials, Trial(sid, name, conds,
