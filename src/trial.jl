@@ -19,14 +19,14 @@ struct DataSubset
     pattern::String
     ext::String
 
-    DataSubset(name, source, dir, pattern, ext=raw"(?(-1).*?|)\.") = new(name, source, dir, pattern, ext)
+    DataSubset(name, source, dir, pattern, ext=".") = new(name, source, dir, pattern, escape_period(ext))
 end
 
 function escape_period(ext)
     return replace(ext, r"^\\?\.?" => "\\.")
 end
 
-function DataSubset(name, source::Type{S}, dir, pattern, ext="(?(-1).*?|)"*escape_period(srcext(source))) where S <: AbstractSource
+function DataSubset(name, source::Type{S}, dir, pattern, ext=escape_period(srcext(source))) where S <: AbstractSource
     return DataSubset(name, (s) -> source(s), dir, pattern, ext)
 end
 
@@ -344,7 +344,7 @@ function findtrials(
     verbose=false,
     ignorefiles::Union{Nothing, Vector{String}}=nothing,
     defaultconds::Union{Nothing, Dict{Symbol}}=nothing,
-    rsearch = "(?|(?:"*str_rgx(subject_fmt)*")(?:.*?))(?<conditions>"*str_rgx(trialconds.labels_rg)*")",
+    rsearch = "(?|(?:"*str_rgx(subject_fmt)*")(?:.*?))(?<conditions>"*str_rgx(trialconds.labels_rg)*")(?(-1).*?|)",
     maxlogs=50,
 )
     trials = Vector{Trial{I}}()
