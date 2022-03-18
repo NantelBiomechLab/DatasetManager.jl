@@ -8,6 +8,20 @@ unique_conditions(trials) = unique(reduce(vcat, collect.(unique(keys.(conditions
 observed_levels(trials) = Dict( factor => unique(skipmissing(get.(conditions.(trials), factor, missing)))
     for factor in unique_conditions(trials))
 
+function conditions_isequal(condsA, condsB; ignore=nothing)
+    if !isnothing(ignore)
+        ign_k_condsA = setdiff(keys(condsA), ignore)
+        if intersect(ign_k_condsA, setdiff(keys(condsB), ignore)) == ign_k_condsA
+            return all(isequal.(getindex.(Ref(condsA), ign_k_condsA),
+                getindex.(Ref(condsB), ign_k_condsA)))
+        else
+            return false
+        end
+    else
+        return isequal(condsA, condsB)
+    end
+end
+
 
 """
     summarize([io,] trials; verbosity=5)
@@ -50,7 +64,9 @@ function summarize(trials::AbstractVector{T}; kwargs...) where T <: Trial
     summarize(stdout, trials; kwargs...)
 end
 
-function summarize(oio::IO, trials::AbstractVector{T}; verbosity=5) where T <: Trial
+function summarize(oio::IO, trials::AbstractVector{T};
+    verbosity=5, ignoreconditions=nothing
+) where T <: Trial
     io = IOBuffer()
     N = length(trials)
     if N === 0
@@ -96,6 +112,9 @@ function summarize(oio::IO, trials::AbstractVector{T}; verbosity=5) where T <: T
 
     # Conditions
     obs_levels = observed_levels(trials)
+    if !isnothing(ignoreconditions)
+        foreach(c -> delete!(obs_levels, c), ignoreconditions)
+    end
     Nconds = length(obs_levels)
 
     println(io, BOLD("Conditions:"))
@@ -106,12 +125,22 @@ function summarize(oio::IO, trials::AbstractVector{T}; verbosity=5) where T <: T
     end
 
     unq_conds = copy.(unique(conditions.(trials)))
+    if !isnothing(ignoreconditions)
+        foreach(unq_conds) do conds
+            foreach(c -> delete!(conds, c), ignoreconditions)
+        end
+    end
+    unq_conds = unique(unq_conds)
+
     Nunq_conds = length(unq_conds)
     println(io, " └ Unique level combinations observed: ", BLU("$(Nunq_conds)"),
         Nunq_conds === prod(length.(values(obs_levels))) ? LG(" (full factorial)") : "")
+
+    all_conds = unique_conditions(trials)
     foreach(unq_conds) do conds
-        conds[Symbol("# trials")] = count(isequal(conds), conditions.(trials))
-        miss_conds = setdiff(keys(obs_levels), keys(conds))
+        conds[Symbol("# trials")] = count(c -> conditions_isequal(conds, c; ignore=ignoreconditions),
+            conditions.(trials))
+        miss_conds = setdiff(all_conds, keys(conds))
         if !isempty(miss_conds)
             get!.(Ref(conds), miss_conds, missing)
         end
