@@ -427,11 +427,6 @@ optionalparse(T, ::Nothing) = nothing
 optionalparse(::Type{T}, x::T) where T = x
 optionalparse(T, x::U) where {U} = T <: String ? String(x) : parse(T, x)
 
-_get(collection::RegexMatch, key, default) = haskey(collection, key) ? collection[key] : default
-_get(default::Base.Callable, collection::RegexMatch, key) = haskey(collection, key) ? collection[key] : default()
-_get(collection, key, default) = get(collection, key, default)
-_get(default::Base.Callable, collection, key) = get(default, collection, key)
-
 """
     findtrials(subsets::AbstractVector{DataSubset}, conditions::TrialConditions;
         <keyword arguments>) -> Vector{Trial}
