@@ -300,6 +300,13 @@ Get the conditions for `trial`
 conditions(trial::Trial) = trial.conditions
 
 """
+    sources(trial::Trial{ID}) -> Dict{String,AbstractSource}
+
+Get the sources for `trial`
+"""
+sources(trial::Trial) = trial.sources
+
+"""
     hascondition(trial, condition...)
     hascondition(trial, (condition => value)...)
 
@@ -367,13 +374,6 @@ function recodecondition!(f, trial, cond)
     @assert hascondition(trial, cond)
     conditions(trial)[cond] = f(conditions(trial)[cond])
 end
-
-"""
-    sources(trial::Trial{ID}) -> Dict{String,AbstractSource}
-
-Get the sources for `trial`
-"""
-sources(trial::Trial) = trial.sources
 
 """
     hassource(trial, src::Union{String,S<:AbstractSource}) -> Bool
