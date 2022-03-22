@@ -18,16 +18,17 @@ struct DataSubset
     dir::String
     pattern::String
     ext::String
+    dependent::Bool
 
-    DataSubset(name, source, dir, pattern, ext=".") = new(name, source, dir, pattern, escape_period(ext))
+    DataSubset(name, source, dir, pattern, ext=".", dependent=false) = new(name, source, dir, pattern, escape_period(ext), dependent)
 end
 
 function escape_period(ext)
     return replace(ext, r"^\\?\.?" => "\\.")
 end
 
-function DataSubset(name, source::Type{S}, dir, pattern, ext=escape_period(srcext(source))) where S <: AbstractSource
-    return DataSubset(name, (s) -> source(s), dir, pattern, ext)
+function DataSubset(name, source::Type{S}, dir, pattern; ext=escape_period(srcext(source)), dependent=false) where S <: AbstractSource
+    return DataSubset(name, (s) -> source(s), dir, pattern, ext, dependent)
 end
 
 function Base.show(io::IO, ds::DataSubset)
@@ -386,16 +387,20 @@ Find all the trials matching `conditions` which can be found in `subsets`.
 - `debug=false`: Show Regex and files that did not match for each subset. Use to debug
    `TrialConditions` definitions or issues with `subject_fmt` failing to match subject ID's.
 """
-function findtrials(
+function findtrials(subsets::AbstractVector{DataSubset}, trialconds::TrialConditions; kwargs...)
+    I = trialconds.types[:subject]
+    findtrials!(Vector{Trial{I}}(), subsets, trialconds; kwargs...)
+end
+
+function findtrials!(
+    trials::Vector{Trial{I}},
     subsets::AbstractVector{DataSubset},
     trialconds::TrialConditions;
     debug=false,
     verbose=false,
     ignorefiles::Union{Nothing, Vector{String}}=nothing,
     maxlogs=50,
-)
-    I = trialconds.types[:subject]
-    trials = Vector{Trial{I}}()
+) where I
     requiredconds = filter(!=(:subject), trialconds.required)
     condnames_nosubject = filter(!=(:subject), trialconds.condnames)
     defaultconds = trialconds.defaults
@@ -454,18 +459,34 @@ function findtrials(
                 continue
             else
                 sid = optionalparse(I, m[:subject])
-                seenall = findall(trials) do trial
-                    sid == subject(trial) &&
-                    all(condnames_nosubject) do cond
-                        T = trialconds.types[cond]
-                        actual = get(conditions(trial), cond, get(defaultconds, cond, nothing))
-                        candidate = optionalparse(T, get(m, cond, get(defaultconds, cond, nothing)))
+                if set.dependent
+                    if isnothing(get(m, Symbol(set.name), nothing))
+                        continue
+                    end
+                    seenall = findall(trials) do trial
+                        sid == subject(trial) &&
+                        all(requiredconds) do cond
+                            T = trialconds.types[cond]
+                            actual = get(conditions(trial), cond, get(defaultconds, cond, nothing))
+                            candidate = optionalparse(T, get(m, cond, get(defaultconds, cond, nothing)))
 
-                        return actual == candidate
+                            return actual == candidate
+                        end
+                    end
+                else
+                    seenall = findall(trials) do trial
+                        sid == subject(trial) &&
+                        all(condnames_nosubject) do cond
+                            T = trialconds.types[cond]
+                            actual = get(conditions(trial), cond, get(defaultconds, cond, nothing))
+                            candidate = optionalparse(T, get(m, cond, get(defaultconds, cond, nothing)))
+
+                            return actual == candidate
+                        end
                     end
                 end
 
-                if isempty(seenall)
+                if isempty(seenall) && !set.dependent
                     name = splitext(basename(file))[1]
                     conds = Dict{Symbol,Any}()
                     foreach(requiredconds) do cond
@@ -485,17 +506,27 @@ function findtrials(
                     push!(trials, Trial(sid, name, conds,
                         Dict{String,AbstractSource}(set.name => set.source(file))))
                 else
-                    @assert length(seenall) == 1
-                    seen = only(seenall)
-                    t = trials[seen]
-                    if hassource(t, set.name)
-                        let io = IOBuffer()
-                            showerror(io, DuplicateSourceError(t, set,
-                                sourcepath(t.sources[set.name]), file))
-                            @error String(take!(io))
+                    if !set.dependent
+                        @assert length(seenall) == 1
+                    end
+
+                    foreach(seenall) do seen
+                        t = trials[seen]
+                        if set.dependent
+                            src_name = m[Symbol(set.name)]
+                        else
+                            src_name = set.name
                         end
-                    else
-                        t.sources[set.name] = set.source(file)
+
+                        if hassource(t, src_name)
+                            let io = IOBuffer()
+                                showerror(io, DuplicateSourceError(t, set,
+                                    sourcepath(t.sources[src_name]), file))
+                                @error String(take!(io))
+                            end
+                        else
+                            t.sources[src_name] = set.source(file)
+                        end
                     end
                 end
             end
