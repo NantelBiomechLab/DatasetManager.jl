@@ -333,6 +333,20 @@ julia> filter(hascondition(:group => "A"), [trial1, trial2])
 hascondition(cond::Pair{Symbol}) = Base.Fix2(hascondition, cond)
 hascondition(conds::Vararg{Pair{Symbol,T} where T <: Any}) = Base.Fix2(hascondition, conds)
 
+function renamecondition!(trial, (old, new)::Pair)
+    @assert hascondition(trial, old)
+    @assert !hascondition(trial, new)
+    conditions(trial)[new] = conditions(trial)[old]
+    delete!(conditions(trial), old)
+
+    return nothing
+end
+
+function recodecondition!(f, trial, cond)
+    @assert hascondition(trial, cond)
+    conditions(trial)[cond] = f(conditions(trial)[cond])
+end
+
 """
     sources(trial::Trial{ID}) -> Dict{String,AbstractSource}
 
