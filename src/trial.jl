@@ -200,42 +200,42 @@ end
 
 function Base.show(io::IO, t::Trial)
     print(io, "Trial(", repr(t.subject), ", ", repr(t.name), ", ")
-    if get(io, :limit, false)
+    if get(io, :compact, true) || get(io, :limit, true)
+        print(io, length(conditions(t)), " conditions, ")
+    else
         print(io, '(')
-        _io = IOContext(io, :typeinfo=>eltype(t.conditions))
+        _io = IOContext(io, :typeinfo=>eltype(conditions(t)))
         first = true
-        for p in pairs(t.conditions)
+        for p in pairs(conditions(t))
             first || print(_io, ", ")
             first = false
             print(_io, p)
         end
         print(io, "), ")
-    else
-        print(io, length(t.conditions), " conditions, ")
     end
-    numsources = length(t.sources)
-    if numsources == 1
-        print(io, numsources, " source", ')')
-    else
-        print(io, numsources, " sources", ')')
-    end
+    numsources = length(sources(t))
+    plural = numsources == 1 ? "" : "s"
+    print(io, numsources, " source", plural, ')')
 end
 
 function Base.show(io::IO, ::MIME"text/plain", t::Trial{I}) where I
     println(io, "Trial{", I, "}")
     println(io, "  Subject: ", t.subject)
     println(io, "  Name: ", t.name)
-    print(io, "  Conditions:")
-    for c in t.conditions
-        print(io, "\n    ")
-        print(io, repr(c.first), " => ", repr(c.second))
+    println(io, "  Conditions:")
+    for c in conditions(t)
+        print(io, "    ")
+        println(io, repr(c.first), " => ", repr(c.second))
     end
-    print(io, "\n  Sources:")
-    for p in t.sources
-        print(io, "\n    ")
-        print(io, repr(p.first), " => ", repr(p.second))
+    if isempty(sources(t))
+        println(io, "  No sources")
+    else
+        println(io, "  Sources:")
+        for p in sources(t)
+            print(io, "    ")
+            println(io, repr(p.first), " => ", repr(p.second))
+        end
     end
-    println(io)
 end
 
 Base.isequal(x::Trial{I}, y::Trial{T}) where {I,T} = false
