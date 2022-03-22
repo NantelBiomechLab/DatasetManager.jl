@@ -11,7 +11,7 @@ observed_levels(trials) = Dict( factor => unique(skipmissing(get.(conditions.(tr
 function conditions_isequal(condsA, condsB; ignore=nothing)
     if !isnothing(ignore)
         ign_k_condsA = setdiff(keys(condsA), ignore)
-        if intersect(ign_k_condsA, setdiff(keys(condsB), ignore)) == ign_k_condsA
+        if issetequal(ign_k_condsA, setdiff(keys(condsB), ignore))
             return all(isequal.(getindex.(Ref(condsA), ign_k_condsA),
                 getindex.(Ref(condsB), ign_k_condsA)))
         else
