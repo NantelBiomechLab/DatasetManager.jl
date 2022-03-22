@@ -449,34 +449,39 @@ optionalparse(::Type{T}, x::T) where T = x
 optionalparse(T, x::U) where {U} = T <: String ? String(x) : parse(T, x)
 
 """
-    findtrials(subsets::AbstractVector{DataSubset}, conditions::TrialConditions;
-        <keyword arguments>) -> Vector{Trial}
+    findtrials(subsets, conditions; <keyword arguments>) -> Vector{Trial}
 
 Find all the trials matching `conditions` which can be found in `subsets`.
 
 # Keyword arguments:
 
-- `subject_fmt=r"(?<=Subject )(?<subject>\\d+)"`: The format that the subject identifier
-   will appear in file paths.
 - `ignorefiles::Union{Nothing, Vector{String}}=nothing`: A list of files, given in the form
    of an absolute path, that are in any of the `subsets` folders which are to be ignored.
-- `defaultconds::Union{Nothing, Dict{Symbol}}=nothing`: Any conditions which have a default
-   level if the condition is not found in the file path.
-- `debug=false`: Show Regex and files that did not match for each subset. Use to debug
-   `TrialConditions` definitions or issues with `subject_fmt` failing to match subject ID's.
+- `debug=false`: Show files that did not match (all) the required conditions
+- `verbose=false`: Show files that *did* match all required conditions when `debug=true`
+- `maxlogs=50`: Maximum number of files per subset to show when debugging
+
+See also: [`Trial`](@ref), [`findtrials!`](@ref), [`DataSubset`](@ref), [`TrialConditions`](@ref)
 """
 function findtrials(subsets::AbstractVector{DataSubset}, trialconds::TrialConditions; kwargs...)
     I = trialconds.types[:subject]
     findtrials!(Vector{Trial{I}}(), subsets, trialconds; kwargs...)
 end
 
+"""
+    findtrials!(trials, subsets, conditions; <keyword arguments>)
+
+Find and add new trials or new sources to existing trials.
+
+See also: [`findtrials`](@ref), [`Trial`](@ref), [`DataSubset`](@ref), [`TrialConditions`](@ref)
+"""
 function findtrials!(
     trials::Vector{Trial{I}},
     subsets::AbstractVector{DataSubset},
     trialconds::TrialConditions;
+    ignorefiles::Union{Nothing, Vector{String}}=nothing,
     debug=false,
     verbose=false,
-    ignorefiles::Union{Nothing, Vector{String}}=nothing,
     maxlogs=50,
 ) where I
     requiredconds = filter(!=(:subject), trialconds.required)
