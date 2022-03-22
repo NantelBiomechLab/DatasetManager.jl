@@ -278,10 +278,58 @@ Get the conditions for `trial`
 """
 conditions(trial::Trial) = trial.conditions
 
-hascondition(trial::Trial, cond::Pair{Symbol}) = conditions(trial)[cond.first] == cond.second
-hascondition(trial::Trial, cond::Pair{Symbol,T}) where T <: AbstractVector = conditions(trial)[cond.first] ∈ cond.second
+"""
+    hascondition(trial, condition...)
+    hascondition(trial, (condition => value)...)
+
+Test if `trial` has a condition. `value` can be a single level, multiple acceptable levels,
+or a predicate function. Multiple conditions and/or condition pairs can be given which all
+must be true to match.
+
+# Examples
+
+```julia-repl
+julia> trial = Trial(1, "baseline", Dict(:group => "control", :session => 2))
+
+julia> hascondition(trial, :group)
+true
+
+julia> hascondition(trial, :group => "A")
+false
+
+julia> hascondition(trial, :group => ["control", "A"])
+true
+
+julia> hascondition(trial, :group => ["control", "A"], :session => >=(2))
+false
+
+```
+"""
+hascondition(trial::Trial, cond::Symbol) = haskey(conditions(trial), cond)
+hascondition(trial::Trial, cond::Pair{Symbol,T}) where T = conditions(trial)[cond.first] == cond.second
+hascondition(trial::Trial, cond::Pair{Symbol,T}) where T <: Union{AbstractVector,Tuple} = conditions(trial)[cond.first] ∈ cond.second
+hascondition(trial::Trial, cond::Pair{Symbol,T}) where T <: Function = cond.second(conditions(trial)[cond.first])
 hascondition(trial::Trial, conds::Vararg{Pair{Symbol,T} where T <: Any}) = mapreduce(Base.Fix1(hascondition, trial), &, conds)
 hascondition(trial::Trial, conds::NTuple{N, Pair{Symbol,T} where T <: Any}) where N = hascondition(trial, conds...)
+
+"""
+    hascondition((condition => value)...)
+
+Create a function that tests if its argument has the given conditions, i.e. a function equivalent to
+`t -> hascondition(t, conditions...)`.
+
+# Examples
+```julia-repl
+julia> trial1 = Trial(1, "baseline", Dict(:group => "control", :session => 2));
+
+julia> trial2 = Trial(2, "baseline", Dict(:group => "A", :session => 1));
+
+julia> filter(hascondition(:group => "A"), [trial1, trial2])
+1-element Vector{Trial{Int64}}:
+ Trial(2, "baseline", (:group => "A", :session => 1), 0 sources)
+
+```
+"""
 hascondition(cond::Pair{Symbol}) = Base.Fix2(hascondition, cond)
 hascondition(conds::Vararg{Pair{Symbol,T} where T <: Any}) = Base.Fix2(hascondition, conds)
 
