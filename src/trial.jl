@@ -40,24 +40,38 @@ function Base.show(io::IO, ds::DataSubset)
 end
 
 """
-    TrialConditions(conditions, labels; <keyword arguments>)
+    TrialConditions(conditions, labels; [required, types, defaults, subject_fmt])
 
 Describes the experimental conditions and the labels for levels within each condition.
 
 # Arguments
 
-- `conditions` is a collection of condition names (eg `(:medication, :strength)`)
-- `labels` is a `Dict` with keys for each condition name (eg `haskey(labels, :medication)`).
-Each key gets a collection of the labels for all levels and any transformation desired for
-that condition.
+- `conditions` is a collection of condition names (eg `(:medication, :dose)`) in the order
+  they must appear in
+- `labels` must have keys for each condition name (eg `haskey(labels, :medication)`).
+  The value(s) for each key describes how that condition will be matched. Acceptable options
+  include a Regex, a pair (`old` => `transf` [=> `new`], where `old` may be a Regex or
+  one/multiple String(s), and where `transf` may be a `Function` or a [`SubstitutionString`](@ref),
+  and `new` is a Regex), or an array of any of the preceding.
 
 # Keyword arguments
 
-- `required=conditions`: The conditions which every trial must have (in the case of some
-trials having optional/additional conditions).
-- `types=fill(String, length(conditions)`: The (Julia) types for each condition (eg
-`[String, Int]`)
-- `sep="[_-]"`: The character separating condition labels
+- `required=conditions`: The minimum conditions which every trial must have
+- `types=Dict(conditions .=> String)`: The types that each condition should be parsed as
+- `defaults::Dict{Symbol,Any}`: Default conditions to set when a given condition is not matched
+- `subject_fmt=r"Subject (?<subject>\\d+)?"`: The Regex pattern used to match the trial's
+    subject ID. Any patterns given under a `:subject` key in `labels` takes precedence.
+
+# Examples
+```julia-repl
+julia> labels = Dict(
+    :subject => r"(?<=Patient )\\d+",
+    :group => ["Control", "Group A", "Group B"],
+    :posture => r"(sit|stand)"i => lowercase,
+    :cue => r"cue[-_](fast|slow)" => ((s) -> "\$s cue") => r"(fast|slow) cue");
+
+julia> conds = TrialConditions((:subject,:group,:posture,:cue), labels; types=Dict(:subject => Int));
+```
 """
 struct TrialConditions
     condnames::Vector{Symbol}
@@ -104,8 +118,12 @@ function TrialConditions(
                 flag = "i"
             end
         elseif typeof(labels[cond]) <: Pair{Regex,Pair{T1,T2}} where {T1,T2}
-            join(rg, (str_rgx(x) for x in labels[cond].second.second ), '|')
-            print(rg, ')')
+            if labels[cond].second.second isa Regex
+                print(rg, str_rgx(labels[cond].second.second), ')')
+            else
+                join(rg, (str_rgx(x) for x in labels[cond].second.second ), '|')
+                print(rg, ')')
+            end
             push!(subst, labels[cond].first => labels[cond].second.first)
         elseif typeof(labels[cond]) <: Pair{Regex,F} where F <: Function
             print(rg, str_rgx(labels[cond].first), ')')
