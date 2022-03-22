@@ -58,54 +58,100 @@ trials having optional/additional conditions).
 struct TrialConditions
     condnames::Vector{Symbol}
     required::Vector{Symbol}
-    labels_rg::Regex
-    subst::Vector{Pair{Regex,String}}
+    labels::Dict{Symbol, Regex}
     types::Dict{Symbol,DataType}
+    defaults::Dict{Symbol,Any}
+    subst::Vector{Pair{Regex,Any}}
 
-    function TrialConditions(conds, required, labels_rg, subst, types)
+    function TrialConditions(conds, required, labels, types, defaults, subst)
+        @assert :subject ∈ conds
+        :subject ∉ required && push!(required, :subject)
+        @assert issubset(conds, keys(labels))
+        @assert issubset(required, conds)
         get!.(Ref(types), setdiff(conds, keys(types)), String)
-        @assert Set(conds) == Set(collect(keys(types)))
+        @assert issubset(conds, keys(types))
 
-        return new(conds, required, labels_rg, subst, types)
+        return new(conds, required, labels, types, defaults, subst)
     end
 end
+
+str_rgx(r::Regex) = r.pattern
+str_rgx(str::String) = str
 
 function TrialConditions(
     conditions,
     labels;
     required=conditions,
     types=Dict(conditions .=> String),
-    sep="[_-]?"
+    defaults=Dict{Symbol,Any}(),
+    subject_fmt=r"Subject (?<subject>\d+)?",
 )
-    labels_rg = ""
-    subst = Vector{Pair{Regex,String}}(undef, 0)
+    labels_rg = Dict{Symbol,Regex}()
+    subst = Vector{Pair{Regex,Any}}(undef, 0)
+    conditions = collect(conditions)
+    flag = ""
 
-    for (i, cond) in enumerate(conditions)
-        labels_rg *= "(?<$cond>"
+    for cond in conditions
+        rg = IOBuffer()
+        print(rg, "(?<$cond>")
         if labels[cond] isa Regex
-            labels_rg *= labels[cond].pattern
-
-            optchar = '?'
-            labels_rg *= string(')', optchar)
-            i < length(conditions) && (labels_rg *= sep)
+            print(rg, str_rgx(labels[cond]), ')')
+            if !iszero(labels[cond].compile_options & Base.PCRE.CASELESS)
+                flag = "i"
+            end
+        elseif typeof(labels[cond]) <: Pair{Regex,Pair{T1,T2}} where {T1,T2}
+            join(rg, (str_rgx(x) for x in labels[cond].second.second ), '|')
+            print(rg, ')')
+            push!(subst, labels[cond].first => labels[cond].second.first)
+        elseif typeof(labels[cond]) <: Pair{Regex,F} where F <: Function
+            print(rg, str_rgx(labels[cond].first), ')')
+            push!(subst, labels[cond])
+            if !iszero(labels[cond].first.compile_options & Base.PCRE.CASELESS)
+                flag = "i"
+            end
         else
-            labels_rg *= join((x isa Pair ? x.second : x for x in labels[cond]), '|')
+            join(rg, (x isa Pair ? str_rgx(x.second) : str_rgx(x)
+                for x in labels[cond]), '|')
+            print(rg, ')')
 
-            optchar = '?'
-            labels_rg *= string(')', optchar)
-            i < length(conditions) && (labels_rg *= sep)
             foreach(labels[cond]) do condlabel
                 if condlabel isa Pair
-                    altlabels = condlabel.first isa Union{Symbol,String} ? [condlabel.first] :
-                        condlabel.first
-                    filter!(label -> label != condlabel.second, altlabels)
-                    push!(subst, Regex("("*join(altlabels, '|')*")") => condlabel.second)
+                    if condlabel.first isa Regex
+                        push!(subst, condlabel)
+                    else
+                        altlabels = condlabel.first isa String ? [condlabel.first] :
+                            condlabel.first
+                        filter!(label -> label != condlabel.second, altlabels)
+                        push!(subst, Regex("("*join(altlabels, '|')*")") => condlabel.second)
+                    end
                 end
             end
         end
+        labels_rg[cond] = Regex(String(take!(rg)), flag)
+    end
+    if :subject ∉ conditions
+        labels_rg[:subject] = subject_fmt
+        pushfirst!(conditions, :subject)
     end
 
-    return TrialConditions(collect(conditions), collect(required), Regex(labels_rg), subst, types)
+    return TrialConditions(conditions, collect(required), labels_rg, types, defaults, subst)
+end
+
+function extract_conditions(file, trialconds)
+    conds = Dict{Symbol,Any}()
+    last_ofst = 1
+    first_ofst = 1
+
+    for (i,cond) in enumerate(trialconds.condnames)
+        m = match(trialconds.labels[cond], file, last_ofst)
+        if !isnothing(m) && !isnothing(m[cond])
+            conds[cond] = String(m[cond])
+            i == 1 && (first_ofst = m.offset)
+            last_ofst = m.offset + length(m.match)
+        end
+    end
+
+    return file[first_ofst:end], conds
 end
 
 """
@@ -292,24 +338,27 @@ const lgry = Crayon(foreground=:light_gray)
 const bold = Crayon(bold=true)
 const rst = Crayon(reset=true)
 
-function highlight_matches(str, m)
-    io = IOBuffer()
-    hstr = IOContext(io, :color => true)
+function highlight_matches(str, m, conds)
+    hstr = str
+    BG_str = string(BOLD*GREEN_BG)
+    rst_str = string(rst)
 
-    firsti = m.offset
-    prev = firstindex(str)
-    for (m,i) in zip(filter(!isnothing, m.captures), filter(!iszero, m.offsets))
-        i -= firsti
-        print(hstr, @view(str[prev:i]), BOLD*GREEN_BG, m, rst)
-        prev = i + length(m) + 1
+    BG_str_len = length(BG_str)
+    rst_str_len = length(rst_str)
+
+    ofst = 1
+    for c in conds
+        val = get(m, c, nothing)
+        if !isnothing(val)
+            _m = match(Regex(string(val)), hstr, ofst)
+            hstr = string(@view(hstr[1:_m.offset-1]), BG_str, val, rst_str,
+                @view(hstr[(_m.offset+length(val)):end]))
+            ofst = _m.offset + BG_str_len + length(val) + rst_str_len
+        end
     end
-    print(hstr, @view(str[prev:end]))
 
-    return String(take!(io))
+    return hstr
 end
-
-str_rgx(r::Regex) = r.pattern
-str_rgx(str::String) = str
 
 optionalparse(T, ::Nothing) = nothing
 optionalparse(::Type{T}, x::T) where T = x
@@ -340,21 +389,17 @@ Find all the trials matching `conditions` which can be found in `subsets`.
 function findtrials(
     subsets::AbstractVector{DataSubset},
     trialconds::TrialConditions;
-    I::Type=String,
-    subject_fmt=r"Subject (?<subject>\d+)?",
     debug=false,
     verbose=false,
     ignorefiles::Union{Nothing, Vector{String}}=nothing,
-    defaultconds::Union{Nothing, Dict{Symbol}}=nothing,
-    rsearch = "(?|(?:"*str_rgx(subject_fmt)*")(?:.*?))(?<conditions>"*str_rgx(trialconds.labels_rg)*")(?(-1).*?|)",
     maxlogs=50,
 )
+    I = trialconds.types[:subject]
     trials = Vector{Trial{I}}()
-    requiredconds = trialconds.required
-    if isnothing(defaultconds)
-        defaultconds = Dict{Symbol,String}()
-    end
-    optionalconds = setdiff(trialconds.condnames, requiredconds, keys(defaultconds))
+    requiredconds = filter(!=(:subject), trialconds.required)
+    condnames_nosubject = filter(!=(:subject), trialconds.condnames)
+    defaultconds = trialconds.defaults
+    optionalconds = setdiff(condnames_nosubject, requiredconds, keys(defaultconds))
     if !isnothing(ignorefiles)
         ignorefiles .= normpath.(ignorefiles)
     end
@@ -364,7 +409,6 @@ function findtrials(
     end
 
     for set in subsets
-        rsearchext = Regex(rsearch*set.ext)
         debugheader, num_debugs = false, 0
         pattern = set.pattern
         files = normpath.(glob(pattern, set.dir))
@@ -374,14 +418,14 @@ function findtrials(
 
         for file in files
             _file = replace(file, trialconds.subst...)
-            m = match(rsearchext, _file)
+            slug, m = extract_conditions(_file, trialconds)
 
             if debug && num_debugs ≤ maxlogs
-                if verbose || isnothing(m) || any(isnothing.(m[cond] for cond in requiredconds))
+                if verbose || any(isnothing.(get(m, cond, nothing) for cond in [:subject; requiredconds]))
+
                     if !debugheader
                         debugheader = true
-                        println(stderr, "┌ Subset ", repr(set.name),
-                            " Searching using regex: ", rsearchext)
+                        println(stderr, "┌ Subset ", repr(set.name))
                     end
                     pretty_file = replace(string(lgry, file, rst), pretty_subst...)*string(rst)
 
@@ -389,12 +433,15 @@ function findtrials(
                         if isnothing(m)
                             println(ioc, "│ ╭ No match")
                         else
-                            pretty_mstr = '"'*highlight_matches(m.match, m)*'"'
-                            if any(isnothing, m)
-                                pretty_mstr *= " (not found: "*join(RED_FG.(first.(
-                                    filter(kv -> isnothing(kv[2]), collect(pairs(m))))), ", ")*')'
+                            print(ioc, "│ ╭ Match: ")
+                            print(ioc, '"', highlight_matches(slug, m, trialconds.condnames), '"')
+                            if any(c -> !haskey(m, c), trialconds.condnames)
+                                print(ioc, " (not found: ")
+                                join(ioc, RED_FG.(string.(setdiff(trialconds.condnames, keys(m)))), ", ")
+                                println(ioc, ')')
+                            else
+                                println(ioc)
                             end
-                            println(ioc, "│ ╭ Match: ", pretty_mstr)
                         end
                         println(ioc, "│ ╰ @ \"", pretty_file, '"')
                         print(stderr, String(take!(io)))
@@ -403,16 +450,16 @@ function findtrials(
                 end
             end
 
-            if isnothing(m) || any(isnothing.(m[cond] for cond in [:subject; requiredconds]))
+            if any(isnothing.(get(m, cond, nothing) for cond in [:subject; requiredconds]))
                 continue
             else
                 sid = optionalparse(I, m[:subject])
                 seenall = findall(trials) do trial
-                    trial.subject == sid &&
-                    all(trialconds.condnames) do cond
+                    sid == subject(trial) &&
+                    all(condnames_nosubject) do cond
                         T = trialconds.types[cond]
-                        actual = _get(conditions(trial), cond, _get(defaultconds, cond, nothing))
-                        candidate = optionalparse(T, _get(m, cond, _get(defaultconds, cond, nothing)))
+                        actual = get(conditions(trial), cond, get(defaultconds, cond, nothing))
+                        candidate = optionalparse(T, get(m, cond, get(defaultconds, cond, nothing)))
 
                         return actual == candidate
                     end
@@ -427,11 +474,11 @@ function findtrials(
                     end
                     foreach(defaultconds) do (k,v)
                         T = trialconds.types[k]
-                        get!(() -> optionalparse(T, _get(m, k, v)), conds, k)
+                        get!(() -> optionalparse(T, get(m, k, v)), conds, k)
                     end
                     foreach(optionalconds) do cond
                         T = trialconds.types[cond]
-                        if !isnothing(m[cond])
+                        if !isnothing(get(m, cond, nothing))
                             get!(() -> optionalparse(T, m[cond]), conds, cond)
                         end
                     end
