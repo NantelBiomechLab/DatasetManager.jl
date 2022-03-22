@@ -1,9 +1,12 @@
 """
-    DataSubset(name, source::Type{<:AbstractSource}, dir, pattern)
+    DataSubset(name, source::Type{<:AbstractSource}, dir, pattern; [dependent=false])
 
-Describes a subset of data, where files found within `dir`, with (absolute) paths which
-match `pattern` (using [glob syntax](https://en.wikipedia.org/wiki/Glob_(programming))), are
-all of the same `AbstractSource` subtype.
+Describes a subset of data, where files found within `dir`, which match `pattern` (using
+[glob syntax](https://en.wikipedia.org/wiki/Glob_(programming))), are `source` sources.
+Independent sources (`dependent=false`) can be the only source in a new `Trial`, while
+dependent sources will only be added to existing trials.
+
+See also: [`Trial`](@ref), [`findtrials`](@ref), [`findtrials!`](@ref)
 
 # Examples
 
