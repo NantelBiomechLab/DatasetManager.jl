@@ -589,7 +589,9 @@ function findtrials!(
                     push!(trials, Trial(sid, name, conds,
                         Dict{String,AbstractSource}(set.name => set.source(file))))
                 else
-                    if !set.dependent
+                    if set.dependent
+                        _id=gensym(file)
+                    else
                         @assert length(seenall) == 1
                     end
 
@@ -605,7 +607,7 @@ function findtrials!(
                             let io = IOBuffer()
                                 showerror(io, DuplicateSourceError(t, set,
                                     sourcepath(t.sources[src_name]), file))
-                                @error String(take!(io))
+                                @error String(take!(io)) _id=_id maxlog=1
                             end
                         else
                             t.sources[src_name] = set.source(file)
