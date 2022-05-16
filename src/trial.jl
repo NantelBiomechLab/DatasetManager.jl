@@ -1,12 +1,22 @@
 """
-    DataSubset(name, source::Type{<:AbstractSource}, dir, pattern; [dependent=false])
+    DataSubset(name, source::Union{Function,<:AbstractSource}, dir, pattern; [dependent=false])
 
-Describes a subset of data, where files found within `dir`, which match `pattern` (using
-[glob syntax](https://en.wikipedia.org/wiki/Glob_(programming))), are `source` sources.
-Independent sources (`dependent=false`) can be the only source in a new `Trial`, while
-dependent sources will only be added to existing trials.
+Describes a subset of `source` data files found within `dir` which match `pattern` (using
+[glob syntax](https://en.wikipedia.org/wiki/Glob_(programming))). The `name` of the
+DataSubset will be used in `findtrials` as the source name in a Trial.
 
-See also: [`Trial`](@ref), [`findtrials`](@ref), [`findtrials!`](@ref)
+Some sources described by a DataSubset may not be relevant as standalone/independent Trials
+(e.g. maximal voluntary contraction "trials", when collecting EMG data, are typically only
+relevant to movement trials for a given subject/session of a data collection, but are not
+useful on their own). Dependent sources (eg `dependent=true`) will not create new trials in
+`findtrials` and will only be added to pre-existing trials when the required conditions and
+a "condition" with the same name as the DataSubset's `name` exists. The matched "condition"
+will be used in `findtrials!` as the source name in corresponding Trials.
+
+If `source` is a function, it must accept a file path and return a Source.
+
+See also: [`Source`](@ref), [`TrialConditions`](@ref), [`findtrials`](@ref),
+[`findtrials!`](@ref)
 
 # Examples
 
@@ -42,23 +52,24 @@ end
 """
     TrialConditions(conditions, labels; [required, types, defaults, subject_fmt])
 
-Describes the experimental conditions and the labels for levels within each condition.
+Describes the experimental conditions (aka factors) and the labels for levels within each condition.
 
 # Arguments
 
 - `conditions` is a collection of condition names (eg `(:medication, :dose)`) in the order
-  they must appear in
-- `labels` must have keys for each condition name (eg `haskey(labels, :medication)`).
-  The value(s) for each key describes how that condition will be matched. Acceptable options
-  include a Regex, a pair (`old` => `transf` [=> `new`], where `old` may be a Regex or
-  one/multiple String(s), and where `transf` may be a `Function` or a [`SubstitutionString`](@ref),
-  and `new` is a Regex), or an array of any of the preceding.
+  they must appear in the file paths of trial sources
+- `labels` must have a key-value pair for each condition name. The value(s) for each key
+  describes how that condition will be matched. Acceptable options include a Regex, a pair
+  (`old` => `transf` [=> `new`], where `old` may be a Regex or one/multiple String(s), and
+  where `transf` may be a `Function` or a [`SubstitutionString`](@ref) (if `old` is a
+  Regex), and `new` is a Regex), or an array of any of the preceding. Keys in `labels` which
+  are not included in `conditions` will be ignored.
 
 # Keyword arguments
 
-- `required=conditions`: The minimum conditions which every trial must have
+- `required=conditions`: The conditions which every trial is required to have. C
 - `types=Dict(conditions .=> String)`: The types that each condition should be parsed as
-- `defaults::Dict{Symbol,Any}`: Default conditions to set when a given condition is not matched
+- `defaults=Dict{Symbol,Any}()`: Default conditions to set when a given condition is not matched
 - `subject_fmt=r"Subject (?<subject>\\d+)?"`: The Regex pattern used to match the trial's
     subject ID. Any patterns given under a `:subject` key in `labels` takes precedence.
 
@@ -66,7 +77,7 @@ Describes the experimental conditions and the labels for levels within each cond
 ```julia-repl
 julia> labels = Dict(
     :subject => r"(?<=Patient )\\d+",
-    :group => ["Control", "Group A", "Group B"],
+    :group => ["Placebo" => "Control", "Group A", "Group B"],
     :posture => r"(sit|stand)"i => lowercase,
     :cue => r"cue[-_](fast|slow)" => ((s) -> "\$s cue") => r"(fast|slow) cue");
 
@@ -471,7 +482,9 @@ end
 """
     findtrials!(trials, subsets, conditions; <keyword arguments>)
 
-Find and add new trials or new sources to existing trials.
+Find more trials and/or find additional sources for existing trials.
+
+For DataSubsets in `subsets` which are dependent, candidate source files must have the required conditions and have a "condition" matching the DataSubset name.
 
 See also: [`findtrials`](@ref), [`Trial`](@ref), [`DataSubset`](@ref), [`TrialConditions`](@ref)
 """
