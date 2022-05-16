@@ -626,6 +626,10 @@ function findtrials!(
                         end
 
                         if hassource(t, src_name)
+                            if !@isdefined(_id)
+                                _id=gensym(file)
+                            end
+
                             let io = IOBuffer()
                                 showerror(io, DuplicateSourceError(t, set,
                                     sourcepath(t.sources[src_name]), file))
