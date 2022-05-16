@@ -61,7 +61,7 @@ Describes the experimental conditions (aka factors) and the labels for levels wi
 - `labels` must have a key-value pair for each condition name. The value(s) for each key
   describes how that condition will be matched. Acceptable options include a Regex, a pair
   (`old` => `transf` [=> `new`], where `old` may be a Regex or one/multiple String(s), and
-  where `transf` may be a `Function` or a [`SubstitutionString`](@ref) (if `old` is a
+  where `transf` may be a `Function` or a `SubstitutionString` (if `old` is a
   Regex), and `new` is a Regex), or an array of any of the preceding. Keys in `labels` which
   are not included in `conditions` will be ignored.
 
