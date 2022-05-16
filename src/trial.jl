@@ -107,6 +107,15 @@ end
 str_rgx(r::Regex) = r.pattern
 str_rgx(str::String) = str
 
+# TODO: Add tests labels (ie values in `labels`) for:
+    # - Regex
+    # - Regex => Function
+    # - Regex => Function => Vector{String}
+    # - Regex => Function => Regex
+    # - Regex => SubstitutionString => Regex
+    # - Vector{String}
+    # - Vector{Union{String,Pair{Vector{String},String}}}
+    # - Vector{Pair{Vector{String},String}}
 function TrialConditions(
     conditions,
     labels;
@@ -129,7 +138,7 @@ function TrialConditions(
                 flag = "i"
             end
         elseif typeof(labels[cond]) <: Pair{Regex,Pair{T1,T2}} where {T1,T2}
-            if labels[cond].second.second isa Regex
+            if labels[cond].second.second isa Regex || labels[cond].second.second isa String
                 print(rg, str_rgx(labels[cond].second.second), ')')
             else
                 join(rg, (str_rgx(x) for x in labels[cond].second.second ), '|')
