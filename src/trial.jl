@@ -327,6 +327,21 @@ Get the sources for `trial`
 sources(trial::Trial) = trial.sources
 
 """
+    hassubject(trial, sub)
+
+Test if the subject ID for `trial` is `sub`
+"""
+hassubject(trial::Trial, sub) = subject(trial) == sub
+
+"""
+    hassubject(sub)
+
+Create a function that tests if a trial has the subject ID `sub`, i.e. a function equivalent
+to `t -> hassubject(t, sub)`.
+"""
+hassubject(sub) = Base.Fix2(hassubject, sub)
+
+"""
     hascondition(trial, condition...)
     hascondition(trial, (condition => value)...)
 
