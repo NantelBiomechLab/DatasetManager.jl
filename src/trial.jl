@@ -367,17 +367,25 @@ Create a function that tests if its argument has the given conditions, i.e. a fu
 `t -> hascondition(t, conditions...)`.
 
 # Examples
-```julia-repl
-julia> trial1 = Trial(1, "baseline", Dict(:group => "control", :session => 2));
+```jldoctest
+julia> trial1 = Trial(1, "baseline", Dict(:group => "control", :session => 2))
+Trial{Int64}
+  Subject: 1
+  Name: baseline
+  Conditions:
+    :group => "control"
+    :session => 2
+  No sources
 
 julia> trial2 = Trial(2, "baseline", Dict(:group => "A", :session => 1));
 
 julia> filter(hascondition(:group => "A"), [trial1, trial2])
 1-element Vector{Trial{Int64}}:
- Trial(2, "baseline", (:group => "A", :session => 1), 0 sources)
+ Trial(2, "baseline", 2 conditions, 0 sources)
 
 ```
 """
+hascondition(cond::Symbol) = Base.Fix2(hascondition, cond)
 hascondition(cond::Pair{Symbol}) = Base.Fix2(hascondition, cond)
 hascondition(conds::Vararg{Pair{Symbol,T} where T <: Any}) = Base.Fix2(hascondition, conds)
 
