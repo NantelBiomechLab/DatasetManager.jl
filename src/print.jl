@@ -1,20 +1,22 @@
 function write_results(
     filename, df, conds;
-    variables=resultsvariables(rs), archive=true, format=:wide
+    variables=unique(df.variable), archive=true, format=:wide
 )
     format ∈ (:wide, :long) || throw(ArgumentError("`format` must be either :wide or :long"))
-    ("subject", "variable", "value") ∈ names(df) ||
+    issubset(("subject", "variable", "value"), names(df)) ||
         throw(ArgumentError("`df` must be provided in long format"))
-    tempfn = string(filename, '-', bytes2hex(rand(UInt8, 3)))
+    dir, name = splitdir(filename)
+    name, ext = splitext(name)
+    tempfn = string(dir, "/~", name, '-', bytes2hex(rand(UInt8, 2)), ext)
 
     if format == :long
-        CSV.write(tempfn, df)
+        CSV.write(tempfn, subset(df, :variable => x -> x .∈ Ref(variables)))
         if archive && isfile(filename)
             mv(filename, filename*".bak")
         end
         mv(tempfn, filename)
     else
-        wide = unstack(df, [:variable, conds...], :subject, :value)
+        wide = unstack(subset(df, :variable => x -> x .∈ Ref(variables)), [:variable, conds...], :subject, :value)
         open(tempfn, "w") do io
             println(io, join([' '; wide[!, :variable]], ','))
             for cond in conds
@@ -32,7 +34,7 @@ function write_results(
 
 
         if archive && isfile(filename)
-            mv(filename, filename*".bak")
+            mv(filename, filename*".bak"; force=true)
         end
         mv(tempfn, filename)
     end
