@@ -354,8 +354,8 @@ false
 ```
 """
 hascondition(trial::Trial, cond::Symbol) = haskey(conditions(trial), cond)
-hascondition(trial::Trial, cond::Pair{Symbol,T}) where T = conditions(trial)[cond.first] == cond.second
-hascondition(trial::Trial, cond::Pair{Symbol,T}) where T <: Union{AbstractVector,Tuple} = conditions(trial)[cond.first] ∈ cond.second
+hascondition(trial::Trial, cond::Pair{Symbol,T}) where T = (get(conditions(trial), cond.first, missing) == cond.second) === true
+hascondition(trial::Trial, cond::Pair{Symbol,T}) where T <: Union{AbstractVector,Tuple} = (get(conditions(trial), cond.first, missing) ∈ cond.second) === true
 hascondition(trial::Trial, cond::Pair{Symbol,T}) where T <: Function = cond.second(conditions(trial)[cond.first])
 hascondition(trial::Trial, conds::Vararg{Pair{Symbol,T} where T <: Any}) = mapreduce(Base.Fix1(hascondition, trial), &, conds)
 hascondition(trial::Trial, conds::NTuple{N, Pair{Symbol,T} where T <: Any}) where N = hascondition(trial, conds...)
