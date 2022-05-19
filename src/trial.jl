@@ -400,22 +400,48 @@ function recodecondition!(f, trial, cond)
 end
 
 """
-    hassource(trial, src::Union{String,S<:AbstractSource}) -> Bool
+    hassource(trial, src::String)
+    hassource(trial, srctype::S) where {S<:AbstractSource}
+    hassource(trial, src::Regex)
 
-Check if `trial` has a source with key or type `src`.
+Check if `trial` has a source with key or type matching `src`.
 
 # Examples
-```julia
-julia> hassource(trial, "model")
-false
+```jldoctest
+julia> trial1 = Trial(1, "baseline", Dict(), Dict("model" => Source{Nothing}()));
 
-julia> hassource(trial, Source{Events})
+julia> hassource(trial, "model")
 true
+
+julia> hassource(trial, Source{Nothing})
+true
+
+julia> hassource(trial, r"test*")
+false
 ```
 """
 hassource(trial::Trial, src::String) = haskey(sources(trial), src)
+hassource(trial::Trial, src::Regex) = any(contains(src), keys(sources(trial)))
 hassource(trial::Trial, src::S) where S <: AbstractSource = src ∈ values(sources(trial))
 hassource(trial::Trial, ::Type{S}) where S <: AbstractSource = S ∈ typeof.(values(sources(trial)))
+
+"""
+    hassource(src)
+
+Create a function that tests if a trial has the source `src`, i.e. a function equivalent
+to `t -> hassource(t, src)`.
+
+# Examples
+```jldoctest
+julia> trial1 = Trial(1, "baseline", Dict(), Dict("model" => Source{Nothing}()));
+
+julia> trial2 = Trial(2, "baseline", Dict(), Dict());
+
+julia> filter(hassource("model"), [trial1, trial2])
+1-element Vector{Trial{Int64}}:
+ Trial(1, "baseline", 0 conditions, 1 source)
+
+"""
 hassource(s) = Base.Fix2(hassource, s)
 
 """
