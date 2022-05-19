@@ -419,6 +419,16 @@ function recodecondition!(trial, cond::Pair{Symbol,T}) where {T<:Base.Callable}
     end
 end
 
+function addcondition!(trial, cond::Pair{Symbol,T}) where {T<:Base.Callable}
+    @assert !hascondition(trial, cond.first)
+    f = cond.second
+    c = f(trial)
+    if !isnothing(c)
+        conditions(trial)[cond.first] = c
+    end
+    return nothing
+end
+
 """
     hassource(trial, src::String)
     hassource(trial, srctype::S) where {S<:AbstractSource}
