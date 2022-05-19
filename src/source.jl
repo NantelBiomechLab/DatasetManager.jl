@@ -129,6 +129,10 @@ function requiresource!(trial, src::Type{<:AbstractSource}, parent=nothing; kwar
     requiresource!(trial, srcname_default(src) => src(), parent; kwargs...)
 end
 
+function requiresource!(trial, name::Regex)
+    requiresource!(trial, name => Source{Nothing}(""), nothing; force=false, deps=UnknownDeps())
+end
+
 function requiresource!(trial, namesrc::Pair, parent=nothing;
     force=false, deps=dependencies(namesrc.second), kwargs...
 )
