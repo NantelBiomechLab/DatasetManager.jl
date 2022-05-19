@@ -41,15 +41,15 @@ struct Segment{S<:AbstractSource,ID}
                 "finish time must be ≥ start time; got $finish"))
         end
 
-        return new(trial, source, start, finish, merge(trial.conditions, conditions))
+        return new(trial, source, convert(Union{Nothing,Float64}, start), convert(Union{Nothing,Float64}, finish), merge(trial.conditions, conditions))
     end
 end
 
 function Segment(
     trial::Trial{ID},
     source::S;
-    start::Union{Nothing,Float64}=nothing,
-    finish::Union{Nothing,Float64}=nothing,
+    start=nothing,
+    finish=nothing,
     conditions::Dict{Symbol}=Dict{Symbol,Any}()
 ) where {ID, S <: AbstractSource}
     return Segment{S,ID}(trial, source, start, finish, conditions)
@@ -97,7 +97,7 @@ function Base.show(io::IO, s::Segment{S,ID}) where {S,ID}
     end
 end
 
-function Base.show(io::IO, ::MIME"text/plain", s::Segment{S,ID}) where {S,ID}
+function Base.show(io::IO, _::MIME"text/plain", s::Segment{S,ID}) where {S,ID}
     println(IOContext(io, :limit=>true), "Segment{$S,$ID}\n Trial: $(s.trial)")
     println(io, " Source: ", s.source)
     print(io, " Time: ", isnothing(s.start) ? "beginning" : s.start)
@@ -215,7 +215,7 @@ function Base.show(io::IO, sr::SegmentResult)
     end
 end
 
-function Base.show(io::IO, ::MIME"text/plain", sr::SegmentResult{S,ID}) where {S,ID}
+function Base.show(io::IO, _::MIME"text/plain", sr::SegmentResult{S,ID}) where {S,ID}
     println(io, "SegmentResult{$S,$ID}")
     print(io, ' ', sr.segment)
     println(io)
