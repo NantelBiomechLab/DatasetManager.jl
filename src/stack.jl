@@ -3,7 +3,7 @@
 
 Compile the results into a stacked, long form DataFrame
 """
-function stack(rs::Vector{<:SegmentResult}, conds;
+function stack(rs::Vector{<:SegmentResult}, conds=unique_conditions(rs);
     variables=resultsvariables(rs)
 )
     df = DataFrame(subject = categorical(subject.(rs)))
