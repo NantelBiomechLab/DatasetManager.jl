@@ -336,7 +336,7 @@ must be true to match.
 
 # Examples
 
-```julia-repl
+```jldoctest
 julia> trial = Trial(1, "baseline", Dict(:group => "control", :session => 2))
 
 julia> hascondition(trial, :group)
@@ -348,8 +348,11 @@ false
 julia> hascondition(trial, :group => ["control", "A"])
 true
 
-julia> hascondition(trial, :group => ["control", "A"], :session => >=(2))
+julia> hascondition(trial, :group => "A", :session => 1)
 false
+
+julia> hascondition(trial, :group => ["control", "A"], :session => >=(2))
+true
 
 ```
 """
@@ -363,19 +366,12 @@ hascondition(trial::Trial, conds::NTuple{N, Pair{Symbol,T} where T <: Any}) wher
 """
     hascondition((condition => value)...)
 
-Create a function that tests if its argument has the given conditions, i.e. a function equivalent to
+Create a function that tests if a trial has the given condition(s), i.e. a function equivalent to
 `t -> hascondition(t, conditions...)`.
 
 # Examples
 ```jldoctest
-julia> trial1 = Trial(1, "baseline", Dict(:group => "control", :session => 2))
-Trial{Int64}
-  Subject: 1
-  Name: baseline
-  Conditions:
-    :group => "control"
-    :session => 2
-  No sources
+julia> trial1 = Trial(1, "baseline", Dict(:group => "control", :session => 2));
 
 julia> trial2 = Trial(2, "baseline", Dict(:group => "A", :session => 1));
 
