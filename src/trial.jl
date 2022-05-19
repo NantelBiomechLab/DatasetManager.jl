@@ -409,9 +409,14 @@ function renamecondition!(trial, (old, new)::Pair)
     return nothing
 end
 
-function recodecondition!(f, trial, cond)
-    @assert hascondition(trial, cond)
-    conditions(trial)[cond] = f(conditions(trial)[cond])
+function recodecondition!(trial, cond::Pair{Symbol,T}) where {T<:Base.Callable}
+    @assert hascondition(trial, cond.first)
+    f = cond.second
+    if hasmethod(f, Tuple{Any,Any})
+        conditions(trial)[cond.first] = f(trial, conditions(trial)[cond.first])
+    else
+        conditions(trial)[cond.first] = f(conditions(trial)[cond.first])
+    end
 end
 
 """
