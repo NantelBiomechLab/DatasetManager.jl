@@ -148,7 +148,12 @@ function requiresource!(trial, namesrc::Pair, parent=nothing;
     end
 
     if deps isa UnknownDeps
-        throw(MissingSourceError("unable to generate missing source $src for $trial"))
+        # TODO: Cause/solution for `MissingSourceError` unclear from error name or message
+        if force
+            throw(MissingSourceError("unable to generate missing source $name => $src for $trial"))
+        else
+            throw(MissingSourceError("required source $name is missing for $trial"))
+        end
     else
         foreach(deps) do reqsrc
             requiresource!(trial, reqsrc, src; force=false)
