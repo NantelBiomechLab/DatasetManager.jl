@@ -238,7 +238,7 @@ function Base.show(io::IO, t::Trial)
     print(io, numsources, " source", plural, ')')
 end
 
-function Base.show(io::IO, ::MIME"text/plain", t::Trial{I}) where I
+function Base.show(io::IO, _::MIME"text/plain", t::Trial{I}) where I
     println(io, "Trial{", I, "}")
     println(io, "  Subject: ", t.subject)
     println(io, "  Name: ", t.name)
@@ -802,11 +802,10 @@ subdirectories, using the naming schema "\$trial.subject_\$srcname_\$basename(so
 
 # Examples
 
-```julia
+```julia-repl
 julia> export_trials(trials, pwd()) do trial, source
     "\$(subject(trial))_\$(conditions(trial)[:group]).\$(srcext(source))"
 end
-
 ```
 """
 function export_trials(trials::Vector{<:Trial}, outdir, srcs=unique_sources(trials))
