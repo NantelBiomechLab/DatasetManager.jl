@@ -445,15 +445,20 @@ julia> filter(hassource("model"), [trial1, trial2])
 hassource(s) = Base.Fix2(hassource, s)
 
 """
-    getsource(trial, src::Union{String,Type{<:AbstractSource}}) -> <:AbstractSource
-    getsource(trial, name::String => src::Type{<:AbstractSource}) -> <:AbstractSource
+    getsource(trial, name::String) -> Source
+    getsource(trial, pattern::Regex) -> Vector{Source}
+    getsource(trial, src::S) where {S<:AbstractSource} -> Source
+    getsource(trial, name::String => src::Type{<:AbstractSource}) -> Source
 
-Return a source from `trial` with key or type `src`. When the second argument is a pair, a
-source with key `name` will returned, or of type `src` if no source `name` is present.
+Return a source from `trial` with the requested `name` or `src`. When the both `name`
+and `src` are given as a pair, a source with `name` will be searched for first, and if
+not found, a source of type `src` will be searched for.
 
-If multiple sources of type `src` are present, the desired source must be accessed by name/key only or an error will be thrown.
+If multiple sources of type `src` are present, the desired source must be accessed by
+name/pattern only or an error will be thrown.
 """
 getsource(trial::Trial, src::String) = sources(trial)[src]
+getsource(trial::Trial, src::Regex) = getindex.(Ref(sources(trial)), filter(contains(src), keys(sources(trial))))
 function getsource(trial::Trial, ::Type{S}) where S <: AbstractSource
     only(filter(v -> v isa S, collect(values(sources(trial)))))
 end
