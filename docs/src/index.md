@@ -13,14 +13,14 @@ gensimpledata()
 datadir = relpath(joinpath(pkgdir(DatasetManager), "test/data/simple"))
 struct GaitEvents; end
 subsets = [ DataSubset("events", Source{GaitEvents}, datadir, "*.csv") ]
-conds = TrialConditions((:session,:stim), Dict(:session => r"\d", :stim => ["stim", "placebo"]); types=[Int,String])
+conds = TrialConditions((:session,:stim), Dict(:session => r"\d", :stim => ["stim", "placebo"]);
+    subject_fmt=r"ID(?<subject>\d+)", types=Dict(:session => Int, :stim => String))
 ENV["LINES"] = 17
 ```
 
 ```@repl simplefakedata
 using DatasetManager, DataFrames, CSV, Statistics
 trials = findtrials(subsets, conds;
-    subject_fmt=r"ID(?<subject>\d+)",
     ignorefiles=[joinpath(datadir, "ID4_3_stim-02.csv")]);
 summarize(trials)
 analysis_results = analyzedataset(trials, Source{GaitEvents}) do trial
