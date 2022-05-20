@@ -24,6 +24,7 @@ hassource
 getsource
 sources
 findtrials
+findtrials!
 analyzedataset
 export_trials
 ```

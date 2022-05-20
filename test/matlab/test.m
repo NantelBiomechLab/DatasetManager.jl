@@ -128,8 +128,8 @@ genpath = '/mnt/data/projects/unorganized-datasets/CAREN-PD/PD Project/Data/Gene
 dflowpath = '/mnt/data/projects/unorganized-datasets/CAREN-PD/parkinsons/raw/D-Flow';
 
 subsets = [
-    DataSubset('visual3d', 'V3DExportSource', fullfile(genpath, 'Subject */Export/*.mat')), ...
-    DataSubset('dflow', 'RawDFlowPDSource', fullfile(dflowpath, 'N*/*.txt'))
+    DataSubset('visual3d', @V3DExportSource, fullfile(genpath, 'Subject */Export/*.mat')), ...
+    DataSubset('dflow', @RawDFlowPDSource, fullfile(dflowpath, 'N*/*.txt'))
 ]
 
 %% find trials matching conditions

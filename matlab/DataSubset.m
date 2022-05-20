@@ -6,14 +6,23 @@ classdef DataSubset
         name = ''
         source
         pattern = ''
+        ext = '(?(lastreqgroup)\w*?|)\.'
     end
     
     methods
-        function obj = DataSubset(name, source, pattern)
+        function obj = DataSubset(name, source, varargin)
             if nargin > 0
-                obj.name = name;
-                obj.source = source;
-                obj.pattern = pattern;
+                if nargin > 3
+                    obj.name = name;
+                    obj.source = source;
+                    obj.pattern = varargin{1};
+                    obj.ext = strcat('(?(lastreqgroup)\w*?|)', regexprep(varargin{2}, '^\\?\.?', '\\.'));
+                elseif nargin == 3
+                    obj.name = name;
+                    obj.source = source;
+                    obj.pattern = varargin{:};
+                    obj.ext = strcat('(?(lastreqgroup)\w*?|)', regexprep(srcext(source()), '^\\?\.?', '\\.'));
+                end
             end
         end
     end

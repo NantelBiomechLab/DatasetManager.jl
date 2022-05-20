@@ -1,4 +1,4 @@
-classdef Trial
+classdef Trial < handle
     % Trial Describes a single trial, including a reference to the subject, trial name, trial
     % conditions, and relevant sources of data.
     properties
@@ -28,27 +28,17 @@ classdef Trial
                 arrayfun(@isequal, repmat(obj.conditions, 1, length(y)), [y.conditions]);
         end
 
-        function bool = hassource(trial, varargin)
-            p = inputParser;
+        function bool = hassource(trial, src)
+            bool = false(size(trial));
 
-            addRequired(p, 'trial', @(x) isa(x, 'Trial'));
-            addOptional(p, 'name', '');
-            addOptional(p, 'src', Source(), @(x) isa(x, 'Source'));
-            addParameter(p, 'OfClass', false, @islogical);
-
-            parse(p, trial, varargin{:});
-            name = p.Results.name;
-            src = p.Results.src;
-            ofclass = p.Results.OfClass;
-
-            bool = false;
-
-            bool = bool | isfield(trial.sources, name);
-
-            bool = bool | any(structfun(@(x) x == src, trial.sources));
-            
-            if ofclass
-                bool = bool | structfun(@(x) isa(x, class(src)), trial.sources);
+            if isa(src, 'Source')
+                bool = bool | reshape(cellfun(@(s) any(structfun(@(x) x == src, s)), {trial.sources}), size(trial));
+            elseif ischar(src)
+                if exist(src, 'class') == 8
+                    bool = bool | reshape(cellfun(@(s) any(structfun(@(x) isa(x, src), s)), {trial.sources}), size(trial));
+                else
+                    bool = bool | reshape(cellfun(@(s) isfield(s, src), {trial.sources}), size(trial));
+                end
             end
         end
 
@@ -85,6 +75,53 @@ classdef Trial
                 end
             end
         end
+
+        function requiresource(trial, src, varargin)
+            p = inputParser;
+            p.KeepUnmatched = true;
+            addRequired(p, 'trial', @(x) isa(x, 'Trial'));
+            addRequired(p, 'src', @(x) isa(x, 'Source'));
+            addOptional(p, 'parent', false, @islogical);
+            addParameter(p, 'Name', srcname_default(src), @ischar);
+            addParameter(p, 'Force', false, @islogical);
+            addParameter(p, 'Dependencies', dependencies(src));
+
+            parse(p, trial, src, varargin{:});
+            parent = p.Results.parent;
+            name = p.Results.Name;
+            force = p.Results.Force;
+            deps = p.Results.Dependencies;
+
+            if ~force
+                if (~parent && hassource(trial, class(src))) || hassource(trial, name) || hassource(trial, src)
+                    return
+                elseif isfile(src.path)
+                    trial.sources.(name) = src
+                    return
+                end
+            end
+
+            % TODO: Decide if `false` is an acceptable design choice (in lieu of the Julia
+            % version's `UnknownDeps`
+            if islogical(deps) && deps == false
+                trialstr = evalc('display(trial)');
+                srcstr = evalc('display(src)');
+                error('unable to generate missing source %s\nfor %s', srcstr(12:end-1), trialstr(14:end-2))
+            else
+                for i = 1:length(deps)
+                    requiresource(trial, deps{i}, true, 'Force', false);
+                end
+            end
+
+            new_src = generatesource(src, trial, deps, p.Unmatched);
+            if ~isfile(new_src.path)
+                trialstr = evalc('display(trial)');
+                srcstr = evalc('display(new_src)');
+                error('unable to generate missing source %s\nfor %s', srcstr(15:end-1), trialstr(14:end-2))
+            end
+
+            trial.sources.(name) = new_src;
+        end
     end
 
 methods(Static)
@@ -105,24 +142,32 @@ methods(Static)
         addRequired(p, 'conditions', @(x) isa(x, 'TrialConditions'));
         addParameter(p, 'SubjectFormat', 'Subject (?<subject>\d+)', @ischar);
         addParameter(p, 'IgnoreFiles', {}, @iscell);
-
         addParameter(p, 'DefaultConditions', struct());
+        addParameter(p, 'Debug', false);
+        addParameter(p, 'MaxLog', 25);
+        addParameter(p, 'Verbose', false);
 
         parse(p, subsets, conditions, varargin{:});
         subject_fmt = p.Results.SubjectFormat;
         ignorefiles = GetFullPath(p.Results.IgnoreFiles);
         defaultconds = p.Results.DefaultConditions;
+        debug = p.Results.Debug;
+        maxlog = p.Results.MaxLog;
+        verbose = p.Results.Verbose;
 
         trials = Trial.empty;
 
-        rg = strcat(subject_fmt, '.*', conditions.labels_rg);
+        rg = strcat(subject_fmt, '(?:.*?)', conditions.labels_rg);
 
         reqcondnames = conditions.required;
         optcondnames = setdiff(setdiff(conditions.condnames, reqcondnames), ...
             fieldnames(defaultconds));
 
         for seti = 1:length(subsets)
+            debugheader = false;
+            num_debugs = 0;
             set = subsets(seti);
+            rsearchext = strcat(rg, regexprep(set.ext, 'lastreqgroup', reqcondnames(end)));
             pattern = set.pattern;
             files = dir(pattern);
             files = fullfile({files.folder}, {files.name});
@@ -133,14 +178,37 @@ methods(Static)
 
             for filei = 1:length(files)
                 file = files{filei};
-                priv_file = multregexprep(file, conditions.subst(:,1), conditions.subst(:,2));
+                priv_file = regexprep(file, conditions.subst(:,1), conditions.subst(:,2));
 
-                m = regexp(priv_file, rg, 'names');
-                if isempty(m)
-                    continue
+                m = regexp(priv_file, rsearchext, 'names');
+
+                if debug && num_debugs <= maxlog
+                    if verbose || isempty(m) || any(selectstructfun(@isempty, m, reqcondnames))
+                        if ~debugheader
+                            debugheader = true;
+                            fprintf('┌ Subset ''%s'' Searching using regex: ''%s''\n', set.name, rsearchext);
+                        end
+
+                        if isempty(m)
+                            fprintf('│ ╭ No match\n')
+                        else
+                            newm = regexp(priv_file, rsearchext, 'match');
+                            str = sprintf('''%s''', newm{:});
+                            if any(selectstructfun(@isempty, m, reqcondnames))
+                                fns = fieldnames(m);
+                                is = ismember(fns, reqcondnames);
+                                is = structfun(@isempty, m) & is;
+                                notfields_joined = join(fns(is), ', ');
+                                str = strcat(str, sprintf(' (not found: %s)', notfields_joined{:}));
+                            end
+                            fprintf('│ ╭ Match: %s\n', str);
+                        end
+                        fprintf('│ ╰ @ ''%s''\n', file);
+                        num_debugs = num_debugs + 1;
+                    end
                 end
 
-                if isempty(m.('subject')) || any(selectstructfun(@isempty, m, reqcondnames))
+                if isempty(m) || isempty(m.('subject')) || any(selectstructfun(@isempty, m, reqcondnames))
                     continue
                 else
                     [~, name, ~] = fileparts(file);
@@ -187,28 +255,38 @@ methods(Static)
                         end
                         trial = trials(seen);
                         if isfield(trial.sources, set.name)
-                            [~, short_file, ext] = fileparts(file);
-                            [~, short_orig, o_ext] = fileparts(trial.sources.(set.name));
+                            compath = sharedpath(file, trial.sources.(set.name).path);
+                            short_file = ['.../', regexprep(file, compath, '')];
+                            short_orig = ['.../', regexprep(trial.sources.(set.name).path, compath, '')];
                             trialdisp = sprintf("Trial('%s','%s', %i conditions, %i sources)", ...
                                 trial.subject, trial.name, length(trial.conditions), ...
                                 length(trial.sources));
-                            error("Error: Duplicate source. Found '%s' source file\n'%s'\nfor %s which already has\na '%s' source at '%s'.", ...
-                                set.name, [short_file, ext], trialdisp, set.name, [short_orig, o_ext])
+                            error('Trial:DuplicateSource', "  Duplicate source. Found '%s' source file '%s'\n  for %s which already\n  has a source '%s' at '%s'.", ...
+                                set.name, short_file, trialdisp, set.name, short_orig)
                         else
                             trial.sources.(set.name) = srcfun(file);
-                            trials(seen) = trial;
                         end
                     end
                 end
             end
+            if debugheader
+                fprintf('└ End subset: ''%s''', set.name);
+            end
         end
     end
 
-    function summarize(trials)
-        verbosity = 5;
+    function summarize(trials, varargin)
+        p = inputParser;
+
+        addRequired(p, 'trials');
+        addParameter(p, 'Verbosity', 5);
+        parse(p, trials, varargin{:});
+        verbosity = p.Results.Verbosity;
+
         N = length(trials);
         if N == 0
             disp('0 trials present')
+            return
         end
 
         subs = unique({trials.subject});
@@ -224,11 +302,10 @@ methods(Static)
 
         Ntrials = cellfun(@(ID) sum(strcmp({trials.subject}, ID)), subs);
         [C,~,ic] = unique(Ntrials);
-        Ntrialsdist = accumarray(ic, 1);
-        [Ntrialsdist, ord] = sort(Ntrialsdist, 'descend');
+        Ntrialsdist = sort(accumarray(ic, 1), 'descend');
 
         for j = 1:min(length(Ntrialsdist),verbosity)
-            num = Ntrialsdist(ord(j));
+            num = C(length(C) + 1 - j);
             if j < min(length(Ntrialsdist),verbosity)
                 sep = '├';
             else
@@ -236,22 +313,22 @@ methods(Static)
             end
 
             if j >= verbosity
-                fprintf('   %s ≤%d: %d/%d (%3.f%%)\n', sep, ord(j), num, Nsubs, ...
-                    sum(Ntrialsdist(ord(j:end))./Nsubs)*100)
+                fprintf('   %s ≤%d: %d/%d (%.f%%)\n', sep, num, sum(Ntrialsdist(j:end)),  Nsubs, ...
+                    sum(Ntrialsdist(j:end))/Nsubs*100)
             else
-                fprintf('   %s %d: %d/%d (%3.f%%)\n', sep, ord(j), num, Nsubs, ...
-                    num/Nsubs*100)
+                fprintf('   %s %d: %d/%d (%.f%%)\n', sep, num, Ntrialsdist(j), Nsubs, ...
+                    Ntrialsdist(j)/Nsubs*100)
             end
         end
 
         fprintf('Conditions:\n')
         fprintf(' ├ Observed levels:\n')
 
-        factors = cellfun(@keys, {trials.conditions}, 'UniformOutput', false);
+        factors = cellfun(@fieldnames, {trials.conditions}, 'UniformOutput', false);
         factors = unique(vertcat(factors{:}));
 
-        levels = cellfun(@values, {trials.conditions}, 'UniformOutput', false);
-        levels = vertcat(levels{:});
+        levels = cellfun(@struct2cell, {trials.conditions}, 'UniformOutput', false);
+        levels = horzcat(levels{:})';
 
         condsTable = table(categorical(levels(:,1)),'VariableNames',factors(1));
         for i = 2:length(factors)
@@ -260,7 +337,7 @@ methods(Static)
         end
 
         [unq_conds,~,ic] = unique(condsTable);
-        cats = varfun(@categories, unq_conds);
+        cats = varfun(@categories, unq_conds, 'OutputFormat', 'cell');
         for i = 1:length(factors)
             if i == length(factors)
                 sep = '└';
@@ -274,7 +351,7 @@ methods(Static)
         end
 
         fprintf(' └ Unique level combinations observed: %d', height(unq_conds))
-        if height(unq_conds) == prod(varfun(@length, cats, 'OutputFormat', 'uniform'))
+        if height(unq_conds) == prod(cellfun(@length, cats))
             fprintf(' (full factorial)\n')
         else
             fprintf('\n')
@@ -284,7 +361,18 @@ methods(Static)
         disp(unq_conds)
 
         fprintf('Sources:\n')
-        sources = fieldnames([trials.sources]);
+        sources = cellfun(@fieldnames, {trials.sources}, 'UniformOutput', false);
+        sources = unique(vertcat(sources{:}));
+        classes = structfun(@class, trials(1).sources, 'UniformOutput', false);
+        if ~all(ismember(sources, fieldnames(classes)))
+            missing = ismember(sources, fieldnames(classes));
+            missing = {sources{~missing}};
+
+            for i = 1:length(missing)
+                idx = find(hassource(trials, missing{i}));
+                classes.(missing{i}) = class(trials(idx(1)).sources.(missing{i}));
+            end
+        end
         for i = 1:length(sources)
             if i == length(sources)
                 sep = '└';
@@ -292,7 +380,8 @@ methods(Static)
                 sep = '├';
             end
 
-            fprintf(' %s ''%s''\n', sep, sources{i})
+            c = sum(hassource(trials, sources{i}));
+            fprintf(" %s '%s' => @%s, %i trials (%.0f%%)\n", sep, sources{i}, classes.(sources{i}), c, c/length(trials)*100)
         end
     end
 
@@ -300,21 +389,35 @@ methods(Static)
         p = inputParser;
         addRequired(p, 'fun');
         addRequired(p, 'trials', @(x) isa(x, 'Trial'));
-        addParameter(p, 'Parallel', false, @isbool);
+        addParameter(p, 'Parallel', false, @islogical);
 
         parse(p, fun, trials, varargin{:});
         parallel = p.Results.Parallel;
 
         srs = SegmentResult.empty(length(trials),0);
 
+        warning('on', 'Trial:analyzetrials')
+
         if parallel
             parpool('local');
             parfor i = 1:length(trials)
-                srs(i) = fun(trials(i));
+                try
+                    srs(i,1) = fun(trials(i));
+                catch e
+                    fprintf('Error at index (%i)', i)
+                    disp(trials(i))
+                    warning('Trial:analyzetrials', e.message)
+                end
             end
         else
             for i = 1:length(trials)
-                srs(i,1) = fun(trials(i));
+                try
+                    srs(i,1) = fun(trials(i));
+                catch e
+                    fprintf('Error at index (%i)', i)
+                    disp(trials(i))
+                    warning('Trial:analyzetrials', e.message)
+                end
             end
         end
     end
@@ -322,12 +425,12 @@ end % methods
 
 end
 
-function newstr = multregexprep(str, regex, rep)
-    newstr = str;
-    length(regex) == length(rep);
-    for i = 1:length(regex)
-        newstr = regexprep(newstr, regex{i}, rep{i});
-    end
+function dir = sharedpath(file1, file2)
+    ms = regexp({file1, file2}, '(?<dir>[^\.\\\/:*?"<>|\r\n]+[\/\\])', 'end');
+    li = max(ms{1}(ms{1} == ms{2}));
+
+    assert(strcmp(file1(1:li), file2(1:li)));
+    dir = file1(1:li);
 end
 
 function bool = selectstructfun(fun, s, fields)

@@ -3,7 +3,7 @@
 
 Compile the results into a stacked, long form DataFrame
 """
-function stack(rs::Vector{<:SegmentResult}, conds;
+function stack(rs::Vector{<:SegmentResult}, conds=unique_conditions(rs);
     variables=resultsvariables(rs)
 )
     df = DataFrame(subject = categorical(subject.(rs)))
@@ -21,4 +21,9 @@ function stack(rs::Vector{<:SegmentResult}, conds;
 end
 
 stack(rs::Vector{<:SegmentResult}, conds::TrialConditions; kwargs...) = stack(rs, conds.condnames; kwargs...)
+
+function flatten_dims(df, col; axes=["X","Y","Z"])
+    df.axis = fill(categorical(string.(axes)), nrow(df))
+    flatten(df, [col, :axis])
+end
 

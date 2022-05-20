@@ -61,7 +61,7 @@ sourcepath(src::AbstractSource) = src.path::String
 """
     srcext(src::Union{S,Type{S}})
 
-Actual file extension or default file extension for a `src` or `src` type
+    Actual file extension or default file extension for a `src` or `src` type. Period (.) should be the first letter.
 """
 srcext(src::AbstractSource) = splitext(sourcepath(src))[2]
 srcext(::Type{<:AbstractSource}) = ""
@@ -129,13 +129,17 @@ function requiresource!(trial, src::Type{<:AbstractSource}, parent=nothing; kwar
     requiresource!(trial, srcname_default(src) => src(), parent; kwargs...)
 end
 
+function requiresource!(trial, name::Regex)
+    requiresource!(trial, name => Source{Nothing}(""), nothing; force=false, deps=UnknownDeps())
+end
+
 function requiresource!(trial, namesrc::Pair, parent=nothing;
     force=false, deps=dependencies(namesrc.second), kwargs...
 )
     name, src = namesrc
     if !force
-        if hassource(trial, name) || hassource(trial, src) ||
-            (parent !== nothing && hassource(trial, typeof(src)))
+        if (parent !== nothing && hassource(trial, typeof(src))) ||
+            hassource(trial, name) || hassource(trial, src)
             return nothing
         elseif isfile(sourcepath(src))
             sources(trial)[name] = src
@@ -144,7 +148,12 @@ function requiresource!(trial, namesrc::Pair, parent=nothing;
     end
 
     if deps isa UnknownDeps
-        throw(MissingSourceError("unable to generate missing source $src for $trial"))
+        # TODO: Cause/solution for `MissingSourceError` unclear from error name or message
+        if force
+            throw(MissingSourceError("unable to generate missing source $name => $src for $trial"))
+        else
+            throw(MissingSourceError("required source $name is missing for $trial"))
+        end
     else
         foreach(deps) do reqsrc
             requiresource!(trial, reqsrc, src; force=false)
