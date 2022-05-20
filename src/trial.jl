@@ -21,8 +21,8 @@ See also: [`Source`](@ref), [`TrialConditions`](@ref), [`findtrials`](@ref),
 # Examples
 
 ```jldoctest; setup = :(struct Events; end)
-julia> DataSubset("events", Source{Events}, "path/to/subset", "Subject [0-9]*/events/*.tsv")
-DataSubset("events", Source{Events}, "path/to/subset", "Subject [0-9]*/events/*.tsv")
+julia> DataSubset("events", Source{Events}, "/path/to/subset", "Subject [0-9]*/events/*.tsv")
+DataSubset("events", Source{Events}, "/path/to/subset", "Subject [0-9]*/events/*.tsv")
 ```
 """
 struct DataSubset
@@ -60,7 +60,7 @@ Describes the experimental conditions (aka factors) and the labels for levels wi
   they must appear in the file paths of trial sources
 - `labels` must have a key-value pair for each condition name. The value(s) for each key
   describes how that condition will be matched. Acceptable options include a Regex, a pair
-  (`old` => `transf` [=> `new`], where `old` may be a Regex or one/multiple String(s), and
+  (`old => transf [=> new]`, where `old` may be a Regex or one/multiple String(s), and
   where `transf` may be a `Function` or a `SubstitutionString` (if `old` is a
   Regex), and `new` is a Regex), or an array of any of the preceding. Keys in `labels` which
   are not included in `conditions` will be ignored.
@@ -79,9 +79,10 @@ julia> labels = Dict(
     :subject => r"(?<=Patient )\\d+",
     :group => ["Placebo" => "Control", "Group A", "Group B"],
     :posture => r"(sit|stand)"i => lowercase,
-    :cue => r"cue[-_](fast|slow)" => ((s) -> "\$s cue") => r"(fast|slow) cue");
+    :cue => r"cue[-_](fast|slow)" => s"\\\\1 cue" => r"(fast|slow) cue");
 
-julia> conds = TrialConditions((:subject,:group,:posture,:cue), labels; types=Dict(:subject => Int));
+julia> conds = TrialConditions((:subject,:group,:posture,:cue), labels;
+    types=Dict(:subject => Int));
 ```
 """
 struct TrialConditions
@@ -103,6 +104,7 @@ struct TrialConditions
         return new(conds, required, labels, types, defaults, subst)
     end
 end
+# TODO: Pretty-printing for TrialConditions
 
 str_rgx(r::Regex) = r.pattern
 str_rgx(str::String) = str
@@ -197,10 +199,26 @@ function extract_conditions(file, trialconds)
 end
 
 """
-    Trial(subject, name, [conditions, sources])
+    Trial{ID}(subject::ID, name::String; [conditions, sources])
 
 Describes a single trial, including a reference to the subject, trial name, trial
 conditions, and relevant sources of data.
+
+# Keyword arguments
+- `conditions=Dict{Symbol,Any}()`
+- `sources=Dict{String,AbstractSource}()`
+
+# Examples
+```jldoctest
+julia> trial1 = Trial(1, "baseline", Dict(:group => "control", :session => 2))
+Trial{Int64}
+ Subject: 1
+ Name: baseline
+ Conditions:
+   :group => "control"
+   :session => 2
+ No sources
+```
 """
 mutable struct Trial{I}
     subject::I
@@ -248,7 +266,7 @@ function Base.show(io::IO, _::MIME"text/plain", t::Trial{I}) where I
         println(io, repr(c.first), " => ", repr(c.second))
     end
     if isempty(sources(t))
-        println(io, "  No sources")
+        print(io, "  No sources")
     else
         println(io, "  Sources:")
         for p in sources(t)
@@ -306,16 +324,18 @@ function duplicatesourceerror_show(io, trial, datasubset, original, dup)
 end
 
 """
-    subject(trial::Trial{ID}) -> subject::ID
+    subject(trial::Trial{ID}) -> ID
+    subject(seg::Union{Segment,SegmentResult}) -> ID
 
-Get the subject identifier for `trial`
+Get the subject identifier of a `Trial`, `Segment`, or `SegmentResult`.
 """
 subject(trial::Trial{ID}) where {ID} = trial.subject
 
 """
     conditions(trial::Trial{ID}) -> Dict{Symbol,Any}
+    conditions(seg::Union{Segment,SegmentResult}) -> Dict{Symbol}
 
-Get the conditions for `trial`
+Get the conditions of a `Trial`, `Segment`, or `SegmentResult`.
 """
 conditions(trial::Trial) = trial.conditions
 
@@ -327,27 +347,26 @@ Get the sources for `trial`
 sources(trial::Trial) = trial.sources
 
 """
-    hassubject(trial, sub)
+    hassubject(trial, sub) -> Bool
 
-Test if the subject ID for `trial` is `sub`
+Test if the subject ID for `trial` is equal to `sub`
 """
 hassubject(trial::Trial, sub) = subject(trial) == sub
 
 """
-    hassubject(sub)
+    hassubject(sub) -> Bool
 
-Create a function that tests if a trial has the subject ID `sub`, i.e. a function equivalent
-to `t -> hassubject(t, sub)`.
+Create a function that tests if the subject ID of a trial is equal to `sub`, i.e. a function
+equivalent to `t -> hassubject(t, sub)`.
 """
 hassubject(sub) = Base.Fix2(hassubject, sub)
 
 """
-    hascondition(trial, condition...)
-    hascondition(trial, (condition => value)...)
+    hascondition(trial, (condition [=> value])...) -> Bool
 
-Test if `trial` has a condition. `value` can be a single level, multiple acceptable levels,
-or a predicate function. Multiple conditions and/or condition pairs can be given which all
-must be true to match.
+Test if `trial` has `condition`, or that `condition` matches `value`. Specifying `value` is
+optional. Multiple conditions and/or condition pairs can be given which all must be true to
+match. `value` can be a single level, multiple acceptable levels, or a predicate function.
 
 # Examples
 
@@ -379,10 +398,10 @@ hascondition(trial::Trial, conds::Vararg{Pair{Symbol,T} where T <: Any}) = mapre
 hascondition(trial::Trial, conds::NTuple{N, Pair{Symbol,T} where T <: Any}) where N = hascondition(trial, conds...)
 
 """
-    hascondition((condition => value)...)
+    hascondition((condition => value)...) -> Bool
 
-Create a function that tests if a trial has the given condition(s), i.e. a function equivalent to
-`t -> hascondition(t, conditions...)`.
+Create a function that tests if a trial has the given `condition`(s)/`value`(s), i.e. a
+function equivalent to `t -> hascondition(t, conditions...)`.
 
 # Examples
 ```jldoctest
@@ -430,9 +449,9 @@ function addcondition!(trial, cond::Pair{Symbol,T}) where {T<:Base.Callable}
 end
 
 """
-    hassource(trial, src::String)
-    hassource(trial, srctype::S) where {S<:AbstractSource}
-    hassource(trial, src::Regex)
+    hassource(trial, src::String) -> Bool
+    hassource(trial, srctype::S) where {S<:AbstractSource} -> Bool
+    hassource(trial, src::Regex) -> Bool
 
 Check if `trial` has a source with key or type matching `src`.
 
@@ -456,7 +475,7 @@ hassource(trial::Trial, src::S) where S <: AbstractSource = src ∈ values(sourc
 hassource(trial::Trial, ::Type{S}) where S <: AbstractSource = S ∈ typeof.(values(sources(trial)))
 
 """
-    hassource(src)
+    hassource(src) -> Bool
 
 Create a function that tests if a trial has the source `src`, i.e. a function equivalent
 to `t -> hassource(t, src)`.
@@ -470,7 +489,7 @@ julia> trial2 = Trial(2, "baseline", Dict(), Dict());
 julia> filter(hassource("model"), [trial1, trial2])
 1-element Vector{Trial{Int64}}:
  Trial(1, "baseline", 0 conditions, 1 source)
-
+```
 """
 hassource(s) = Base.Fix2(hassource, s)
 
@@ -480,9 +499,9 @@ hassource(s) = Base.Fix2(hassource, s)
     getsource(trial, src::S) where {S<:AbstractSource} -> Source
     getsource(trial, name::String => src::Type{<:AbstractSource}) -> Source
 
-Return a source from `trial` with the requested `name` or `src`. When the both `name`
-and `src` are given as a pair, a source with `name` will be searched for first, and if
-not found, a source of type `src` will be searched for.
+Return a source from `trial` with the requested `name` or `src`. When the both `name` and
+`src` are given as a pair, a source with `name` will be searched for first, and if not
+found, a source of type `src` will be searched for.
 
 If multiple sources of type `src` are present, the desired source must be accessed by
 name/pattern only or an error will be thrown.

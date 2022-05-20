@@ -11,7 +11,9 @@ needs to be associated with each instance).
 All subtypes of `AbstractSource` **must**:
 
 - have a `path` field or extend the `sourcepath` function.
-- accept a single string, the absolute path of the source file, in the constructor.
+- have an empty constructor
+- have a constructor accepting a string (the absolute path of the source file) as the sole
+  argument
 
 Minimum method definitions necessary for complete functionality of a subtype of
 `AbstractSource` (i.e. `Source{S}` or otherwise):
@@ -24,26 +26,27 @@ Additional methods to improve user experience and/or additional functionality
 - [`dependencies`](@ref) (if defining a `generatesource` method)
 - [`srcext`](@ref)
 - [`srcname_default`](@ref)
-
-## Example
-
-```julia
-struct MySource <: AbstractSource
-    path::String
-end
-
-DatasetManager.readsource(src::MySource) = customreadfunc(sourcepath(src))
-DatasetManager.readsegment(seg::Segment{MySource}) = readsource(seg.source)[start:finish]
-```
 """
 abstract type AbstractSource end
 
 (::Type{S})() where S <: AbstractSource = S(tempname()*srcext(S))
 
 """
-    Source{S}(path)
+    Source{S}([path])
 
-A basic source, where `S` can be any singleton or existing type
+A standard/default source, where `S` can be an existing type or a singleton type defined for
+dispatch purposes.
+
+# Examples
+```julia-repl
+julia> Source{Missing}()
+Source{Missing}("/tmp/jl_ruMeMy")
+
+julia> struct RandomDev; end
+
+julia> Source{RandomDev}("/dev/urandom")
+Source{RandomDev}("/dev/urandom")
+```
 """
 struct Source{S} <: AbstractSource
     path::String

@@ -134,12 +134,6 @@ Return the parent `Trial` for the given `Segment` or `SegmentResult`
 """
 trial(seg::Segment) = seg.trial
 
-"""
-    subject(seg::Union{Segment,SegmentResult})
-
-Return the subject reference for the parent `Trial` of the given `Segment` or
-`SegmentResult`
-"""
 subject(seg::Segment) = subject(seg.trial)
 
 """
@@ -150,11 +144,6 @@ Return the source for the parent `Trial` of the given `Segment` or
 """
 source(seg::Segment) = seg.source
 
-"""
-    conditions(seg::Union{Segment,SegmentResult}) -> Dict{Symbol}
-
-Return the conditions for the given `Segment` or `SegmentResult`
-"""
 conditions(seg::Segment) = seg.conditions
 
 """
