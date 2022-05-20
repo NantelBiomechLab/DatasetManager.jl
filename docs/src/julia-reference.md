@@ -20,9 +20,13 @@ DatasetManager.srcname_default
 DataSubset
 TrialConditions
 Trial
-hassource
-getsource
+subject
+conditions
 sources
+hassubject
+hassource
+hascondition
+getsource
 findtrials
 findtrials!
 analyzedataset
@@ -36,10 +40,8 @@ Segment
 SegmentResult
 readsegment
 trial
-subject
 segment
 source
-conditions
 results
 resultsvariables
 ```
