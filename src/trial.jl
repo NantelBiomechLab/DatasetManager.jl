@@ -352,7 +352,7 @@ must be true to match.
 # Examples
 
 ```jldoctest
-julia> trial = Trial(1, "baseline", Dict(:group => "control", :session => 2))
+julia> trial = Trial(1, "baseline", Dict(:group => "control", :session => 2));
 
 julia> hascondition(trial, :group)
 true
@@ -440,13 +440,13 @@ Check if `trial` has a source with key or type matching `src`.
 ```jldoctest
 julia> trial1 = Trial(1, "baseline", Dict(), Dict("model" => Source{Nothing}()));
 
-julia> hassource(trial, "model")
+julia> hassource(trial1, "model")
 true
 
-julia> hassource(trial, Source{Nothing})
+julia> hassource(trial1, Source{Nothing})
 true
 
-julia> hassource(trial, r"test*")
+julia> hassource(trial1, r"test*")
 false
 ```
 """
