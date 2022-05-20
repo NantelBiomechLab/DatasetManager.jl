@@ -406,7 +406,7 @@ methods(Static)
                 catch e
                     fprintf('Error at index (%i)', i)
                     disp(trials(i))
-                    warning('Trial:analyzetrials', e.message)
+                    warning('Trial:analyzetrials', '%s', e.message)
                 end
             end
         else
@@ -416,7 +416,7 @@ methods(Static)
                 catch e
                     fprintf('Error at index (%i)', i)
                     disp(trials(i))
-                    warning('Trial:analyzetrials', e.message)
+                    warning('Trial:analyzetrials', '%s', e.message)
                 end
             end
         end
