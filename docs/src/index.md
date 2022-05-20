@@ -39,12 +39,12 @@ repetitive and custom code needed for new research by providing a flexible frame
 can work with many different datasets.
 
 The core functionality of DatasetManager eases the analysis of a new dataset by allowing the
-researcher to describe the dataset (e.g. the locations of the various sources or data,
-naming formats, etc) and then finding all the trials and associated metadata (e.g. subject
-identifier, trial conditions) in the dataset. Additional functionality includes the ability
+researcher to describe the dataset (e.g. the locations of the various sources of data,
+naming formats, etc) and then finding all the trials and associated metadata (e.g. unique subject
+ID, trial conditions, etc) in the dataset. Additional functionality includes the ability
 to define segments of the timeseries of a trial and attach experimental conditions specific
 to those segments, and a user-extensible common interface for reading/loading different
-sources of data using the correct method based on the type of data.
+sources of data based on the data type.
 
 ### Key functionality
 
