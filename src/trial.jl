@@ -212,12 +212,12 @@ conditions, and relevant sources of data.
 ```jldoctest
 julia> trial1 = Trial(1, "baseline", Dict(:group => "control", :session => 2))
 Trial{Int64}
- Subject: 1
- Name: baseline
- Conditions:
-   :group => "control"
-   :session => 2
- No sources
+  Subject: 1
+  Name: baseline
+  Conditions:
+    :group => "control"
+    :session => 2
+  No sources
 ```
 """
 mutable struct Trial{I}
