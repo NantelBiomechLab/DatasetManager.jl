@@ -19,7 +19,11 @@ classdef Segment
             parse(p, trial, source, varargin{:});
             obj.trial = p.Results.trial;
             source = p.Results.source;
-            obj.source = getsource(trial, source);
+            if isa(source, 'Source')
+                obj.source = source;
+            else
+                obj.source = getsource(trial, source);
+            end
             obj.start = p.Results.Start;
             obj.finish = p.Results.Finish;
             obj.conditions = merge(p.Results.Conditions, trial.conditions);
