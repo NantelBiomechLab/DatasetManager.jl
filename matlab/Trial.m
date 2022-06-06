@@ -407,6 +407,7 @@ methods(Static)
                     fprintf('Error at index (%i)', i)
                     disp(trials(i))
                     warning('Trial:analyzetrials', '%s', e.message)
+                    srs(i,1) = SegmentResult(Segment(trials(i), Source()));
                 end
             end
         else
@@ -417,6 +418,7 @@ methods(Static)
                     fprintf('Error at index (%i)', i)
                     disp(trials(i))
                     warning('Trial:analyzetrials', '%s', e.message)
+                    srs(i,1) = SegmentResult(Segment(trials(i), Source()));
                 end
             end
         end
