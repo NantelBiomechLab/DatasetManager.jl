@@ -50,11 +50,17 @@ classdef SegmentResult
             conds = unique(vertcat(withdups{:}));
         end
 
-        function data = stack(srs)
-            sub = subject(srs)';
-            conds = struct2cell(conditions(srs)')';
-            condnames = fieldnames(srs(1).segment.conditions);
-            vars = resultsvariables(srs);
+        function data = stack(srs, varargin)
+            p = inputParser;
+            addRequired(p, 'srs', @(x) isa(x, 'SegmentResult'));
+            addParameter(p, 'Conditions', unique_conditions(srs), @iscell);
+            addParameter(p, 'Variables', resultsvariables(srs), @iscell);
+
+            parse(p, srs, varargin{:});
+            condnames = p.Results.Conditions;
+            vars = p.Results.Variables;
+
+            sub = reshape(subject(srs), [], 1);
             for vari = 1:length(vars)
                 var = vars{vari};
                 for i = find(cellfun(@(s) ~isfield(s, var), {srs.results}))
@@ -62,16 +68,25 @@ classdef SegmentResult
                 end
             end
             data = struct2table([srs.results]);
+
+            % Add conditions columns to table
             data = addvars(data, sub, 'Before', 1, 'NewVariableNames', {'subject'});
-            for i = size(conds, 2):-1:1
-                data = addvars(data, conds(:,i), 'After', 1, 'NewVariableNames', ...
-                    condnames(i));
+            for i = 1:length(condnames)
+                data = addvars(data, reshape({srs.conditions.(condnames{i})}, [], 1), 'After', 1, ...
+                    'NewVariableNames', condnames{i});
             end
 
+            % Convert conditions columns to categorical
             data.subject = categorical(data.subject);
             for i = 1:length(condnames)
-                data.(condnames{i}) = categorical(data.(condnames{i}));
+                % convert to string because categorical doesn't accept missing's in cell arrays of
+                % char vectors (cell arrays of strings ok with missing)
+                data.(condnames{i}) = categorical(cellfun(@string, data.(condnames{i})));
             end
+
+            data = stack(data(:, vertcat({'subject'}, condnames, vars)), vars, ...
+                'NewDataVariableName', 'value', 'IndexVariableName', 'variable');
+            data = sortrows(data, vertcat({'variable'; 'subject'}, condnames));
         end
     end
 end
