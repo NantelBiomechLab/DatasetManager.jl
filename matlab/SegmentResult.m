@@ -26,7 +26,17 @@ classdef SegmentResult
 
         function conds = conditions(obj)
             segs = [obj.segment];
-            conds = [segs.conditions];
+            condnames = unique_conditions(obj);
+            conditions_cell = {segs.conditions};
+            for ci = 1:length(condnames)
+                cond = condnames{ci};
+                I = find(cellfun(@(c) ~isfield(c, cond), conditions_cell));
+                for i = I
+                    conditions_cell{i}.(cond) = missing;
+                end
+            end
+
+            conds = [conditions_cell{:}];
         end
 
         function resvar = resultsvariables(obj)
@@ -35,7 +45,10 @@ classdef SegmentResult
                 resvar = [resvar; fieldnames(obj(i).results)];
             end
 
-            resvar = unique(resvar);
+        function conds = unique_conditions(segres)
+            segs = [segres.segment];
+            withdups = cellfun(@fieldnames, {segs.conditions}, 'UniformOutput', false);
+            conds = unique(vertcat(withdups{:}));
         end
 
         function data = stack(srs)
