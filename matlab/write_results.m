@@ -1,13 +1,13 @@
-function write_results(filename, data, conditions, varargin)
+function write_results(filename, data, conds, varargin)
     p = inputParser;
     addRequired(p, 'filename', @ischar);
     addRequired(p, 'data', @istable);
-    addRequired(p, 'conditions', @iscell);
-    addParameter(p, 'Variables', setdiff(data.Properties.VariableNames, vertcat({'subject'; 'values'}, conditions)), @iscell);
+    addRequired(p, 'conds', @iscell);
+    addParameter(p, 'Variables', unique(data.variable), @iscell);
     addParameter(p, 'Archive', false, @islogical);
     addParameter(p, 'Format', 'wide', @(f) ismember(f, {'wide'; 'long'}));
 
-    parse(p, filename, data, conditions, varargin{:});
+    parse(p, filename, data, conds, varargin{:});
     variables = p.Results.Variables;
     archive = p.Results.Archive;
     format = p.Results.Format;
@@ -18,11 +18,26 @@ function write_results(filename, data, conditions, varargin)
     end
     tempfn = [ path '/~' name '-' num2hex(rand(1,'single')) ext ];
 
-    if strcmp(format, 'long')
-        long = stack(data(:, vertcat({'subject'}, conditions, variables)), variables, ...
-            'NewDataVariableName', 'value', 'IndexVariableName', 'variable');
-        long = sortrows(long, vertcat({'subject'}, conditions));
+    variables = reshape(variables, length(variables), []);
+    conds = reshape(conds, length(conds), []);
 
+    long = data(ismember(data.variable, variables), :);
+    ignore_conds = setdiff(data.Properties.VariableNames, ...
+        vertcat({'subject';'variable';'value'}, conds));
+    if ~isempty(ignore_conds)
+        long = removevars(long, ignore_conds);
+    end
+    long = sortrows(long, vertcat({'variable'; 'subject'}, conds));
+
+    long = movevars(long, 'subject', 'Before', 1);
+    for i = 1:(length(conds)-1)
+        cond = conds{i};
+        nextcond = conds{i+1};
+        long = movevars(long, cond, 'Before', nextcond);
+    end
+    long = movevars(long, conds{end}, 'Before', 'variable');
+
+    if strcmp(format, 'long')
         writetable(long, tempfn);
         if archive && isfile(filename)
             movefile(filename, [filename '.bak'], 'f')
@@ -31,20 +46,18 @@ function write_results(filename, data, conditions, varargin)
         % a file at `filename` shouldn't exist at this point so no need to force
         movefile(tempfn, filename)
     else % strcmp(format, 'wide') == true
-        long = stack(data(:, vertcat({'subject'}, conditions, variables)), variables, ...
-            'NewDataVariableName', 'value', 'IndexVariableName', 'variable');
-        long = sortrows(long, vertcat({'subject'}, conditions));
-        
-        labels = join(cellfun(@char, table2cell(long(:, conditions)), 'UniformOutput', false), '_', 2);
-        wide = addvars(long, labels, 'After', conditions{end}, 'NewVariableNames', {'labels'});
+        labels = join(cellfun(@char, table2cell(long(:, conds)), 'UniformOutput', false), '_', 2);
+        wide = addvars(long, labels, 'After', conds{end}, 'NewVariableNames', {'labels'});
         wide = unstack(wide, 'value', 'subject');
         wide = movevars(wide, 'variable', 'Before', 1);
 
         widechar = cellfun(@string, table2cell(wide)', 'UniformOutput', false);
-        widechar = cellfun(@char, widechar, 'UniformOutput', false);
+        MISS = cellfun(@ismissing, widechar);
+        [widechar{MISS}] = deal("");
+        widechar = cellstr(widechar);
 
-        subrownames = setdiff(wide.Properties.VariableNames, vertcat({'subject'; 'labels'; 'variable'}, conditions))';
-        subrownames = vertcat({'variable'}, conditions, {'labels'}, subrownames);
+        subrownames = setdiff(wide.Properties.VariableNames, vertcat({'subject'; 'labels'; 'variable'}, conds))';
+        subrownames = vertcat({'variable'}, conds, {'labels'}, subrownames);
 
         widechar = horzcat(subrownames, widechar);
         cstr = join(widechar, ',');
