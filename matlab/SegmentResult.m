@@ -40,10 +40,9 @@ classdef SegmentResult
         end
 
         function resvar = resultsvariables(obj)
-            resvar = {};
-            for i = 1:length(obj)
-                resvar = [resvar; fieldnames(obj(i).results)];
-            end
+            resvar = cellfun(@fieldnames, {obj.results}, 'UniformOutput', false);
+            resvar = unique(vertcat(resvar{:}));
+        end
 
         function conds = unique_conditions(segres)
             segs = [segres.segment];
