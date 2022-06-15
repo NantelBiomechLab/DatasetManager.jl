@@ -23,8 +23,10 @@ function write_results(
                 println(io, join([string(cond); wide[!, cond]], ','))
             end
 
-            combined_labels = Matrix(select(wide, conds => ByRow((c...) -> join(c, '_'))))
-            println(io, join(combined_labels, ','))
+            combined_labels = Matrix(select(wide, [:variable; conds] => ByRow((c...) -> join(c, '_'))))
+            print(io, "labels,")
+            join(io, combined_labels, ',')
+            println(io)
 
             for sub in sort(unique(df[!,:subject]), lt=natural)
                 println(io, join([string(sub);
