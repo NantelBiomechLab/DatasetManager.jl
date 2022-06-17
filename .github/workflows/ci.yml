@@ -54,7 +54,7 @@ jobs:
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
             using DatasetManager
-            DocMeta.setdocmeta!(DatasetManager, :DocTestSetup, :(include(joinpath(pkgdir(DatasetManager), "docs", "doctest-setup.jl"))); recursive=true)
+            DocMeta.setdocmeta!(DatasetManager, :DocTestSetup, :(using DatasetManager; include(joinpath(pkgdir(DatasetManager), "docs", "doctest-setup.jl"))); recursive=true)
             doctest(DatasetManager)'
       - run: julia --project=docs docs/make.jl
         env:
