@@ -24,32 +24,33 @@ end
 
 
 """
-summarize([io,] trials; [verbosity=5, ignoreconditions])
+    summarize([io,] trials; [verbosity=5, ignoreconditions])
 
 Summarize a vector of `Trial`s.
 
 # Examples
+
 ```jldoctest simplefakedata
 julia> summarize(trials)
-[1mSubjects:[22m
- └ [36m10[39m:[37m "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "10"[39m
-[1mTrials:[22m
- ├ [36m40[39m trials
+Subjects:
+ └ 10: "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "10"
+Trials:
+ ├ 40 trials
  └ Trials per subject:
-   └ [36m4[39m: 10 subjects [37m(100%)[39m
-[1mConditions:[22m
+   └ 4: 10 subjects (100%)
+Conditions:
  ├ Observed levels:
- │ ├ [35;1mstim[39;22m => ["placebo", "stim"]
- │ └ [35;1msession[39;22m => [1, 2]
- └ Unique level combinations observed: [36m4[39m[37m (full factorial)[39m
-    [35;1m    stim [0m│[35;1m session [0m│[37m # trials [0m
+ │ ├ stim => ["placebo", "stim"]
+ │ └ session => [1, 2]
+ └ Unique level combinations observed: 4 (full factorial)
+        stim │ session │ # trials
     ─────────┼─────────┼──────────
-     placebo │       1 │[37m 10       [0m
-        stim │       1 │[37m 10       [0m
-     placebo │       2 │[37m 10       [0m
-        stim │       2 │[37m 10       [0m
-[1mSources:[22m
- └ [32m"events"[39m => Source{GaitEvents}[37m, 40 trials (100%)[39m
+     placebo │       1 │ 10
+        stim │       1 │ 10
+     placebo │       2 │ 10
+        stim │       2 │ 10
+Sources:
+ └ "events" => Source{GaitEvents}, 40 trials (100%)
 
 ```
 """
