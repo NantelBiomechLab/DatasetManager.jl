@@ -1,24 +1,10 @@
 # Julia Reference
 
-## Sources
-
-```@docs
-AbstractSource
-Source
-readsource
-sourcepath
-requiresource!
-generatesource
-dependencies
-DatasetManager.srcext
-DatasetManager.srcname_default
-```
-
 ## Trials
 
 ```@docs
-DataSubset
 TrialConditions
+DataSubset
 Trial
 subject
 conditions
@@ -31,6 +17,20 @@ findtrials
 findtrials!
 analyzedataset
 export_trials
+```
+
+## Sources
+
+```@docs
+AbstractSource
+Source
+readsource
+sourcepath
+requiresource!
+generatesource
+dependencies
+DatasetManager.srcext
+DatasetManager.srcname_default
 ```
 
 ## Segments

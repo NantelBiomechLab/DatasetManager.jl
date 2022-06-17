@@ -1,13 +1,13 @@
 """
     DataSubset(name, source::Union{Function,<:AbstractSource}, dir, pattern; [dependent=false])
 
-Describes a subset of `source` data files found within `dir` which match `pattern` (using
-[glob syntax](https://en.wikipedia.org/wiki/Glob_(programming))). The `name` of the
+Describes a subset of `source` data files found within a folder `dir` which match `pattern`
+(using [glob syntax](https://en.wikipedia.org/wiki/Glob_(programming))). The `name` of the
 DataSubset will be used in `findtrials` as the source name in a Trial.
 
 Some sources described by a DataSubset may not be relevant as standalone/independent Trials
 (e.g. maximal voluntary contraction "trials", when collecting EMG data, are typically only
-relevant to movement trials for a given subject/session of a data collection, but are not
+relevant to movement trials for that specific subject/session of a data collection, but are not
 useful on their own). Dependent sources (eg `dependent=true`) will not create new trials in
 `findtrials` and will only be added to pre-existing trials when the required conditions and
 a "condition" with the same name as the DataSubset's `name` exists. The matched "condition"
@@ -20,9 +20,30 @@ See also: [`Source`](@ref), [`TrialConditions`](@ref), [`findtrials`](@ref),
 
 # Examples
 
-```jldoctest; setup = :(struct Events; end)
+```julia-repl
 julia> DataSubset("events", Source{Events}, "/path/to/subset", "Subject [0-9]*/events/*.tsv")
 DataSubset("events", Source{Events}, "/path/to/subset", "Subject [0-9]*/events/*.tsv")
+
+```
+
+### DataSubsets for dependent sources
+
+```julia-repl
+julia> labels = Dict(
+        :subject => r"(?<=Patient )\\d+",
+        :session => r"(?<=Session )\\d+",
+        :mvic => r"mvic_[rl](bic|tric)", # Defines possible MVIC "trial" names
+    );
+
+julia> # Only :subject and :session are required conditions (for matching existing trials)
+julia> conds = TrialConditions((:subject,:session,:mvic), labels; required=(:subject,:session,));
+
+julia> # Note the DataSubset name matches the "condition" name in `labels`
+julia> subsets = [
+    DataSubset("mvic", Source{C3DFile}, c3dpath, "Subject [0-9]*/Session [0-2]/*.c3d"; dependent=true)
+];
+
+julia> findtrials!(trials, subsets, conds)
 ```
 """
 struct DataSubset
@@ -52,26 +73,38 @@ end
 """
     TrialConditions(conditions, labels; [required, types, defaults, subject_fmt])
 
-Describes the experimental conditions (aka factors) and the labels for levels within each condition.
+Define the names of experimental `conditions` (aka factors) and the possible `labels`
+within each condition. Conditions are determined from the absolute path of potential
+sources.
+
+`subject` is a reserved condition name for the unique identifier (ID) of individual
+subjects/participants in the dataset. If `:subject` is not explicitly included in
+`conditions`, it will be inserted at the beginning of `conditions`. The format of the
+`subject` identifier can be specified in `labels` or using the keyword argument `subject_fmt`.
 
 # Arguments
 
 - `conditions` is a collection of condition names (eg `(:medication, :dose)`) in the order
   they must appear in the file paths of trial sources
-- `labels` must have a key-value pair for each condition name. The value(s) for each key
-  describes how that condition will be matched. Acceptable options include a Regex, a pair
-  (`old => transf [=> new]`, where `old` may be a Regex or one/multiple String(s), and
-  where `transf` may be a `Function` or a `SubstitutionString` (if `old` is a
-  Regex), and `new` is a Regex), or an array of any of the preceding. Keys in `labels` which
-  are not included in `conditions` will be ignored.
+- `labels` must have a key-value pair for each condition. The value(s) for each key
+  define the acceptable labels for each condition. Levels may be defined using a:
+    - String
+    - Regex
+    - `old => transf [=> new]`, where `old` may be a Regex or one/multiple String(s),
+      where `transf` may be a `String`, `Function`, or a `SubstitutionString` (only if `old` is a
+      Regex), and where `new` is a Regex
+    - Array of any combination of the preceding.
+  Keys in `labels` which are not included in `conditions` will be ignored.
 
 # Keyword arguments
 
-- `required=conditions`: The conditions which every trial is required to have. C
+- `required=conditions`: The conditions which every trial is required to have.
 - `types=Dict(conditions .=> String)`: The types that each condition should be parsed as
-- `defaults=Dict{Symbol,Any}()`: Default conditions to set when a given condition is not matched
+- `defaults=Dict{Symbol,Any}()`: Default conditions to set when a given condition is not
+  matched. Defaults can given for required conditions. If a condition is not required, has
+  no default, and is not matched, it will not be included as a condition for a source.
 - `subject_fmt=r"Subject (?<subject>\\d+)?"`: The Regex pattern used to match the trial's
-    subject ID. Any patterns given under a `:subject` key in `labels` takes precedence.
+    subject ID. If `:subject` is present in `labels`, that definition will take precedence.
 
 # Examples
 ```julia-repl
@@ -199,14 +232,13 @@ function extract_conditions(file, trialconds)
 end
 
 """
-    Trial{ID}(subject::ID, name::String; [conditions, sources])
+    Trial{ID}(subject::ID, name::String, [conditions::Dict{Symbol}, sources::Dict{String}])
 
-Describes a single trial, including a reference to the subject, trial name, trial
-conditions, and relevant sources of data.
-
-# Keyword arguments
-- `conditions=Dict{Symbol,Any}()`
-- `sources=Dict{String,AbstractSource}()`
+Characterizes a single instance of data collected from a specific `subject`. The Trial has a
+`name`, and may have one or more `conditions` which describe experimental conditions and/or
+subject specific charateristics which are relevant to subsequent analyses. A Trial may have
+one or more complementary `sources` of data (e.g. simultaneous recordings from separate
+equipment stored in separate files, supplementary data for a primary data source, etc).
 
 # Examples
 ```jldoctest
@@ -330,6 +362,8 @@ end
 Get the subject identifier of a `Trial`, `Segment`, or `SegmentResult`.
 """
 subject(trial::Trial{ID}) where {ID} = trial.subject
+
+# TODO: Add name access function
 
 """
     conditions(trial::Trial{ID}) -> Dict{Symbol,Any}
@@ -484,7 +518,7 @@ to `t -> hassource(t, src)`.
 ```jldoctest
 julia> trial1 = Trial(1, "baseline", Dict(), Dict("model" => Source{Nothing}()));
 
-julia> trial2 = Trial(2, "baseline", Dict(), Dict());
+julia> trial2 = Trial(2, "baseline");
 
 julia> filter(hassource("model"), [trial1, trial2])
 1-element Vector{Trial{Int64}}:
@@ -495,16 +529,16 @@ hassource(s) = Base.Fix2(hassource, s)
 
 """
     getsource(trial, name::String) -> Source
-    getsource(trial, pattern::Regex) -> Vector{Source}
     getsource(trial, src::S) where {S<:AbstractSource} -> Source
     getsource(trial, name::String => src::Type{<:AbstractSource}) -> Source
+    getsource(trial, pattern::Regex) -> Vector{Source}
 
 Return a source from `trial` with the requested `name` or `src`. When the both `name` and
 `src` are given as a pair, a source with `name` will be searched for first, and if not
-found, a source of type `src` will be searched for.
+found, a source of type `src` will be searched for. When `src` (as an `<:AbstractSource`) is
+given, only a source of type `src` may be present, otherwise an error will be thrown.
 
-If multiple sources of type `src` are present, the desired source must be accessed by
-name/pattern only or an error will be thrown.
+If a Regex `pattern` is given, multiple sources may be returned.
 """
 getsource(trial::Trial, src::String) = sources(trial)[src]
 getsource(trial::Trial, src::Regex) = getindex.(Ref(sources(trial)), filter(contains(src), keys(sources(trial))))
@@ -573,9 +607,9 @@ function findtrials(subsets::AbstractVector{DataSubset}, trialconds::TrialCondit
 end
 
 """
-    findtrials!(trials, subsets, conditions; <keyword arguments>)
+    findtrials!(trials, subsets, conditions; <keyword arguments>) -> Vector{Trial}
 
-Find more trials and/or find additional sources for existing trials.
+Find more trials and/or additional sources for existing trials.
 
 For DataSubsets in `subsets` which are dependent, candidate source files must have the required conditions and have a "condition" matching the DataSubset name.
 
@@ -734,15 +768,15 @@ function findtrials!(
 end
 
 """
-    analyzedataset(f, trials, Type{<:AbstractSource}; kwargs...) -> Vector{SegmentResult}
+    analyzedataset(f, trials, Type{<:AbstractSource}; [enable_progress, show_errors, threaded]) -> Vector{SegmentResult}
 
-Call function `f` on every trial in `trials` in parallel (multi-threaded). If `f` errors for
-a given trial, the `SegmentResult` for that trial will be empty (no results), and the trial
-and error will be shown after the analysis has finished.
+Map function `f` over all `trials` (multi-threaded by default) and return the
+`SegmentResult`. If `f` errors for a given trial, the `SegmentResult` for that trial will be empty (no results), and the error will be rethrown along with the trial which caused the error.
 
 # Keyword arguments
-- `threaded=true`: Analyze `trials` using multiple threads
 - `enable_progress=true`: Enable the progress meter
+- `show_errors=true`: Show trials and their errors
+- `threaded=true`
 """
 function analyzedataset(
     fun, trials::AbstractVector{Trial{I}}, ::Type{SRC};
