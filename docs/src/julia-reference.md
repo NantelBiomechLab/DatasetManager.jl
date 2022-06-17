@@ -51,4 +51,5 @@ resultsvariables
 ```@docs
 summarize
 DatasetManager.stack
+write_results
 ```
