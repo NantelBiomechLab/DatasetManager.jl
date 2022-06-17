@@ -682,7 +682,7 @@ function findtrials!(
                         @assert length(seenall) == 1
                     end
 
-                    foreach(seenall) do seen
+                    for seen in seenall
                         t = trials[seen]
                         if set.dependent
                             src_name = m[Symbol(set.name)]
@@ -691,6 +691,10 @@ function findtrials!(
                         end
 
                         if hassource(t, src_name)
+                            if sourcepath(getsource(t, src_name)) == file
+                                continue
+                            end
+
                             if !@isdefined(_id)
                                 _id=gensym(file)
                             end
