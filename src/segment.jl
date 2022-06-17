@@ -5,25 +5,35 @@ Describes a portion of a source in `trial` from time `start` to `finish` with se
 specific `conditions`, if applicable.
 
 If `src` is a String or AbstractSource, it must refer to a source that exists in `trial`.
-If the `start` is omitted, the segment will start at the beginning of the source/trial.
-If the `finish` is omitted, the segment will be from time `start` to the end of the
-source/trial.
+`start` and `finish` are used in `readsegment` to trim time from the beginning and/or end of
+the data read from `src`. `start` and `finish` default to the beginning and end,
+respectively, of the source/trial. `start` must be before `finish`, but they are otherwise
+only validated during `readsegment`.
 
 Any conditions present in `trial` will be merged into the conditions for the segment.
+Note: if `src` is a `<:AbstractSource` instance, it will not be added to the trial's sources.
 
 # Example:
 
-```julia
-t = Trial(1, "intervention")
+```jldoctest; setup=:(struct Events; end)
+julia> t = Trial(1, "intervention", Dict(:group => "control"), Dict("events" => Source{Events}("/path/to/file")));
 
-struct MySource <: AbstractSource
-    path::String
-end
+julia> seg = Segment(t, "events")
+Segment{Source{Events},Int64}
+ Trial: Trial(1, "intervention", 1 conditions, 1 source)
+ Source: Source{Events}("/path/to/file")
+ Time: beginning to end
+ Conditions: (same as parent trial)
+    :group => "control"
 
-seg = Segment(t, MySource; start=0.0, finish=10.0, conditions=Dict(:group => "control"))
-
-# Use a source that already exists in the trial
-seg5 = Segment(t, "main")
+julia> seg = Segment(t, Source{Events}("/new/events/file"); start=0.0, finish=10.0, conditions=Dict(:stimulus => "sham"))
+Segment{Source{Events},Int64}
+ Trial: Trial(1, "intervention", 1 conditions, 1 source)
+ Source: Source{Events}("/new/events/file")
+ Time: 0.0 to 10.0
+ Conditions:
+    :stimulus => "sham"
+    :group => "control"
 ```
 """
 struct Segment{S<:AbstractSource,ID}
@@ -134,13 +144,7 @@ Return the parent `Trial` for the given `Segment` or `SegmentResult`
 """
 trial(seg::Segment) = seg.trial
 
-"""
-    subject(seg::Union{Segment,SegmentResult})
-
-Return the subject reference for the parent `Trial` of the given `Segment` or
-`SegmentResult`
-"""
-subject(seg::Segment) = subject(seg.trial)
+subject(seg::Segment) = subject(trial(seg))
 
 """
     source(seg::Union{Segment,SegmentResult}) -> AbstractSource
@@ -150,17 +154,12 @@ Return the source for the parent `Trial` of the given `Segment` or
 """
 source(seg::Segment) = seg.source
 
-"""
-    conditions(seg::Union{Segment,SegmentResult}) -> Dict{Symbol}
-
-Return the conditions for the given `Segment` or `SegmentResult`
-"""
 conditions(seg::Segment) = seg.conditions
 
 """
     SegmentResult(segment::Segment, results::Dict{Symbol)
 
-Contains the results of any analysis/analyses performed on the trial segment in a `Dict`.
+Contains the results of any analyses performed on the trial segment in a `Dict`.
 
 # Example:
 
@@ -178,16 +177,16 @@ function SegmentResult(segment::Segment{S,ID}, results) where {S,ID}
 end
 SegmentResult(seg::Segment) = SegmentResult(seg, Dict{String,Any}())
 
-trial(sr::SegmentResult) = trial(sr.segment)
-subject(sr::SegmentResult) = subject(sr.segment)
-source(sr::SegmentResult) = source(sr.segment)
-
 "Get the segment of a `SegmentResult`"
 segment(sr::SegmentResult) = sr.segment
-conditions(sr::SegmentResult) = conditions(sr.segment)
 
 "Get the results of a `SegmentResult`"
 results(sr::SegmentResult) = sr.results
+
+trial(sr::SegmentResult) = trial(segment(sr))
+subject(sr::SegmentResult) = subject(segment(sr))
+source(sr::SegmentResult) = source(segment(sr))
+conditions(sr::SegmentResult) = conditions(segment(sr))
 
 """
     resultsvariables(sr::Union{SegmentResult,Vector{SegmentResult}})
@@ -202,7 +201,7 @@ function resultsvariables(srs::Vector{<:SegmentResult})
 end
 
 function Base.show(io::IO, sr::SegmentResult)
-    print(IOContext(io, :compact=>true, :limit=>true), "SegmentResult(",sr.segment,", ")
+    print(IOContext(io, :compact=>true, :limit=>true), "SegmentResult(",segment(sr),", ")
     if isempty(results(sr))
         print(io, "No results)")
     else
@@ -217,7 +216,7 @@ end
 
 function Base.show(io::IO, _::MIME"text/plain", sr::SegmentResult{S,ID}) where {S,ID}
     println(io, "SegmentResult{$S,$ID}")
-    print(io, ' ', sr.segment)
+    print(io, ' ', segment(sr))
     println(io)
     show(io, MIME("text/plain"), sr.results)
 end

@@ -1,7 +1,7 @@
 using DatasetManager
 using Documenter
 
-DocMeta.setdocmeta!(DatasetManager, :DocTestSetup, :(using DatasetManager); recursive=true)
+DocMeta.setdocmeta!(DatasetManager, :DocTestSetup, :(include(joinpath(@__DIR__, "doctest-setup.jl"))); recursive=true)
 makedocs(;
     modules=[DatasetManager],
     authors="Allen Hill <allenofthehills@gmail.com> and contributors",
@@ -14,12 +14,15 @@ makedocs(;
             "assets/css/custom.css"
         ],
         highlights=["matlab"],
+        highlightjs=joinpath(@__DIR__, "src/assets/js/highlight.min.js"),
+        prerender=true,
+        ansicolor=true,
     ),
     pages=[
         "Home" => "index.md",
         "Examples" => [
             "Describing datasets" => "examples/datasets-examples.md",
-            "Defining `AbstractSource` subtypes" => "examples/abstractsource-subtypes.md"
+            "Working with sources" => "examples/sources.md"
         ],
         "Julia Reference" => "julia-reference.md",
         "MATLAB Reference" => "matlab-reference.md"

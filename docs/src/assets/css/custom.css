@@ -20,3 +20,8 @@
     background-image: url('../images/matlab-logo.png');
 }
 
+.content li > p + ul {
+    margin-top: -0.9em;
+    margin-bottom: 0.75em;
+}
+

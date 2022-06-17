@@ -24,39 +24,33 @@ end
 
 
 """
-    summarize([io,] trials; verbosity=5)
+    summarize([io,] trials; [verbosity=5, ignoreconditions])
 
 Summarize a vector of `Trial`s.
 
-Summarizes:
-- Number of unique subjects and lists IDs
-- Total number of trials and trials per subject
-- Unique conditions and observed levels, unique combinations of conditions
-- Unique sources and source types
-
 # Examples
-```julia
+
+```jldoctest simplefakedata
 julia> summarize(trials)
 Subjects:
- └ 15: 1  2  3  4  5  6  7  8  9  10  11  12  13  14  15
+ └ 10: "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "10"
 Trials:
- ├ Number of trials: 90
- └ Number of trials per subject:
-   └ 6: 15/15 (100%)
+ ├ 40 trials
+ └ Trials per subject:
+   └ 4: 10 subjects (100%)
 Conditions:
  ├ Observed levels:
- │ ├ sym => ["asym", "sym"]
- │ └ arms => ["active", "held", "norm"]
- └ Unique level combinations observed: 6 (full factorial)
-      sym │   arms │ # trials
-    ──────┼────────┼──────────
-     asym │ active │ 15
-     asym │   held │ 15
-     asym │   norm │ 15
-      sym │ active │ 15
-      ⋮   │   ⋮    │ ⋮
+ │ ├ stim => ["placebo", "stim"]
+ │ └ session => [1, 2]
+ └ Unique level combinations observed: 4 (full factorial)
+        stim │ session │ # trials
+    ─────────┼─────────┼──────────
+     placebo │       1 │ 10
+        stim │       1 │ 10
+     placebo │       2 │ 10
+        stim │       2 │ 10
 Sources:
- └ "events" => Source{Events}, 90 trials (100%)
+ └ "events" => Source{GaitEvents}, 40 trials (100%)
 
 ```
 """
