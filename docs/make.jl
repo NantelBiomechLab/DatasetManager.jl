@@ -1,7 +1,7 @@
 using DatasetManager
 using Documenter
 
-DocMeta.setdocmeta!(DatasetManager, :DocTestSetup, :(using DatasetManager); recursive=true)
+DocMeta.setdocmeta!(DatasetManager, :DocTestSetup, :(include(joinpath(@__DIR__, "doctest-setup.jl"))); recursive=true)
 makedocs(;
     modules=[DatasetManager],
     authors="Allen Hill <allenofthehills@gmail.com> and contributors",

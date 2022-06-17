@@ -24,39 +24,32 @@ end
 
 
 """
-    summarize([io,] trials; verbosity=5)
+summarize([io,] trials; [verbosity=5, ignoreconditions])
 
 Summarize a vector of `Trial`s.
 
-Summarizes:
-- Number of unique subjects and lists IDs
-- Total number of trials and trials per subject
-- Unique conditions and observed levels, unique combinations of conditions
-- Unique sources and source types
-
 # Examples
-```julia
+```jldoctest simplefakedata
 julia> summarize(trials)
-Subjects:
- └ 15: 1  2  3  4  5  6  7  8  9  10  11  12  13  14  15
-Trials:
- ├ Number of trials: 90
- └ Number of trials per subject:
-   └ 6: 15/15 (100%)
-Conditions:
+[1mSubjects:[22m
+ └ [36m10[39m:[37m "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "10"[39m
+[1mTrials:[22m
+ ├ [36m40[39m trials
+ └ Trials per subject:
+   └ [36m4[39m: 10 subjects [37m(100%)[39m
+[1mConditions:[22m
  ├ Observed levels:
- │ ├ sym => ["asym", "sym"]
- │ └ arms => ["active", "held", "norm"]
- └ Unique level combinations observed: 6 (full factorial)
-      sym │   arms │ # trials
-    ──────┼────────┼──────────
-     asym │ active │ 15
-     asym │   held │ 15
-     asym │   norm │ 15
-      sym │ active │ 15
-      ⋮   │   ⋮    │ ⋮
-Sources:
- └ "events" => Source{Events}, 90 trials (100%)
+ │ ├ [35;1mstim[39;22m => ["placebo", "stim"]
+ │ └ [35;1msession[39;22m => [1, 2]
+ └ Unique level combinations observed: [36m4[39m[37m (full factorial)[39m
+    [35;1m    stim [0m│[35;1m session [0m│[37m # trials [0m
+    ─────────┼─────────┼──────────
+     placebo │       1 │[37m 10       [0m
+        stim │       1 │[37m 10       [0m
+     placebo │       2 │[37m 10       [0m
+        stim │       2 │[37m 10       [0m
+[1mSources:[22m
+ └ [32m"events"[39m => Source{GaitEvents}[37m, 40 trials (100%)[39m
 
 ```
 """
