@@ -15,7 +15,8 @@ makedocs(;
         ],
         highlights=["matlab"],
         highlightjs=joinpath(@__DIR__, "src/assets/js/highlight.min.js"),
-        prerender=true
+        prerender=true,
+        ansicolor=true,
     ),
     pages=[
         "Home" => "index.md",
