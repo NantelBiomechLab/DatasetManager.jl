@@ -50,7 +50,21 @@ classdef SegmentResult
             conds = unique(vertcat(withdups{:}));
         end
 
-        function data = stack(srs, varargin)
+        function tbl = stack(srs, varargin)
+            % STACK  Stack an array of SegmentResults into a long form table
+            %
+            %   tbl = stack(segres)
+            %   tbl = stack(segres, Name, Value)
+            %
+            % # Name-Value arguments
+            %
+            % - `'Conditions'`: The conditions to include in the table (default is all
+            %   conditions present in any trials/segments). Used to remove "conditions"
+            %   which are not experimental (i.e. needed for grouping/reducing in subsequent
+            %   statistics)
+            % - `'Variables'`: The variables to include in the table (default is all
+            %   variables present in any trials/segments).
+
             p = inputParser;
             addRequired(p, 'srs', @(x) isa(x, 'SegmentResult'));
             addParameter(p, 'Conditions', unique_conditions(srs), @iscell);
@@ -67,26 +81,26 @@ classdef SegmentResult
                     srs(i).results.(var) = NaN;
                 end
             end
-            data = struct2table([srs.results]);
+            tbl = struct2table([srs.results]);
 
             % Add conditions columns to table
-            data = addvars(data, sub, 'Before', 1, 'NewVariableNames', {'subject'});
+            tbl = addvars(tbl, sub, 'Before', 1, 'NewVariableNames', {'subject'});
             for i = 1:length(condnames)
-                data = addvars(data, reshape({srs.conditions.(condnames{i})}, [], 1), 'After', 1, ...
+                tbl = addvars(tbl, reshape({srs.conditions.(condnames{i})}, [], 1), 'After', 1, ...
                     'NewVariableNames', condnames{i});
             end
 
             % Convert conditions columns to categorical
-            data.subject = categorical(data.subject);
+            tbl.subject = categorical(tbl.subject);
             for i = 1:length(condnames)
                 % convert to string because categorical doesn't accept missing's in cell arrays of
                 % char vectors (cell arrays of strings ok with missing)
-                data.(condnames{i}) = categorical(cellfun(@string, data.(condnames{i})));
+                tbl.(condnames{i}) = categorical(cellfun(@string, tbl.(condnames{i})));
             end
 
-            data = stack(data(:, vertcat({'subject'}, condnames, vars)), vars, ...
+            tbl = stack(tbl(:, vertcat({'subject'}, condnames, vars)), vars, ...
                 'NewDataVariableName', 'value', 'IndexVariableName', 'variable');
-            data = sortrows(data, vertcat({'variable'; 'subject'}, condnames));
+            tbl = sortrows(tbl, vertcat({'variable'; 'subject'}, condnames));
         end
     end
 end

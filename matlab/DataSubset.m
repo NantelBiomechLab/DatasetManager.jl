@@ -1,7 +1,27 @@
 classdef DataSubset
-    % DataSubset Describe a subset of your data
-    %   Describes a subset of data, where files found in and matching `pattern`
-    %   (using <a href="matlab:web('https://www.mathworks.com/help/matlab/ref/dir.html#bup_1_c-2')">glob syntax</a>) are all of the same `AbstractSource` subclass.
+    % DATASUBSET  Describes a subset of `source` data files found within a folder `dir` which match
+    % `pattern`.
+    %
+    %   subset = DataSubset(name, source, pattern)
+    %   subset = DataSubset(name, source, pattern, ext)
+    %
+    % # Input arguments
+    %
+    % - `name`: The name of the DataSubset that will be used in `findtrials` as the source
+    %   name in a Trial.
+    % - `source`: The Source type of all files described by this subset
+    % - `pattern`: The pattern (using <a href="matlab:web('https://www.mathworks.com/help/matlab/ref/dir.html#bup_1_c-2')">glob syntax</a>) that defines where sources in this subset are stored on disk.
+    %
+    % # Examples
+    %
+    % ```matlab
+    % subsets = [
+    %     DataSubset('events', @GaitEvents, '/path/to/events/Subject */*.csv')
+    % ]
+    % ```
+    %
+    % See also Source, TrialConditions, Trial.findtrials
+
     properties
         name = ''
         source

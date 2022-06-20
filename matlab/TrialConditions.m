@@ -1,8 +1,10 @@
 classdef TrialConditions
-    % TrialConditions Describes the experimental conditions and the labels for levels within each condition.
+    % TRIALCONDITIONS  Defines the names and levels of experimental conditions.
+    %
+    % See also TrialConditions.generate
 
     properties
-        condnames(1,:)
+    condnames(1,:)
         required(1,:)
         labels_rg
         subst(:,2)
@@ -21,20 +23,40 @@ classdef TrialConditions
 
     methods(Static)
         function obj = generate(conditions, labels, varargin)
-        % GENERATE  Describes the experimental conditions and the labels for levels within each condition.
+        % GENERATE  Define the names of experimental `conditions` (aka factors) and the
+        % possible `labels` within each condition. Conditions are determined from the
+        % absolute path of potential sources.
         %
-        % # Arguments
+        %   trialconds = generate(conditions, labels)
+        %   trialconds = generate(conditions, labels, Name, Value)
         %
-        % - `conditions` is a cell array of condition names (eg `{'medication', 'strength'}`)
-        % - `labels` is a struct with a field for each condition name (eg `isfield(labels, 'medication')`).
-        %   Each condition field must have 'to' and 'from' fields which contain the final names and all the name possibilities, respectively.
-        %   The 'from' field is is optional if the terminology in the filenames is the desired terminology.
+        % # Input arguments
         %
-        % # Optional arguments
+        % - `conditions` is a cell array of condition names (eg `{'medication', 'dose'}`)
+        %   in the order they must appear in the file paths of trial sources
+        % - `labels` is a struct with a field for each condition name (eg `isfield(labels,
+        %   'medication')`). Each condition field must have 'to' and 'from' fields which
+        %   contain the final names and all the name possibilities, respectively. The 'from'
+        %   field is optional if the terminology in the filenames is the desired terminology.
         %
-        % - 'Required' (defaults to all conditions): The conditions which every trial must have (in the case of some
-        %   trials having optional/additional conditions).
-        % - 'Separator' (defaults to '[_-]'): The character separating condition labels
+        % # Name-value arguments
+        %
+        % - `'Required'` (defaults to all conditions): The conditions which every trial must
+        %   have (in the case of some trials having optional/additional conditions).
+        % - `'Separator'` (defaults to `'[_-]'`): The character separating condition labels
+        %
+        % # Examples
+        %
+        % ```matlab
+        % labels.session(1).to = '\d';
+        % labels.stim(1).to = 'stim';
+        % labels.stim(2).to = 'placebo';
+        % % or equivalently:
+        % labels.session.to = '\d';
+        % labels.stim = struct('to', { 'stim'; 'placebo' });
+        %
+        % conds = TrialConditions.generate({'session';'stim'}, labels)
+        % ```
 
             p = inputParser;
             addRequired(p, 'conditions', @iscell)

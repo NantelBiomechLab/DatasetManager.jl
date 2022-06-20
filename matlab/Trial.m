@@ -1,6 +1,26 @@
 classdef Trial < handle
-    % Trial Describes a single trial, including a reference to the subject, trial name, trial
-    % conditions, and relevant sources of data.
+    % TRIAL  Characterizes a single instance of data collected from a specific `subject`.
+    % The Trial has a `name`, and may have on or more `conditions` which describe
+    % experimental conditions and/or subject specific charateristics which are relevant to
+    % subsequent analyses. A Trial may have one or more complementary `sources` of data
+    % (e.g. simultaneous recordings from separate equipment stored in separate files,
+    % supplementary data for a primary data source, etc).
+    %
+    %   trial = Trial(subject, name, conditions, sources)
+    %
+    % # Input arguments
+    %
+    % - `subject`: The unique identifier (ID) char vector of the subject/participant in the trial
+    % - `name`: The trial name (a char vector)
+    % - `conditions`: A struct containing a field for every condition
+    % - `sources`: A struct containing a field for every source
+    %
+    % # Examples
+    %
+    % ```matlab
+    % trial = Trial('1', 'baseline', struct('group', 'control', 'session', 2), struct())
+    % ```
+
     properties
         subject(1,:) char
         name(1,:) char
@@ -77,6 +97,13 @@ classdef Trial < handle
         end
 
         function requiresource(trial, src, varargin)
+            % REQUIRESOURCE  Require a source to exist for a trial, attempt to generate the
+            % source if missing and possible to generate.
+            %
+            %   requiresource(trial, src)
+            %   requiresource(trial, src, Name, Value)
+            %
+
             p = inputParser;
             p.KeepUnmatched = true;
             addRequired(p, 'trial', @(x) isa(x, 'Trial'));
@@ -126,16 +153,34 @@ classdef Trial < handle
 
 methods(Static)
     function trials = findtrials(subsets, conditions, varargin)
-        % FINDTRIALS Find all the trials matching `conditions` which can be found in `subsets`.
+        % FINDTRIALS  Find all the trials matching `conditions` which can be found in `subsets`.
         %
-        % # Keyword arguments:
+        %   trials = findtrials(subsets, conditions)
+        %   trials = findtrials(subsets, conditions, Name, Value)
         %
-        % - 'SubjectFormat'  "(?<=Subject )(?<subject>\\d+)"`: The format that the subject identifier
-        %     will appear in file paths.
-        % - `ignorefiles::Union{Nothing, Vector{String}}=nothing`: A list of files, given in the form
-        %     of an absolute path, that are in any of the `subsets` folders which are to be ignored.
-        % - `defaultconds::Union{Nothing, Dict{Symbol}}=nothing`: Any conditions which have a default
-        %     level if the condition is not found in the file path.
+        % # Input arguments
+        %
+        % - `subsets`: The `DataSubset`s to use when finding sources
+        % - `conditions`: The `TrialConditions` for these sources/trials
+        %
+        % # Name-Value arguments:
+        %
+        % - `'SubjectFormat'`: The regex pattern used to match the trial's subject ID.
+        %   (defaults to 'Subject (?<subject>\d+)'`).
+        % - `'IgnoreFiles'`: A list of files to ignore that are in any of the `subsets`, given in the form
+        %     of an absolute path.
+        % - `'DefaultConditions'`: Default conditions to set when a given condition is not
+        %   matched. Defaults can be given for required conditions. If a condition is not
+        %   required, has no default, and is not matched, it will not be included as a
+        %   condition for a source.
+        % - `'Debug'`: Show files that did not match all the required conditions (default is
+        %   false)
+        % - `'Verbose'`: Also show files that *did* match all required conditions. Has no
+        %   effect is `'Debug'` is set to false.
+        % - `'MaxLog'`: The maximum number of files per subset to show when `'Debug'` is set
+        %   to true
+        %
+        % See also Trial, DataSubset, TrialConditions.generate
 
         p = inputParser;
         addRequired(p, 'subsets', @(x) isa(x, 'DataSubset'));
@@ -276,6 +321,15 @@ methods(Static)
     end
 
     function summarize(trials, varargin)
+        % SUMMARIZE  Summarize an array of trials
+        %
+        %   summarize(trials)
+        %   summarize(trials, Name, Value)
+        %
+        % # Name-Value arguments
+        %
+        % - `'Verbosity'`: The maximum number of unique level combinations to show
+
         p = inputParser;
 
         addRequired(p, 'trials');
@@ -386,6 +440,28 @@ methods(Static)
     end
 
     function srs = analyzetrials(fun, trials, varargin)
+        % ANALYZETRIALS  Evaluate a function on each trial in an array of trials
+        %
+        %   results = analyzetrials(func, trials)
+        %   results = analyzetrials(func, trials, Name, Value)
+        %
+        % If the function errors for a particular trial, an emtpy result will be returned
+        % for that trial, and a warning will be printed that includes the problematic trial
+        % and the error that was thrown. However, the rest of the trials in the array will
+        % continue to be analyzed with the given function.
+        %
+        % # Input arguments
+        %
+        % - `func`: A handle to a function, e.g. `@<function name>`
+        % - `trials`: An array of `Trial`s, typically generated by `findtrials`
+        %
+        % # Name-Value arguments
+        %
+        % - `'Parallel'`: Use multiple threads/processes to evaluate the function on
+        %   multiple trials at once. Can result in a faster analysis, but requires the
+        %   "Parallel Computing Toolbox"
+        %
+        % See also Trial.findtrials
         p = inputParser;
         addRequired(p, 'fun');
         addRequired(p, 'trials', @(x) isa(x, 'Trial'));

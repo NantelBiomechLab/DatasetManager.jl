@@ -1,13 +1,38 @@
-function write_results(filename, data, conds, varargin)
+function write_results(filename, tbl, conds, varargin)
+    % WRITE_RESULTS  Write the results in `tbl` to file at `filename`, including only the
+    % conditions given by `conds`.
+    %
+    %   write_results(filename, tbl, conds)
+    %   write_results(filename, tbl, conds, Name, Value)
+    %
+    % # Input arguments
+    %
+    % - `filename`: The path to write the results to
+    % - `tbl`: The table containing results. Must already be in 'long' form (default from
+    %   stack)
+    % - `conds`: A cell array listing the subset of conditions which are to be included/written
+    %   to file
+    %
+    % # Name-Value arguments
+    %
+    % - `'Variables'`: A cell array listing the subset of variables to be written to file
+    % - `'Format'`: Must be either `'wide'` or `'long'`, defaults to `'wide'`. Determines the
+    %   shape of the written results. (Needs to be 'wide' for some common stats in SPSS, e.g.
+    %   ANOVA.)
+    % - `'Archive'`: A logical value controlling whether a file already existing at
+    %   `filename` should be archived to `[filename '.bak']` before writing the new results to
+    %   `filename`.
+    % See also SegmentResult.stack
+
     p = inputParser;
     addRequired(p, 'filename', @ischar);
-    addRequired(p, 'data', @istable);
+    addRequired(p, 'tbl', @istable);
     addRequired(p, 'conds', @iscell);
-    addParameter(p, 'Variables', unique(data.variable), @iscell);
+    addParameter(p, 'Variables', unique(tbl.variable), @iscell);
     addParameter(p, 'Archive', false, @islogical);
     addParameter(p, 'Format', 'wide', @(f) ismember(f, {'wide'; 'long'}));
 
-    parse(p, filename, data, conds, varargin{:});
+    parse(p, filename, tbl, conds, varargin{:});
     variables = p.Results.Variables;
     archive = p.Results.Archive;
     format = p.Results.Format;
@@ -21,8 +46,8 @@ function write_results(filename, data, conds, varargin)
     variables = reshape(variables, length(variables), []);
     conds = reshape(conds, length(conds), []);
 
-    long = data(ismember(data.variable, variables), :);
-    ignore_conds = setdiff(data.Properties.VariableNames, ...
+    long = tbl(ismember(tbl.variable, variables), :);
+    ignore_conds = setdiff(tbl.Properties.VariableNames, ...
         vertcat({'subject';'variable';'value'}, conds));
     if ~isempty(ignore_conds)
         long = removevars(long, ignore_conds);
