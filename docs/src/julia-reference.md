@@ -1,7 +1,5 @@
 # Julia Reference
 
-## Trials
-
 ```@docs
 TrialConditions
 DataSubset
@@ -15,7 +13,10 @@ hascondition
 getsource
 findtrials
 findtrials!
+summarize
 analyzedataset
+DatasetManager.stack
+write_results
 export_trials
 ```
 
@@ -37,8 +38,8 @@ DatasetManager.srcname_default
 
 ```@docs
 Segment
-SegmentResult
 readsegment
+SegmentResult
 trial
 segment
 source
@@ -46,10 +47,3 @@ results
 resultsvariables
 ```
 
-## Utilities
-
-```@docs
-summarize
-DatasetManager.stack
-write_results
-```
