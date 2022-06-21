@@ -100,6 +100,7 @@ function extract_matlab_docstrings(files=readdir(joinpath(pkgdir(DatasetManager)
         :SegmentResult,
     ]
 
+    @info "Printing to file $(joinpath(pkgdir(DatasetManager), "docs", "src", "matlab-reference.md"))"
     open(joinpath(pkgdir(DatasetManager), "docs", "src", "matlab-reference.md"), "w+") do io
         println(io, "# MATLAB reference\n")
         foreach(order) do sym
@@ -113,4 +114,6 @@ function extract_matlab_docstrings(files=readdir(joinpath(pkgdir(DatasetManager)
 
     return nothing
 end
+
+extract_matlab_docstrings()
 
