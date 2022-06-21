@@ -72,6 +72,8 @@ function extract_matlab_docstrings(files=readdir(joinpath(pkgdir(DatasetManager)
             fullsym = type == "Class" ? Symbol(name) :
                 Symbol(string(namespace, name))
 
+            @info "Found docstring for $fullsym"
+
             symbols[fullsym] = matlab_docstr(fullsym, type, docstring, joinpath("matlab", file), lines)
         end
     end
@@ -98,11 +100,13 @@ function extract_matlab_docstrings(files=readdir(joinpath(pkgdir(DatasetManager)
         :SegmentResult,
     ]
 
-    open(joinpath(@__DIR__, "src", "matlab-reference.md"), "w+") do io
+    open(joinpath(pkgdir(DatasetManager), "docs", "src", "matlab-reference.md"), "w+") do io
         println(io, "# MATLAB reference\n")
         foreach(order) do sym
             if haskey(symbols, sym)
                 println(io, symbols[sym])
+            else
+                @warn "Missing docstring for $sym"
             end
         end
     end
