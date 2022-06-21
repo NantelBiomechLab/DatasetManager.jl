@@ -103,6 +103,22 @@ classdef Trial < handle
             %   requiresource(trial, src)
             %   requiresource(trial, src, Name, Value)
             %
+            % # Name-Value arguments
+            %
+            % - `'Name'`: The name to use if the `src` is missing and needs to be generated.
+            %   Defaults to the `srcname_default(src)`.
+            % - `'Force'`: (Re)generate the `src`, even if it already exists.
+            % - `'Dependencies'`: The sources that `src` depends on to be generated.
+            %   Defaults to `dependencies(src)`, which will be empty if the `src` class has
+            %   not defined a `dependencies` method.
+            % - Any remaining unmatched name-value arguments will be passed on to
+            %   `generatesource` (if called).
+            %
+            % # Examples
+            %
+            % ```matlab
+            % requiresource(trial, GaitEvents(), 'Dependencies', {C3DSource()})
+            % ```
 
             p = inputParser;
             p.KeepUnmatched = true;

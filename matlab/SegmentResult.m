@@ -1,4 +1,15 @@
 classdef SegmentResult
+    % SEGMENTRESULT  Contains a segment and the results of an analysis.
+    %
+    %   segres = SegmentResult(seg)
+    %   segres = SegmentResult(seg, results)
+    %
+    % # Input arguments
+    %
+    % - `seg`: A Segment
+    % - `results`: (Optional) A struct where each field is an individual result. If omitted,
+    % an empty struct will be created.
+
     properties
         segment Segment
         results
