@@ -1,4 +1,23 @@
 classdef Segment
+    % SEGMENT  Describes a segment of time in a source for a trial, optionally with
+    % additional conditions specific to that segment of time. The conditions for the whole
+    % trial will be combined with any conditions specific to the segment (so that all
+    % conditions applicable to that segment of time will be available in one spot).
+    %
+    %   seg = Segment(trial, source)
+    %   seg = Segment(trial, source, Name, Value)
+    %
+    % # Input arguments
+    %
+    % - `source`: Can be an instance of a Source class subtype, or the name of a source
+    %   known/expected to be present in `trial`.
+    %
+    % # Name-Value arguments
+    %
+    % - `'Start'`: The beginning time of the segment
+    % - `'Finish'`: The ending time of the segment
+    % - `'Conditions'`: A struct containing any additional conditions for that segment.
+
     properties
         trial (1,1) Trial
         source (1,1) Source
@@ -30,6 +49,13 @@ classdef Segment
         end
 
         function data = readsegment(obj, varargin)
+            % READSEGMENT  Read the segment of time from the source of `seg`. Name-value
+            % arguments (besides `'Start'` and `'Finish'`, which are reserved) are passed on
+            % to the `readsource` method for the segment's `src` class.
+            %
+            %   data = readsegment(seg)
+            %   data = readsegment(seg, Name, Value)
+
             data = readsource(obj.source, 'Start', obj.start, 'Finish', obj.finish, varargin{:});
         end
 
