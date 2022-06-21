@@ -57,7 +57,7 @@ jobs:
             using DatasetManager
             DocMeta.setdocmeta!(DatasetManager, :DocTestSetup, :(using DatasetManager; include(joinpath(pkgdir(DatasetManager), "docs", "doctest-setup.jl"))); recursive=true)
             doctest(DatasetManager)'
-      - run: julia docs/extract-matlab-docstrings.jl
+      - run: julia --project=docs docs/extract-matlab-docstrings.jl
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
