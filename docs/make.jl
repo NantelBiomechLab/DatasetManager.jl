@@ -20,10 +20,13 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Examples" => [
-            "Describing datasets" => "examples/datasets-examples.md",
-            "Working with sources" => "examples/sources.md"
+        "Concepts" => [
+            "Sources" => "concepts/sources.md",
         ],
+        # "Examples" => [
+        #     "Describing datasets" => "examples/datasets-examples.md",
+        #     "Working with sources" => "examples/sources.md"
+        # ],
         "Julia Reference" => "julia-reference.md",
         "MATLAB Reference" => "matlab-reference.md"
     ],
