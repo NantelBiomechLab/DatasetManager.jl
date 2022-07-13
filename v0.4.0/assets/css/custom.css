@@ -1,0 +1,27 @@
+.admonition-header.disable-icon::before {
+    content: none !important;
+}
+
+.admonition-header.code-icon::before {
+    content: '' !important;
+    display: inline-flex;
+    width: 1.25em;
+    height: 1.25em;
+    background-size: 1.25em 1.25em;
+    padding-bottom: .25em;
+    margin-right: 0.5em !important;
+}
+
+.admonition-header.code-icon.julia-icon::before {
+    background-image: url('../images/julia-dots.svg');
+}
+
+.admonition-header.code-icon.matlab-icon::before {
+    background-image: url('../images/matlab-logo.png');
+}
+
+.content li > p + ul {
+    margin-top: -0.9em;
+    margin-bottom: 0.75em;
+}
+

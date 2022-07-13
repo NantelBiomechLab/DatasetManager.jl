@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Describing datasets · DatasetManager.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link rel="canonical" href="https://NantelBiomechLab.github.io/DatasetManager.jl/examples/datasets-examples/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/css/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">DatasetManager.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li class="is-active"><a class="tocitem" href>Describing datasets</a><ul class="internal"><li><a class="tocitem" href="#Well-organized-dataset-with-minimal-issues"><span>Well organized dataset with minimal issues</span></a></li><li><a class="tocitem" href="#Dataset-with-different-naming-schemes"><span>Dataset with different naming schemes</span></a></li></ul></li><li><a class="tocitem" href="../sources/">Working with sources</a></li></ul></li><li><a class="tocitem" href="../../julia-reference/">Julia Reference</a></li><li><a class="tocitem" href="../../matlab-reference/">MATLAB Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Describing datasets</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Describing datasets</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/docs/src/examples/datasets-examples.md#L" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Describing-datasets"><a class="docs-heading-anchor" href="#Describing-datasets">Describing datasets</a><a id="Describing-datasets-1"></a><a class="docs-heading-anchor-permalink" href="#Describing-datasets" title="Permalink"></a></h1><p>Below are two examples of datasets with different organizations and issues which demonstrate the capabilities of DatasetManager.</p><h2 id="Well-organized-dataset-with-minimal-issues"><a class="docs-heading-anchor" href="#Well-organized-dataset-with-minimal-issues">Well organized dataset with minimal issues</a><a id="Well-organized-dataset-with-minimal-issues-1"></a><a class="docs-heading-anchor-permalink" href="#Well-organized-dataset-with-minimal-issues" title="Permalink"></a></h2><p>Consider a dataset organized as follows:</p><pre><code class="nohighlight hljs">📂 genpath
+├ 📂 Visual3D
+│ ├ 📂 Subject 1
+│ │ ├ 📂 export
+│ │ │ └ 📂 park
+│ │ │   ├ park-none.mat
+│ │ │   ├ park-norm.mat
+│ │ │   └ park-excess.mat
+│ │ └ 📂 import
+│ ├ 📂 Subject 2
+│ ┊
+│
+└ 📂 DFlow
+  ├ 📂 Subject 1
+  │ ├ park-none.csv
+  │ ├ park-norm.csv
+  │ ├ park-excess.csv
+  │ ┊
+  ├ 📂 Subject 2
+  ┊
+
+📂 rawpath
+├ 📂 Subject 1
+│ └ 📂 _
+│   ├ park-none.c3d
+│   ├ park-norm.c3d
+│   ├ park-excess.c3d
+│   ┊
+├ 📂 Subject 2
+┊</code></pre><p>The dataset is organized into 3 separate folders, but all the trials use the same naming scheme between the different folders. Therefore, we can group the data into 3 different data subsets (<code>genpath/Visual3D</code>, <code>genpath/DFlow</code>, and <code>rawpath</code>) for this analysis based on their location and filetype. Each <code>DataSubset</code> gets a name, a source type, a parent directory, and a <a href="https://en.wikipedia.org/wiki/Glob_(programming)">glob</a> which describes the structure and location, and possibly more (eg extension), of the files specified by the <code>DataSubset</code>.</p><div class="admonition">
+<details open="">
+<summary class="admonition-header code-icon julia-icon">Julia code</summary><pre><code class="language-julia hljs">genpath <span class="hljs-keyword">=</span> <span class="hljs-string">&quot;path/to/one/subset&quot;</span>
+dflowpath <span class="hljs-keyword">=</span> <span class="hljs-string">&quot;path/to/another/subset&quot;</span>
+
+parksubsets <span class="hljs-keyword">=</span> [
+    <span class="hljs-built_in">DataSubset</span>(<span class="hljs-string">&quot;visual3d&quot;</span>, V3DExportSource, <span class="hljs-built_in">joinpath</span>(genpath, <span class="hljs-string">&quot;Visual3D&quot;</span>), <span class="hljs-string">&quot;Subject [0-9]*/export/park/park-*.mat&quot;</span>),
+    <span class="hljs-built_in">DataSubset</span>(<span class="hljs-string">&quot;dflow&quot;</span>, DFlowSource, <span class="hljs-built_in">joinpath</span>(genpath, <span class="hljs-string">&quot;DFlow&quot;</span>), <span class="hljs-string">&quot;Subject [0-9]*/park-*.csv&quot;</span>),
+    <span class="hljs-built_in">DataSubset</span>(<span class="hljs-string">&quot;vicon&quot;</span>, C3DSource, rawpath, <span class="hljs-string">&quot;Subject [0-9]*/_/park-*.c3d&quot;</span>)
+]
+</code></pre></details>
+</div>
+</p><div class="admonition">
+<details>
+<summary class="admonition-header code-icon matlab-icon">MATLAB code</summary><pre><code class="language-matlab hljs">genpath = <span class="hljs-string">&#x27;path/to/one/subset&#x27;</span>
+dflowpath = <span class="hljs-string">&#x27;path/to/another/subset&#x27;</span>
+
+parksubsets = [
+    DataSubset(<span class="hljs-string">&#x27;visual3d&#x27;</span>, <span class="hljs-string">&#x27;V3DExportSource&#x27;</span>, fullfile(genpath, <span class="hljs-string">&#x27;Visual3D/Subject */export/park/park-*.mat&#x27;</span>)),
+    DataSubset(<span class="hljs-string">&#x27;dflow&#x27;</span>, <span class="hljs-string">&#x27;DFlowSource&#x27;</span>, fullfile(genpath, <span class="hljs-string">&#x27;DFlow/Subject */park-*.csv&#x27;</span>)),
+    DataSubset(<span class="hljs-string">&#x27;vicon&#x27;</span>, <span class="hljs-string">&#x27;C3DSource&#x27;</span>, fullfile(rawpath, <span class="hljs-string">&#x27;Subject */_/park-*.c3d&#x27;</span>))
+]
+</code></pre></p>
+<div class="admonition-body"><div class="admonition is-info"><header class="admonition-header">Info</header><div class="admonition-body"><p>The MATLAB globbing syntax only supports asterisks. More info <a href="https://www.mathworks.com/help/matlab/ref/dir.html#bup_1_c-2">here</a>.</p></div></div></div>
+</details>
+</div>
+</p><p>This dataset only has one condition (aka &#39;factor&#39; in statistical contexts) with three levels. The dataset was created with different terms for 2 of the levels, and we also wish to improve the naming of some of the levels. Any trial with <code>&quot;none&quot;</code> in the path will be recognized as a <code>&quot;held&quot;</code> trial. If a trial happens to already have the new terminology (<code>&quot;held&quot;</code>), it will be recognized as a <code>&quot;held&quot;</code> trial. The <code>&quot;norm&quot;</code> condition is left unchanged, and will only match trials with <code>&quot;norm&quot;</code> in the path.</p><div class="admonition">
+<details open="">
+<summary class="admonition-header code-icon julia-icon">Julia code</summary><pre><code class="language-julia hljs">levels <span class="hljs-keyword">=</span> <span class="hljs-built_in">Dict</span>(<span class="hljs-symbol">:arms</span> <span class="hljs-built_in">=&gt;</span> [<span class="hljs-string">&quot;none&quot;</span> <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;held&quot;</span>, <span class="hljs-string">&quot;norm&quot;</span>, <span class="hljs-string">&quot;excess&quot;</span> <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;active&quot;</span>])
+parkconds <span class="hljs-keyword">=</span> <span class="hljs-built_in">TrialConditions</span>((<span class="hljs-symbol">:arms</span>,), levels)
+</code></pre></details>
+</div>
+</p><div class="admonition">
+<details>
+<summary class="admonition-header code-icon matlab-icon">MATLAB code</summary><pre><code class="language-matlab hljs">levels.arms(<span class="hljs-number">1</span>).from = <span class="hljs-string">&#x27;none&#x27;</span>
+levels.arms(<span class="hljs-number">1</span>).to = <span class="hljs-string">&#x27;held&#x27;</span>
+levels.arms(<span class="hljs-number">2</span>).to = <span class="hljs-string">&#x27;norm&#x27;</span>
+levels.arms(<span class="hljs-number">3</span>).from = <span class="hljs-string">&#x27;excess&#x27;</span>
+levels.arms(<span class="hljs-number">3</span>).to = <span class="hljs-string">&#x27;active&#x27;</span>
+
+parkconds = TrialConditions.generate({<span class="hljs-string">&#x27;arms&#x27;</span>}, levels)
+<span class="hljs-comment">% alternately:</span>
+parkconds = TrialConditions.generate(fieldnames(levels), levels)
+</code></pre></details>
+</div>
+</p><p>The <code>findtrials</code> function will search every <code>DataSubset</code> for trials which match the <code>TrialConditions</code>:</p><div class="admonition">
+<details open="">
+<summary class="admonition-header code-icon julia-icon">Julia code</summary><pre><code class="language-julia hljs"><span class="hljs-comment"># Read all perturbations</span>
+parktrials <span class="hljs-keyword">=</span> <span class="hljs-built_in">findtrials</span>(parksubsets, parkconds)
+</code></pre></details>
+</div>
+</p><div class="admonition">
+<details>
+<summary class="admonition-header code-icon matlab-icon">MATLAB code</summary><pre><code class="language-matlab hljs">parktrials = DataSet.findtrials(parksubsets, parkconds)
+</code></pre></details>
+</div>
+</p><div class="admonition is-success"><header class="admonition-header">Dealing with duplicate or unwanted files</header><div class="admonition-body"><p>In some cases, there are duplicate (e.g. a trial was redone due to technical difficulties, etc) or unwanted (e.g. corrupted data, etc) files that will match the same set of conditions in a particular <code>DataSubset</code>, and the <code>findtrials</code> function will be unable to determine which file should be used for that <code>DataSubset</code> source. Suppose the first of attempt for a trial, <code>&quot;Subject 01/_/park-norm.c3d&quot;</code> had an issue, and it was repeated with a <code>&#39;-02&#39;</code> added after the trial name (<code>&quot;Subject 01/_/park-norm-02.c3d&quot;</code>).</p><pre><code class="language-julia-repl hljs"><span class="hljs-meta">julia&gt;</span><span class="language-julia"> parktrials <span class="hljs-keyword">=</span> <span class="hljs-built_in">findtrials</span>(parksubsets, parkconds)
+</span>
+ERROR: DuplicateSourceError: Found &quot;vicon&quot; source file &quot;…/Subject 01/_/park-norm-02.c3d&quot; for
+ Trial(1, &quot;park-norm&quot;, Dict{Symbol,Any}(:arms =&gt; &quot;norm&quot;), 3 sources) which already has
+ a &quot;vicon&quot; source at &quot;…/Subject 01/_/park-norm.c3d&quot;
+Stacktrace:
+ [1] findtrials(::Array{DataSubset,1}, ::TrialConditions; I::Type{T} where T, subject_fmt::Regex, ignorefiles::Array{String,1}, defaultconds::Nothing) at /home/user/.julia/dev/DatasetManager/src/trial.jl:232
+ [2] top-level scope at REPL[7]:1
+</code></pre><p>This <code>DuplicateSourceError</code> alerts you that, for <code>Trial(1, &quot;park-norm&quot;, Dict{Symbol,Any}(:arms =&gt; &quot;norm&quot;))</code> there are conflicting files for the <code>&quot;vicon&quot;</code> source, and gives you the names of the two files.  The solution is to add any duplicate or unwanted files to the <code>ignorefiles</code> keyword argument (or the <code>&#39;IgnoreFiles&#39;</code> optional argument in MATLAB).</p><p><strong>Julia:</strong></p><pre><code class="language-julia hljs"><span class="hljs-comment"># Read all perturbations</span>
+parktrials <span class="hljs-keyword">=</span> <span class="hljs-built_in">findtrials</span>(parksubsets, parkconds; ignorefiles<span class="hljs-keyword">=</span>[
+    <span class="hljs-built_in">joinpath</span>(rawpath, <span class="hljs-string">&quot;Subject 01/_/park-norm-01.c3d&quot;</span>)
+])
+</code></pre><p><strong>MATLAB:</strong></p><pre><code class="language-matlab hljs">parktrials = DataSet.findtrials(parksubsets, parkconds, <span class="hljs-string">&#x27;IgnoreFiles&#x27;</span>, { ...
+    fullfile(rawpath, <span class="hljs-string">&#x27;Subject 01/_/park-norm-01.c3d&#x27;</span>)
+})
+</code></pre></div></div><h2 id="Dataset-with-different-naming-schemes"><a class="docs-heading-anchor" href="#Dataset-with-different-naming-schemes">Dataset with different naming schemes</a><a id="Dataset-with-different-naming-schemes-1"></a><a class="docs-heading-anchor-permalink" href="#Dataset-with-different-naming-schemes" title="Permalink"></a></h2><p>Consider a different dataset, organized as follows:</p><pre><code class="nohighlight hljs">📂 v3dpath
+├ 📂 Subject 1
+│ ├ 📂 Export
+│ │ ├ 20181204_1400_NORMS_TR03.mat
+│ │ ├ 20181204_1400_NORMC_TR03.mat
+│ │ ├ 20181204_1400_NORM_PARK_TR03.mat
+│ │ ┊
+│ └ 📂 import
+├ 📂 Subject 2
+│ └ 📂 Export
+│   ├ norm-singletask.mat
+│   ├ Norm-dualtask.mat
+│   ├ park-norm.mat
+│   ┊
+┊
+
+📂 dflowpath
+├ 📂 N01
+│ ├ 20181204_1400_1448_AS_BA_NP_N01_TR01.txt
+│ ├ 20181204_1400_1501_AS_CO_NP_N01_TR01.txt
+│ ├ 20181204_1400_1646_NA_TR_NP_N05_TR01.txt
+│ ┊
+├ 📂 N02
+┊</code></pre><p>This analysis only needs 2 <code>DataSubsets</code>:</p><div class="admonition">
+<details open="">
+<summary class="admonition-header code-icon julia-icon">Julia code</summary><pre><code class="language-julia hljs">v3dpath <span class="hljs-keyword">=</span> <span class="hljs-string">&quot;path/to/one/subset&quot;</span>
+dflowpath <span class="hljs-keyword">=</span> <span class="hljs-string">&quot;path/to/another/subset&quot;</span>
+
+parkdatafiles <span class="hljs-keyword">=</span> [
+    <span class="hljs-built_in">DataSubset</span>(<span class="hljs-string">&quot;visual3d&quot;</span>, V3DExportSource, v3dpath, <span class="hljs-string">&quot;Subject [0-9]*/Export/*.mat&quot;</span>),
+    <span class="hljs-built_in">DataSubset</span>(<span class="hljs-string">&quot;dflow&quot;</span>, RawDFlowPDSource, dflowpath, <span class="hljs-string">&quot;N[0-9]*/*.txt&quot;</span>)
+]
+</code></pre></details>
+</div>
+</p><div class="admonition">
+<details>
+<summary class="admonition-header code-icon matlab-icon">MATLAB code</summary><pre><code class="language-matlab hljs">v3dpath = <span class="hljs-string">&#x27;path/to/one/subset&#x27;</span>
+dflowpath = <span class="hljs-string">&#x27;path/to/another/subset&#x27;</span>
+
+parkdatafiles = [
+    DataSubset(<span class="hljs-string">&#x27;visual3d&#x27;</span>, <span class="hljs-string">&#x27;V3DExportSource&#x27;</span>, fullfile(v3dpath, <span class="hljs-string">&#x27;Subject */Export/*.mat&#x27;</span>)),
+    DataSubset(<span class="hljs-string">&#x27;dflow&#x27;</span>, <span class="hljs-string">&#x27;RawDFlowPDSource&#x27;</span>, fullfile(dflowpath, <span class="hljs-string">&#x27;N*/*.txt&#x27;</span>))
+]
+</code></pre></details>
+</div>
+</p><p>This dataset has several issues which make the level filters more complex and require the use of <a href="https://en.wikipedia.org/wiki/Regular_expression">Regex</a> to properly find the conditions.</p><ul><li>The <code>&quot;visual3d&quot;</code> subset isn&#39;t completely consistent in the naming. For example <code>&quot;Norm&quot;</code> was sometimes used instead of <code>&quot;norm&quot;</code>, and <code>&quot;dual&quot;</code> was sometimes used instead of</li><li><code>&quot;dualtask&quot;</code>.  The <code>&quot;dflow&quot;</code> subset used a completely different trial naming scheme. <code>&quot;AS&quot;</code> was used instead of <code>&quot;norm&quot;</code>, <code>&quot;BA&quot;</code> instead of <code>&quot;singletask&quot;</code>, etc.</li></ul><p>Such conversions can be dealt with simply. However, a slightly more complex issue is that the <code>&quot;singletask&quot;</code> condition in the <code>&quot;visual3d&quot;</code> subset is denoted by an <code>&quot;S&quot;</code> following the <code>&quot;arms&quot;</code> factor. Just matching an <code>&quot;S&quot;</code> could match either the <code>&quot;S&quot;</code> in <code>&quot;Subject&quot;</code> or in <code>&quot;RS&quot;</code>; we need to only match an <code>&quot;S&quot;</code> that follows the <code>&quot;arms&quot;</code> factor, which can be specified by a <a href="https://en.wikipedia.org/wiki/Perl_Compatible_Regular_Expressions#Features">positive lookbehind group</a> in Regex, like this: <code>&quot;(?&lt;=NONE|NORM)S&quot;</code>. A similar Regex can be used to deal with the <code>&quot;C&quot;</code> for <code>&quot;dualtask&quot;</code>.</p><p>A similar technique can be used to find the <code>&quot;TR&quot;</code> denoting the <code>&quot;park&quot;</code> condition, by using lookbehind and lookahead Regex groups. The naming scheme for the <code>&quot;dflow&quot;</code> subset contains <code>&quot;TR&quot;</code> for <em>every</em> trial (&quot;20181204_1400_1646_AS_<em>TR</em>_NP_N05_<em>TR</em>01.txt&quot;), unrelated to the <code>&quot;park&quot;</code> condition. However, we notice that the <code>&quot;TR&quot;</code> denoting the <code>&quot;park&quot;</code> condition has underscores on either side; based on that observation, we can write a Regex for these requirements as <code>&quot;(?&lt;=_)TR(?=_)&quot;</code>.</p><div class="admonition">
+<details open="">
+<summary class="admonition-header code-icon julia-icon">Julia code</summary><pre><code class="language-julia hljs">labels <span class="hljs-keyword">=</span> <span class="hljs-built_in">Dict</span>(<span class="hljs-symbol">:arms</span> <span class="hljs-built_in">=&gt;</span> [[<span class="hljs-string">&quot;NONE&quot;</span>, <span class="hljs-string">&quot;NA&quot;</span>] <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;held&quot;</span>, [<span class="hljs-string">&quot;AS&quot;</span>, <span class="hljs-string">&quot;Norm&quot;</span>, <span class="hljs-string">&quot;NORM&quot;</span>] <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;norm&quot;</span>],
+              <span class="hljs-symbol">:kind</span> <span class="hljs-built_in">=&gt;</span> [[<span class="hljs-string">&quot;(?&lt;=NONE|NORM|held|norm)S&quot;</span>, <span class="hljs-string">&quot;BA&quot;</span>, <span class="hljs-string">&quot;single&quot;</span>] <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;singletask&quot;</span>,
+                        [<span class="hljs-string">&quot;(?&lt;=NONE|NORM|norm|held)C&quot;</span>, <span class="hljs-string">&quot;CO&quot;</span>,, <span class="hljs-string">&quot;CP&quot;</span>, <span class="hljs-string">&quot;dual&quot;</span>] <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;dualtask&quot;</span>,
+                        <span class="hljs-string">&quot;PO&quot;</span> <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;pert&quot;</span>, [<span class="hljs-string">&quot;PARK&quot;</span>, <span class="hljs-string">&quot;(?&lt;=_)TR(?=_)&quot;</span>] <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;park&quot;</span>],
+              <span class="hljs-symbol">:pert_side</span> <span class="hljs-built_in">=&gt;</span> [<span class="hljs-string">&quot;R(?=[ST]|slip|trip)&quot;</span> <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;right&quot;</span>, <span class="hljs-string">&quot;L(?=[ST]|slip|trip)&quot;</span> <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;left&quot;</span>],
+              <span class="hljs-symbol">:pert_type</span> <span class="hljs-built_in">=&gt;</span> [<span class="hljs-string">&quot;NP&quot;</span> <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;steadystate&quot;</span>, <span class="hljs-string">&quot;(?&lt;=[RL]|right|left)T&quot;</span> <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;trip&quot;</span>, <span class="hljs-string">&quot;(?&lt;=[RL]|right|left)S&quot;</span> <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;slip&quot;</span>])
+conds <span class="hljs-keyword">=</span> <span class="hljs-built_in">TrialConditions</span>((<span class="hljs-symbol">:arms</span>,<span class="hljs-symbol">:kind</span>,<span class="hljs-symbol">:pert_side</span>,<span class="hljs-symbol">:pert_type</span>), labels; required<span class="hljs-keyword">=</span>(<span class="hljs-symbol">:arms</span>,<span class="hljs-symbol">:kind</span>))
+</code></pre></details>
+</div>
+</p><div class="admonition">
+<details>
+<summary class="admonition-header code-icon matlab-icon">MATLAB code</summary><pre><code class="language-matlab hljs">labels.arms(<span class="hljs-number">1</span>).from = {<span class="hljs-string">&#x27;NONE&#x27;</span>, <span class="hljs-string">&#x27;NA&#x27;</span>};
+labels.arms(<span class="hljs-number">1</span>).to = <span class="hljs-string">&#x27;held&#x27;</span>;
+labels.arms(<span class="hljs-number">2</span>).from = {<span class="hljs-string">&#x27;AS&#x27;</span>, <span class="hljs-string">&#x27;Norm&#x27;</span>, <span class="hljs-string">&#x27;NORM&#x27;</span>};
+labels.arms(<span class="hljs-number">2</span>).to = <span class="hljs-string">&#x27;norm&#x27;</span>;
+
+labels.kind(<span class="hljs-number">1</span>).from = {<span class="hljs-string">&#x27;(?&lt;=NONE|NORM|held|norm)S&#x27;</span>, <span class="hljs-string">&#x27;BA&#x27;</span>, <span class="hljs-string">&#x27;single&#x27;</span>};
+labels.kind(<span class="hljs-number">1</span>).to = <span class="hljs-string">&#x27;singletask&#x27;</span>;
+labels.kind(<span class="hljs-number">2</span>).from = {<span class="hljs-string">&#x27;(?&lt;=NONE|NORM|norm|held)C&#x27;</span>, <span class="hljs-string">&#x27;CO&#x27;</span>, <span class="hljs-string">&#x27;CP&#x27;</span>, <span class="hljs-string">&#x27;dual&#x27;</span>};
+labels.kind(<span class="hljs-number">2</span>).to = <span class="hljs-string">&#x27;dualtask&#x27;</span>;
+labels.kind(<span class="hljs-number">3</span>).from = <span class="hljs-string">&#x27;PO&#x27;</span>;
+labels.kind(<span class="hljs-number">3</span>).to = <span class="hljs-string">&#x27;pert&#x27;</span>;
+labels.kind(<span class="hljs-number">4</span>).from = {<span class="hljs-string">&#x27;park&#x27;</span>, <span class="hljs-string">&#x27;(?&lt;=_)TR(?=_)&#x27;</span>};
+labels.kind(<span class="hljs-number">4</span>).to = <span class="hljs-string">&#x27;park&#x27;</span> ;
+
+labels.pert_side(<span class="hljs-number">1</span>).from = <span class="hljs-string">&#x27;R(?=[ST]|slip|trip)&#x27;</span>;
+labels.pert_side(<span class="hljs-number">1</span>).to = <span class="hljs-string">&#x27;right&#x27;</span>;
+labels.pert_side(<span class="hljs-number">2</span>).from = <span class="hljs-string">&#x27;L(?=[ST]|slip|trip)&#x27;</span>;
+labels.pert_side(<span class="hljs-number">2</span>).to = <span class="hljs-string">&#x27;left&#x27;</span>;
+
+labels.pert_type(<span class="hljs-number">1</span>).from = <span class="hljs-string">&#x27;NP&#x27;</span>;
+labels.pert_type(<span class="hljs-number">1</span>).to = <span class="hljs-string">&#x27;steadystate&#x27;</span>;
+labels.pert_type(<span class="hljs-number">2</span>).from = <span class="hljs-string">&#x27;(?&lt;=[RL]|right|left)T&#x27;</span>;
+labels.pert_type(<span class="hljs-number">2</span>).to = <span class="hljs-string">&#x27;trip&#x27;</span>;
+labels.pert_type(<span class="hljs-number">3</span>).from = <span class="hljs-string">&#x27;(?&lt;=[RL]|right|left)S&#x27;</span>;
+labels.pert_type(<span class="hljs-number">3</span>).to = <span class="hljs-string">&#x27;slip&#x27;</span>;
+
+conds = TrialConditions.generate({<span class="hljs-string">&#x27;arms&#x27;</span>,<span class="hljs-string">&#x27;kind&#x27;</span>,<span class="hljs-string">&#x27;pert_side&#x27;</span>,<span class="hljs-string">&#x27;pert_type&#x27;</span>}, labels, <span class="hljs-string">&#x27;Required&#x27;</span>, {<span class="hljs-string">&#x27;arms&#x27;</span>, <span class="hljs-string">&#x27;kind&#x27;</span>})
+</code></pre></details>
+</div>
+</p><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>These <code>TrialConditions</code> also include the optional factors of <code>pert_side</code> and <code>pert_type</code>. When the <code>required</code> (<code>&#39;Required&#39;</code> in MATLAB) keyword arg is not specified, it is assumed that all factors are required. In this case, the <code>&quot;visual3d&quot;</code> subset only included the <code>pert_side</code> and <code>pert_type</code> levels for trials that included a perturbation.</p></div></div><p>As always, the <code>findtrials</code> function will locate trials and sources within each subset which match the given conditions.</p><div class="admonition">
+<details open="">
+<summary class="admonition-header code-icon julia-icon">Julia code</summary><pre><code class="language-julia hljs"><span class="hljs-comment"># Read all perturbations</span>
+parktrials <span class="hljs-keyword">=</span> <span class="hljs-built_in">findtrials</span>(parkdatafiles, conds;
+    subject_fmt<span class="hljs-keyword">=</span><span class="hljs-regexp">r&quot;(?&lt;=Subject |N)(?&lt;subject&gt;\d+)&quot;</span>, ignorefiles<span class="hljs-keyword">=</span>[
+        <span class="hljs-built_in">joinpath</span>(dflowpath, <span class="hljs-string">&quot;N02/20181206_1500_1554_NA_BA_NP_N02_TR01.txt&quot;</span>),
+        <span class="hljs-built_in">joinpath</span>(dflowpath, <span class="hljs-string">&quot;N02/20181206_1500_1657_AS_CP_RT_N02_TR01.txt&quot;</span>),
+        ⋮
+        <span class="hljs-built_in">joinpath</span>(dflowpath, <span class="hljs-string">&quot;N020/20190509_1000_1113_NA_CP_RS_N020_TR01.txt&quot;</span>),
+        <span class="hljs-built_in">joinpath</span>(dflowpath, <span class="hljs-string">&quot;N020/20190509_1000_1153_AS_PO_LT_N020_TR01.txt&quot;</span>)
+    ], defaultconds<span class="hljs-keyword">=</span><span class="hljs-built_in">Dict</span>(<span class="hljs-symbol">:pert_type</span> <span class="hljs-built_in">=&gt;</span> <span class="hljs-string">&quot;steadystate&quot;</span>))
+</code></pre></details>
+</div>
+</p><div class="admonition">
+<details>
+<summary class="admonition-header code-icon matlab-icon">MATLAB code</summary><pre><code class="language-matlab hljs"><span class="hljs-comment">% Read all perturbations</span>
+parktrials = DataSet.findtrials(parkdatafiles, conds, ...
+    <span class="hljs-string">&#x27;SubjectFormat&#x27;</span>, <span class="hljs-string">&#x27;(?&lt;=Subject |N)(?&lt;subject&gt;\d+)&#x27;</span>, <span class="hljs-string">&#x27;IgnoreFiles&#x27;</span>, { ...
+        fullfile(dflowpath, <span class="hljs-string">&#x27;N02/20181206_1500_1554_NA_BA_NP_N02_TR01.txt&#x27;</span>), ...
+        fullfile(dflowpath, <span class="hljs-string">&#x27;N02/20181206_1500_1657_AS_CP_RT_N02_TR01.txt&#x27;</span>), ...
+        ⋮
+        fullfile(dflowpath, <span class="hljs-string">&#x27;N020/20190509_1000_1113_NA_CP_RS_N020_TR01.txt&#x27;</span>), ...
+        fullfile(dflowpath, <span class="hljs-string">&#x27;N020/20190509_1000_1153_AS_PO_LT_N020_TR01.txt&#x27;</span>) ...
+    }, <span class="hljs-string">&#x27;DefaultConditions&#x27;</span>, containers.Map(<span class="hljs-string">&#x27;pert_type&#x27;</span>, <span class="hljs-string">&#x27;steadystate&#x27;</span>))
+</code></pre></details>
+</div>
+</p><div class="admonition is-success"><header class="admonition-header">Keyword arg: `subject_fmt` (`&#39;SubjectFormat&#39;` in MATLAB)</header><div class="admonition-body"><p>The <code>subject_fmt</code> Regex has been modified here to match the subject id between the different naming schemes of the two <code>DataSubsets</code>.</p></div></div><div class="admonition is-success"><header class="admonition-header">Keyword arg: `defaultconds` (`&#39;DefaultConditions&#39;` in MATLAB)</header><div class="admonition-body"><p>The <code>defaultconds</code> Dict can be particularly useful when some conditions are optional, and therefore may not exist in the file path, but are needed or desired in the <code>Trial</code>s.</p></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../sources/">Working with sources »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.21 on <span class="colophon-date" title="Wednesday 13 July 2022 23:37">Wednesday 13 July 2022</span>. Using Julia version 1.7.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
