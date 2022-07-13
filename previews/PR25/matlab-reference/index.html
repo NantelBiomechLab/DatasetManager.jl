@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>MATLAB Reference · DatasetManager.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link rel="canonical" href="https://NantelBiomechLab.github.io/DatasetManager.jl/matlab-reference/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/css/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">DatasetManager.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><span class="tocitem">Concepts</span><ul><li><a class="tocitem" href="../concepts/sources/">Sources</a></li></ul></li><li><a class="tocitem" href="../julia-reference/">Julia Reference</a></li><li class="is-active"><a class="tocitem" href>MATLAB Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>MATLAB Reference</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>MATLAB Reference</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/docs/src/matlab-reference.md#L" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="MATLAB-reference"><a class="docs-heading-anchor" href="#MATLAB-reference">MATLAB reference</a><a id="MATLAB-reference-1"></a><a class="docs-heading-anchor-permalink" href="#MATLAB-reference" title="Permalink"></a></h1><article class="docstring">
+    <header>
+        <a id="TrialConditions" class="docstring-binding" href="#TrialConditions"><code>TrialConditions</code></a>
+         —
+        <span class="docstring-category">Class</span>
+    </header>
+    <section>
+        <div><p>Defines the names and levels of experimental conditions.</p><p>See also <a href="#TrialConditions.generate">TrialConditions.generate</a></p>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/TrialConditions.m#L1-L4">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="TrialConditions.generate" class="docstring-binding" href="#TrialConditions.generate"><code>TrialConditions.generate</code></a>
+         —
+        <span class="docstring-category">Function</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">trialconds = generate(conditions, labels)
+trialconds = generate(conditions, labels, Name, Value)
+</code></pre><p>Define the names of experimental <code>conditions</code> (aka factors) and the possible <code>labels</code> within each condition. Conditions are determined from the absolute path of potential sources.</p><p><strong>Input arguments</strong></p><ul><li><code>conditions</code> is a cell array of condition names (eg <code>{&#39;medication&#39;, &#39;dose&#39;}</code>) in the order they must appear in the file paths of trial sources</li><li><code>labels</code> is a struct with a field for each condition name (eg <code>isfield(labels, &#39;medication&#39;)</code>). Each condition field must have &#39;to&#39; and &#39;from&#39; fields which contain the final names and all the name possibilities, respectively. The &#39;from&#39; field is optional if the terminology in the filenames is the desired terminology.</li></ul><p><strong>Name-value arguments</strong></p><ul><li><code>&#39;Required&#39;</code> (defaults to all conditions): The conditions which every trial must have (in the case of some trials having optional/additional conditions).</li><li><code>&#39;Separator&#39;</code> (defaults to <code>&#39;[_-]&#39;</code>): The character separating condition labels</li></ul><p><strong>Examples</strong></p><pre><code class="language-matlab hljs">labels.session(<span class="hljs-number">1</span>).to = <span class="hljs-string">&#x27;\d&#x27;</span>;
+labels.stim(<span class="hljs-number">1</span>).to = <span class="hljs-string">&#x27;stim&#x27;</span>;
+labels.stim(<span class="hljs-number">2</span>).to = <span class="hljs-string">&#x27;placebo&#x27;</span>;
+<span class="hljs-comment">% or equivalently:</span>
+labels.session.to = <span class="hljs-string">&#x27;\d&#x27;</span>;
+labels.stim = struct(<span class="hljs-string">&#x27;to&#x27;</span>, { <span class="hljs-string">&#x27;stim&#x27;</span>; <span class="hljs-string">&#x27;placebo&#x27;</span> });
+
+conds = TrialConditions.generate({<span class="hljs-string">&#x27;session&#x27;</span>;<span class="hljs-string">&#x27;stim&#x27;</span>}, labels)
+</code></pre>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/TrialConditions.m#L25-L59">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="DataSubset" class="docstring-binding" href="#DataSubset"><code>DataSubset</code></a>
+         —
+        <span class="docstring-category">Class</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">subset = DataSubset(name, source, pattern)
+subset = DataSubset(name, source, pattern, ext)
+</code></pre><p>Describes a subset of <code>source</code> data files found within a folder <code>dir</code> which match <code>pattern</code>.</p><p><strong>Input arguments</strong></p><ul><li><code>name</code>: The name of the DataSubset that will be used in <code>findtrials</code> as the source name in a Trial.</li><li><code>source</code>: The Source type of all files described by this subset</li><li><code>pattern</code>: The pattern (using <a href="https://www.mathworks.com/help/matlab/ref/dir.html#bup_1_c-2">glob syntax</a>) that defines where sources in this subset are stored on disk.</li></ul><p><strong>Examples</strong></p><pre><code class="language-matlab hljs">subsets = [
+    DataSubset(<span class="hljs-string">&#x27;events&#x27;</span>, @GaitEvents, <span class="hljs-string">&#x27;/path/to/events/Subject */*.csv&#x27;</span>)
+]
+</code></pre><p>See also <a href="#Source">Source</a>, <a href="#TrialConditions">TrialConditions</a>, <a href="#Trial.findtrials">Trial.findtrials</a></p>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/DataSubset.m#L1-L23">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="Trial" class="docstring-binding" href="#Trial"><code>Trial</code></a>
+         —
+        <span class="docstring-category">Class</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">trial = Trial(subject, name, conditions, sources)
+</code></pre><p>Characterizes a single instance of data collected from a specific <code>subject</code>. The Trial has a <code>name</code>, and may have on or more <code>conditions</code> which describe experimental conditions and/or subject specific charateristics which are relevant to subsequent analyses. A Trial may have one or more complementary <code>sources</code> of data (e.g. simultaneous recordings from separate equipment stored in separate files, supplementary data for a primary data source, etc).</p><p><strong>Input arguments</strong></p><ul><li><code>subject</code>: The unique identifier (ID) char vector of the subject/participant in the trial</li><li><code>name</code>: The trial name (a char vector)</li><li><code>conditions</code>: A struct containing a field for every condition</li><li><code>sources</code>: A struct containing a field for every source</li></ul><p><strong>Examples</strong></p><pre><code class="language-matlab hljs">trial = Trial(<span class="hljs-string">&#x27;1&#x27;</span>, <span class="hljs-string">&#x27;baseline&#x27;</span>, struct(<span class="hljs-string">&#x27;group&#x27;</span>, <span class="hljs-string">&#x27;control&#x27;</span>, <span class="hljs-string">&#x27;session&#x27;</span>, <span class="hljs-number">2</span>), struct())
+</code></pre>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/Trial.m#L1-L22">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="Trial.findtrials" class="docstring-binding" href="#Trial.findtrials"><code>Trial.findtrials</code></a>
+         —
+        <span class="docstring-category">Function</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">trials = findtrials(subsets, conditions)
+trials = findtrials(subsets, conditions, Name, Value)
+</code></pre><p>Find all the trials matching <code>conditions</code> which can be found in <code>subsets</code>.</p><p><strong>Input arguments</strong></p><ul><li><code>subsets</code>: The <code>DataSubset</code>s to use when finding sources</li><li><code>conditions</code>: The <code>TrialConditions</code> for these sources/trials</li></ul><p><strong>Name-Value arguments:</strong></p><ul><li><code>&#39;SubjectFormat&#39;</code>: The regex pattern used to match the trial&#39;s subject ID. (defaults to &#39;Subject (?&lt;subject&gt;\d+)&#39;`).</li><li><code>&#39;IgnoreFiles&#39;</code>: A list of files to ignore that are in any of the <code>subsets</code>, given in the form   of an absolute path.</li><li><code>&#39;DefaultConditions&#39;</code>: Default conditions to set when a given condition is not matched. Defaults can be given for required conditions. If a condition is not required, has no default, and is not matched, it will not be included as a condition for a source.</li><li><code>&#39;Debug&#39;</code>: Show files that did not match all the required conditions (default is false)</li><li><code>&#39;Verbose&#39;</code>: Also show files that <em>did</em> match all required conditions. Has no effect is <code>&#39;Debug&#39;</code> is set to false.</li><li><code>&#39;MaxLog&#39;</code>: The maximum number of files per subset to show when <code>&#39;Debug&#39;</code> is set to true</li></ul><p>See also <a href="#Trial">Trial</a>, <a href="#DataSubset">DataSubset</a>, <a href="#TrialConditions.generate">TrialConditions.generate</a></p>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/Trial.m#L171-L199">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="Trial.summarize" class="docstring-binding" href="#Trial.summarize"><code>Trial.summarize</code></a>
+         —
+        <span class="docstring-category">Function</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">summarize(trials)
+summarize(trials, Name, Value)
+</code></pre><p>Summarize an array of trials</p><p><strong>Name-Value arguments</strong></p><ul><li><code>&#39;Verbosity&#39;</code>: The maximum number of unique level combinations to show</li></ul>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/Trial.m#L339-L347">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="Trial.analyzetrials" class="docstring-binding" href="#Trial.analyzetrials"><code>Trial.analyzetrials</code></a>
+         —
+        <span class="docstring-category">Function</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">results = analyzetrials(func, trials)
+results = analyzetrials(func, trials, Name, Value)
+</code></pre><p>Evaluate a function on each trial in an array of trials</p><p>If the function errors for a particular trial, an emtpy result will be returned for that trial, and a warning will be printed that includes the problematic trial and the error that was thrown. However, the rest of the trials in the array will continue to be analyzed with the given function.</p><p><strong>Input arguments</strong></p><ul><li><code>func</code>: A handle to a function, e.g. <code>@&lt;function name&gt;</code></li><li><code>trials</code>: An array of <code>Trial</code>s, typically generated by <code>findtrials</code></li></ul><p><strong>Name-Value arguments</strong></p><ul><li><code>&#39;Parallel&#39;</code>: Use multiple threads/processes to evaluate the function on multiple trials at once. Can result in a faster analysis, but requires the &quot;Parallel Computing Toolbox&quot;</li></ul><p>See also <a href="#Trial.findtrials">Trial.findtrials</a></p>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/Trial.m#L458-L480">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="SegmentResult.stack" class="docstring-binding" href="#SegmentResult.stack"><code>SegmentResult.stack</code></a>
+         —
+        <span class="docstring-category">Function</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">tbl = stack(segres)
+tbl = stack(segres, Name, Value)
+</code></pre><p>Stack an array of SegmentResults into a long form table</p><p><strong>Name-Value arguments</strong></p><ul><li><code>&#39;Conditions&#39;</code>: The conditions to include in the table (default is all conditions present in any trials/segments). Used to remove &quot;conditions&quot; which are not experimental (i.e. needed for grouping/reducing in subsequent statistics)</li><li><code>&#39;Variables&#39;</code>: The variables to include in the table (default is all variables present in any trials/segments).</li></ul>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/SegmentResult.m#L64-L77">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="write_results" class="docstring-binding" href="#write_results"><code>write_results</code></a>
+         —
+        <span class="docstring-category">Function</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">write_results(filename, tbl, conds)
+write_results(filename, tbl, conds, Name, Value)
+</code></pre><p>Write the results in <code>tbl</code> to file at <code>filename</code>, including only the conditions given by <code>conds</code>.</p><p><strong>Input arguments</strong></p><ul><li><code>filename</code>: The path to write the results to</li><li><code>tbl</code>: The table containing results. Must already be in &#39;long&#39; form (default from stack)</li><li><code>conds</code>: A cell array listing the subset of conditions which are to be included/written to file</li></ul><p><strong>Name-Value arguments</strong></p><ul><li><code>&#39;Variables&#39;</code>: A cell array listing the subset of variables to be written to file</li><li><code>&#39;Format&#39;</code>: Must be either <code>&#39;wide&#39;</code> or <code>&#39;long&#39;</code>, defaults to <code>&#39;wide&#39;</code>. Determines the shape of the written results. (Needs to be &#39;wide&#39; for some common stats in SPSS, e.g. ANOVA.)</li><li><code>&#39;Archive&#39;</code>: A logical value controlling whether a file already existing at <code>filename</code> should be archived to <code>[filename &#39;.bak&#39;]</code> before writing the new results to <code>filename</code>.</li></ul><p>See also <a href="#SegmentResult.stack">SegmentResult.stack</a></p>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/write_results.m#L1-L25">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="Source" class="docstring-binding" href="#Source"><code>Source</code></a>
+         —
+        <span class="docstring-category">Class</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">src = Source(path)
+</code></pre><p>A type representing a source of data in a particular file format</p><p><strong>Input arguments</strong></p><ul><li><code>path</code>: The absolute path to the source file</li></ul><p><strong>Examples</strong></p><pre><code class="language-matlab hljs">src = Source(<span class="hljs-string">&#x27;/path/to/source/file&#x27;</span>)
+</code></pre><p><strong>Creating custom sources</strong></p><p>All subtypes of <code>Source</code> <strong>must</strong>:</p><ul><li>have a <code>path</code> field</li><li>have at least these two constructors:<ul><li>empty constructor</li><li>single argument constructor accepting a char vector of an absolute path</li></ul></li></ul><p><code>Source</code> subtypes <strong>should</strong>:</p><ul><li>have a <a href="#Source.readsource"><code>Source.readsource</code></a> method</li></ul><p><code>Source</code> subtypes <strong>may</strong> implement these additional methods to improve user experience and/or enable additional funcitonality:</p><ul><li><a href="#Source.readsegment"><code>Source.readsegment</code></a></li><li><a href="#Source.generatesource"><code>Source.generatesource</code></a> (if enabling <code>requiresource!</code> generation)</li><li><a href="#Source.dependencies"><code>Source.dependencies</code></a> (if defining a <code>generatesource</code> method)</li><li><a href="#Source.srcext"><code>Source.srcext</code></a></li><li><a href="#Source.srcname_default"><code>Source.srcname_default</code></a></li></ul>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/Source.m#L1-L36">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="Source.readsource" class="docstring-binding" href="#Source.readsource"><code>Source.readsource</code></a>
+         —
+        <span class="docstring-category">Function</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">data = readsource(src)
+</code></pre><p>Read the source data from file.</p>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/Source.m#L106-L110">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="Trial.requiresource" class="docstring-binding" href="#Trial.requiresource"><code>Trial.requiresource</code></a>
+         —
+        <span class="docstring-category">Function</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">requiresource(trial, src)
+requiresource(trial, src, Name, Value)
+</code></pre><p>Require a source to exist for a trial, attempt to generate the source if missing and possible to generate.</p><p><strong>Name-Value arguments</strong></p><ul><li><code>&#39;Name&#39;</code>: The name to use if the <code>src</code> is missing and needs to be generated. Defaults to the <code>srcname_default(src)</code>.</li><li><code>&#39;Force&#39;</code>: (Re)generate the <code>src</code>, even if it already exists.</li><li><code>&#39;Dependencies&#39;</code>: The sources that <code>src</code> depends on to be generated. Defaults to <code>dependencies(src)</code>, which will be empty if the <code>src</code> class has not defined a <code>dependencies</code> method.</li><li>Any remaining unmatched name-value arguments will be passed on to <code>generatesource</code> (if called).</li></ul><p><strong>Examples</strong></p><pre><code class="language-matlab hljs">requiresource(trial, GaitEvents(), <span class="hljs-string">&#x27;Dependencies&#x27;</span>, {C3DSource()})
+</code></pre>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/Trial.m#L99-L121">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="Source.generatesource" class="docstring-binding" href="#Source.generatesource"><code>Source.generatesource</code></a>
+         —
+        <span class="docstring-category">Function</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">newsrc = generatesource(src, trial, deps)
+newsrc = generatesource(src, trial, deps, Name, Value)
+</code></pre><p>Generate a source <code>src</code> for <code>trial</code> using the dependent sources <code>deps</code>. Returns a source of the same class as <code>src</code>, but is not required to be exactly equal to <code>src</code> (i.e. a different <code>src.path</code>).</p><p><strong>Input arguments</strong></p><ul><li><code>src</code>: A source that may or may not exist yet (e.g. if <code>&#39;Force&#39;</code> was set to true in <code>requiresource</code>).</li><li><code>trial</code>: The trial that <code>src</code>/<code>newsrc</code> is being generated for/from.</li><li><code>deps</code>: The sources that <code>src</code> depends on to be generated (i.e. sources which contain data which is used to generate the data comprising <code>newsrc</code>)</li></ul><p><strong>Name-Value arguments</strong></p><p>Any name-value arguments will be specific to a particular Source class subtype. <strong>N.B.</strong>: <code>generatesource</code> will normally be called by <code>requiresource</code>, which uses name-value arguments <code>&#39;Name&#39;</code>, <code>&#39;Force&#39;</code>, and <code>&#39;Dependencies&#39;</code>. These names are functionally reserved (i.e. not available for use in <code>generatesource</code> methods), as they will not be passed on to <code>generatesource</code> by <code>requiresource</code>.</p>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/Source.m#L116-L139">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="Source.dependencies" class="docstring-binding" href="#Source.dependencies"><code>Source.dependencies</code></a>
+         —
+        <span class="docstring-category">Function</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">deps = dependencies(src)
+</code></pre><p>Get the sources that <code>src</code> depends on to be generated with <code>generatesource</code>. By default sources are assumed not to be automatically generatable, therefore <code>dependencies</code> returns false unless a <code>dependencies</code> method has been created for a specific class subtyping <code>Source</code>.</p>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/Source.m#L145-L151">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="Source.srcext" class="docstring-binding" href="#Source.srcext"><code>Source.srcext</code></a>
+         —
+        <span class="docstring-category">Function</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">ext = srcext(src)
+</code></pre><p>Get the file extension for a source.</p><p><strong>Input arguments</strong></p><ul><li><code>src</code>: Can be the class of a source subtype or an instance of a source. If <code>src</code> is a class, the default extension for that <code>src &lt; Source</code> class will be returned; if <code>src</code> is an instance of a source, then the actual extension for that <code>src</code> will be returned, regardless of whether it matches the default extension for that class or not.</li></ul><p><strong>Examples</strong></p><pre><code class="language-matlab hljs"><span class="hljs-comment">% assuming the existence of a class `GaitEvents` which subtypes `Source`</span>
+src = GaitEvents(<span class="hljs-string">&#x27;/path/to/file.tsv&#x27;</span>)
+ext = srcext(GaitEvents) <span class="hljs-comment">% == &#x27;.csv&#x27;</span>
+ext = srcext(src) <span class="hljs-comment">% == &#x27;.tsv&#x27;</span>
+</code></pre><p><strong>Implementation notes</strong></p><p>When defining a method for a custom class subtyping <code>Source</code>, the period should be included in the extension.</p><p><strong>Example implementation</strong></p><pre><code class="language-matlab hljs"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">ext</span> = <span class="hljs-title">srcext</span><span class="hljs-params">(obj)</span></span>
+<span class="hljs-comment">% Calling the default `srcext` method for `Source` will return the actual</span>
+<span class="hljs-comment">% extension for `&lt; Source` instances</span>
+    ext = srcext@Source(obj);
+
+    <span class="hljs-keyword">if</span> <span class="hljs-built_in">isempty</span>(ext)
+        ext = <span class="hljs-string">&#x27;.ext&#x27;</span>;
+    <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/Source.m#L58-L97">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="Source.srcname_default" class="docstring-binding" href="#Source.srcname_default"><code>Source.srcname_default</code></a>
+         —
+        <span class="docstring-category">Function</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">name = srcname_default(src)
+</code></pre><p>Get the default name for a source of a given <code>&lt; Source</code> class</p>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/Source.m#L156-L159">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="Segment" class="docstring-binding" href="#Segment"><code>Segment</code></a>
+         —
+        <span class="docstring-category">Class</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">seg = Segment(trial, source)
+seg = Segment(trial, source, Name, Value)
+</code></pre><p>Describes a segment of time in a source for a trial, optionally with additional conditions specific to that segment of time. The conditions for the whole trial will be combined with any conditions specific to the segment (so that all conditions applicable to that segment of time will be available in one spot).</p><p><strong>Input arguments</strong></p><ul><li><code>source</code>: Can be an instance of a Source class subtype, or the name of a source known/expected to be present in <code>trial</code>.</li></ul><p><strong>Name-Value arguments</strong></p><ul><li><code>&#39;Start&#39;</code>: The beginning time of the segment</li><li><code>&#39;Finish&#39;</code>: The ending time of the segment</li><li><code>&#39;Conditions&#39;</code>: A struct containing any additional conditions for that segment.</li></ul>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/Segment.m#L1-L19">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="Segment.readsegment" class="docstring-binding" href="#Segment.readsegment"><code>Segment.readsegment</code></a>
+         —
+        <span class="docstring-category">Function</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">data = readsegment(seg)
+data = readsegment(seg, Name, Value)
+</code></pre><p>Read the segment of time from the source of <code>seg</code>. Name-value arguments (besides <code>&#39;Start&#39;</code> and <code>&#39;Finish&#39;</code>, which are reserved) are passed on to the <code>readsource</code> method for the segment&#39;s <code>src</code> class.</p>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/Segment.m#L51-L57">source</a>
+    </section>
+</article><article class="docstring">
+    <header>
+        <a id="SegmentResult" class="docstring-binding" href="#SegmentResult"><code>SegmentResult</code></a>
+         —
+        <span class="docstring-category">Class</span>
+    </header>
+    <section>
+        <div><pre><code class="language-matlab hljs">segres = SegmentResult(seg)
+segres = SegmentResult(seg, results)
+</code></pre><p>Contains a segment and the results of an analysis.</p><p><strong>Input arguments</strong></p><ul><li><code>seg</code>: A Segment</li><li><code>results</code>: (Optional) A struct where each field is an individual result. If omitted,</li></ul><p>an empty struct will be created.</p>        </div>
+        <a class="docs-sourcelink" target="_blank" href="https://github.com/NantelBiomechLab/DatasetManager.jl/blob/master/matlab/SegmentResult.m#L1-L11">source</a>
+    </section>
+</article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../julia-reference/">« Julia Reference</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.21 on <span class="colophon-date" title="Wednesday 13 July 2022 17:37">Wednesday 13 July 2022</span>. Using Julia version 1.7.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
