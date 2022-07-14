@@ -874,6 +874,7 @@ function export_trials(rename, trials::Vector{<:Trial}, outdir, srcs=unique_sour
     # TODO: Generate and print/save code to read exported data (e.g. DataSubset's,
     # TrialConditions, etc)
     for trial in trials, src in srcs
+        hassource(trial, src) || continue
         @debug "Copying $(sourcepath(getsource(trial, src))) to $(joinpath(outdir, rename(trial, src)))"
         exppath = joinpath(outdir, rename(trial, getsource(trial, src)))
         mkpath(dirname(exppath))
