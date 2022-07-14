@@ -1,7 +1,7 @@
 name = "DatasetManager"
 uuid = "2ca6b172-e30b-458d-964f-9c975788bc07"
 authors = ["Allen Hill <allenofthehills@gmail.com> and contributors"]
-version = "0.4.0"
+version = "0.4.1"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
