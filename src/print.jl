@@ -27,7 +27,7 @@ function write_results(
         end
         mv(tempfn, filename)
     else
-        wide = unstack(subset(df, :variable => x -> x .∈ Ref(variables)), [:variable, conds...], :subject, :value)
+        wide = sort!(unstack(subset(df, :variable => x -> x .∈ Ref(variables)), [:variable, conds...], :subject, :value), [:variable, conds...])
         open(tempfn, "w") do io
             println(io, join([' '; wide[!, :variable]], ','))
             for cond in conds
