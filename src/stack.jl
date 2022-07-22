@@ -20,7 +20,7 @@ function stack(rs::Vector{<:SegmentResult}, conds=unique_conditions(rs);
         [:variable, :subject, conds...])
 end
 
-stack(rs::Vector{<:SegmentResult}, conds::TrialConditions; kwargs...) = stack(rs, conds.condnames; kwargs...)
+stack(rs::Vector{<:SegmentResult}, conds::TrialConditions; kwargs...) = stack(rs, filter(!=(:subject), conds.condnames); kwargs...)
 
 function flatten_dims(df, col; axes=["X","Y","Z"])
     df.axis = fill(categorical(string.(axes)), nrow(df))
