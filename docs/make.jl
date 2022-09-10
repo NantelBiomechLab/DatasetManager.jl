@@ -23,6 +23,7 @@ makedocs(;
         "Concepts" => [
             "Sources" => "concepts/sources.md",
             "Data Subsets" => "concepts/subsets.md",
+            "Trials" => "concepts/trials.md",
         ],
         # "Examples" => [
         #     "Describing datasets" => "examples/datasets-examples.md",
