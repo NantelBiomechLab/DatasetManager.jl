@@ -22,6 +22,7 @@ makedocs(;
         "Home" => "index.md",
         "Concepts" => [
             "Sources" => "concepts/sources.md",
+            "Data Subsets" => "concepts/subsets.md",
         ],
         # "Examples" => [
         #     "Describing datasets" => "examples/datasets-examples.md",
