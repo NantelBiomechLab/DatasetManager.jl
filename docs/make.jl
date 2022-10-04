@@ -24,6 +24,7 @@ makedocs(;
             "Sources" => "concepts/sources.md",
             "Data Subsets" => "concepts/subsets.md",
             "Trials" => "concepts/trials.md",
+            "Trial Conditions" => "concepts/conditions.md",
         ],
         # "Examples" => [
         #     "Describing datasets" => "examples/datasets-examples.md",
