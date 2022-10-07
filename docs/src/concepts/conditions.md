@@ -40,10 +40,6 @@ The simplest datasets can be described by listing all valid labels for each cond
 <div class="admonition-body" style="background-color:white">
 ```
 
-```@setup conditions
-using DatasetManager
-```
-
 ```@repl conditions
 labels = Dict(
     :subject => ["1", "2", "3", "4", "5"],
@@ -92,16 +88,11 @@ But many datasets aren't that simple or organized so perfectly. Suppose some tri
 <div class="admonition-body" style="background-color:white">
 ```
 
-```@setup conditions
-using DatasetManager
-```
-
 ```@repl conditions
 labels = Dict(
     :subject => ["1", "2", "3", "4", "5"],
     :arms => ["Held" => "held", "Norm" => "norm", "Active" => "active"]
 );
-conds = TrialConditions((:subject,:arms), labels);
 ```
 
 ```@raw html
@@ -129,8 +120,6 @@ labels.arms(2).from = 'Norm';
 labels.arms(2).to = 'norm';
 labels.arms(3).from = 'Active';
 labels.arms(3).to = 'active';
-
-conds = TrialConditions.generate({'subject','arms'}, labels);
 ```
 
 ```@raw html
@@ -147,16 +136,11 @@ We now are matching all hypothetical trials. However, the capitalized conditions
 <div class="admonition-body" style="background-color:white">
 ```
 
-```@setup conditions
-using DatasetManager
-```
-
 ```@repl conditions
 labels = Dict(
     :subject => ["1", "2", "3", "4", "5"],
     :arms => ["Held" => "held", "Norm" => "norm", "Active" => "active"]
 );
-conds = TrialConditions((:subject,:arms), labels);
 ```
 
 ```@raw html
@@ -184,8 +168,6 @@ labels.arms(2).from = 'Norm';
 labels.arms(2).to = 'norm';
 labels.arms(3).from = 'Active';
 labels.arms(3).to = 'active';
-
-conds = TrialConditions.generate({'subject','arms'}, labels);
 ```
 
 ```@raw html
@@ -195,5 +177,62 @@ conds = TrialConditions.generate({'subject','arms'}, labels);
 ```
 
 Now all the capitalized conditions will be converted to lowercase.
+
+## Advanced definitions
+
+In some cases, explicitly listing all the possible labels is untenable. In these cases, the
+`labels` in `TrialConditions` can use regexes, and functions which modify strings (Julia only), in addition to arrays of strings, to identify all conditions/labels and improve the consistency of label naming.
+
+Some examples (multiple equivalent alternatives presented in green):
+
+```@raw html
+<div class="admonition">
+<summary class="admonition-header code-icon julia-icon">Julia</summary>
+<div class="admonition-body" style="background-color:white">
+```
+
+```diff
+labels = Dict(
+-     :subject => ["1", "2", "3", "4", "5"],
++     :subject => r"\d",
+
+-     :arms => ["Held" => "held", "Norm" => "norm", "Active" => "active"],
++     :arms => [r"held"i, r"norm"i, r"active"i] => lowercase,
++     :arms => r"(held|norm|active)"i => lowercase,
+);
+```
+
+In the example for `:arms`, the `'i'` after the closing double quote signals that the regex
+is case-insensitive. By itself, this would lead to the earlier discussed problem of matching
+both the lowercase and capitalized labels, and would produce mismatched labels. The pair `=>` syntax should be read as "convert to/with", so the matches by the regex are given as arguments to the `lowercase` function with the function output being added as an `:arms` condition to any trials, instead of the direct match from the regex. See [`TrialConditions`](@ref) for more details.
+
+```@raw html
+</div>
+</div>
+</p>
+```
+
+```@raw html
+<div class="admonition">
+<summary class="admonition-header code-icon matlab-icon">MATLAB</summary>
+<div class="admonition-body" style="background-color:white">
+```
+
+
+```diff
+- labels.subject(1).to = '1';
++ labels.subject(1).to = '\d';
+```
+
+Regexes could be used for the `arms` label, but the MATLAB version doesn't currently support
+using functions to transform regex matches. If the use of regexes is needed or desired, it
+would be possible to normalize mismatched labels after running `findtrials`.
+
+```@raw html
+</div>
+</div>
+</p>
+```
+
 
 

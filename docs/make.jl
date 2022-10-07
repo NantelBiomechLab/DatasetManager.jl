@@ -13,7 +13,7 @@ makedocs(;
         assets=String[
             "assets/css/custom.css"
         ],
-        highlights=["matlab"],
+        highlights=["matlab", "diff"],
         highlightjs=joinpath(@__DIR__, "src/assets/js/highlight.min.js"),
         prerender=true,
         ansicolor=true,
