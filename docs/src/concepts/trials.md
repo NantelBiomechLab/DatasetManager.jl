@@ -55,6 +55,9 @@ ans =
 </p>
 ```
 
+`Trial`s can be manually constructed, but generally will be automatically found and created
+by the `findtrials` function.
+
 The descriptive nature of `Trial`s makes it easy to include or exclude trials for an
 analysis based on conditions, etc. Various convenience functions have been defined for this
 purpose: `hassubject`, `hascondition`, and `hassource`.
@@ -106,7 +109,7 @@ end
 end
 end
 
-% TODO Add hascondition examples
+% TODO Add hascondition examples matching the Julia examples
 ```
 
 ```@raw html
