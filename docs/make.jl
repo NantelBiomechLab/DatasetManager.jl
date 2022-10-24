@@ -13,17 +13,23 @@ makedocs(;
         assets=String[
             "assets/css/custom.css"
         ],
-        highlights=["matlab"],
+        highlights=["matlab", "diff"],
         highlightjs=joinpath(@__DIR__, "src/assets/js/highlight.min.js"),
         prerender=true,
         ansicolor=true,
     ),
     pages=[
         "Home" => "index.md",
-        "Examples" => [
-            "Describing datasets" => "examples/datasets-examples.md",
-            "Working with sources" => "examples/sources.md"
+        "Concepts" => [
+            "Sources" => "concepts/sources.md",
+            "Data Subsets" => "concepts/subsets.md",
+            "Trials" => "concepts/trials.md",
+            "Trial Conditions" => "concepts/conditions.md",
         ],
+        # "Examples" => [
+        #     "Describing datasets" => "examples/datasets-examples.md",
+        #     "Working with sources" => "examples/sources.md"
+        # ],
         "Julia Reference" => "julia-reference.md",
         "MATLAB Reference" => "matlab-reference.md"
     ],
