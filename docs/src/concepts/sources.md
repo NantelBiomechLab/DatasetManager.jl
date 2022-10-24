@@ -3,7 +3,7 @@
 A `Source` is a [type [Julia]](/julia-reference.html#DatasetManager.Source) or [class
 [MATLAB]](/matlab-reference.html#Source) that refers to the location of a source of data
 (typically a path to a file). DatasetManager normally assumes that sources contain
-time-series data (e.g. in [`readsegment`](@ref), however this is not a requirement.
+time-series data (e.g. in [`readsegment`](@ref), however this is not a requirement).
 
 Datasets often have more than one kind of source (e.g. if multiple systems were
 used to collect different kinds of data, such as EMG and motion capture). These different

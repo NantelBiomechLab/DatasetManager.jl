@@ -1,8 +1,8 @@
 # TrialConditions
 
 A `TrialConditions` is a [type
-[Julia]](../../julia-reference#DatasetManager.TrialConditions) or [class
-[MATLAB]](../../matlab-reference#TrialConditions) that describes the names and possible
+[Julia]](../../../julia-reference/#DatasetManager.TrialConditions) or [class
+[MATLAB]](../../../matlab-reference/#TrialConditions) that describes the names and possible
 values for the experimental conditions (aka factors) and other characteristics (e.g. subject
 ID, etc) which are needed to describe and recognize multiple sources as being
 associated with a single, unique `Trial`.
@@ -21,7 +21,7 @@ Therefore `TrialConditions` is designed to be capable of describing such complex
 
     **label**:
 
-    1. A value of a condition
+    1. A value of a condition, aka a level of a factor
 
     Example: `"control"` is a valid label for the condition "*group*"
 
@@ -38,6 +38,10 @@ The simplest datasets can be described by listing all valid labels for each cond
 <div class="admonition">
 <summary class="admonition-header code-icon julia-icon">Julia</summary>
 <div class="admonition-body" style="background-color:white">
+```
+
+```@setup conditions
+using DatasetManager
 ```
 
 ```@repl conditions
