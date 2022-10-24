@@ -30,18 +30,19 @@ DataSubset("events", Source{Events}, "/path/to/subset", "Subject [0-9]*/events/*
 
 ```julia-repl
 julia> labels = Dict(
-        :subject => r"(?<=Patient )\\d+",
-        :session => r"(?<=Session )\\d+",
-        :mvic => r"mvic_[rl](bic|tric)", # Defines possible MVIC "trial" names
-    );
+         :subject => r"(?<=Patient )\\d+",
+         :session => r"(?<=Session )\\d+",
+         :mvic => r"mvic_[rl](bic|tric)", # Defines possible MVIC "trial" names
+       );
 
 julia> # Only :subject and :session are required conditions (for matching existing trials)
 julia> conds = TrialConditions((:subject,:session,:mvic), labels; required=(:subject,:session,));
 
 julia> # Note the DataSubset name matches the "condition" name in `labels`
 julia> subsets = [
-    DataSubset("mvic", Source{C3DFile}, c3dpath, "Subject [0-9]*/Session [0-2]/*.c3d"; dependent=true)
-];
+         DataSubset("mvic", Source{C3DFile}, c3dpath, "Subject [0-9]*/Session [0-2]/*.c3d";
+            dependent=true)
+       ];
 
 julia> findtrials!(trials, subsets, conds)
 ```
@@ -74,7 +75,7 @@ end
     TrialConditions(conditions, labels; [required, types, defaults, subject_fmt])
 
 Define the names of experimental `conditions` (aka factors) and the possible `labels`
-within each condition. Conditions are determined from the absolute path of potential
+within each condition. Conditions are searched for in the absolute path of potential
 sources.
 
 `subject` is a reserved condition name for the unique identifier (ID) of individual
@@ -109,13 +110,14 @@ subjects/participants in the dataset. If `:subject` is not explicitly included i
 # Examples
 ```julia-repl
 julia> labels = Dict(
-    :subject => r"(?<=Patient )\\d+",
-    :group => ["Placebo" => "Control", "Group A", "Group B"],
-    :posture => r"(sit|stand)"i => lowercase,
-    :cue => r"cue[-_](fast|slow)" => s"\\\\1 cue" => r"(fast|slow) cue");
+         :subject => r"(?<=Patient )\\d+",
+         :group => ["Placebo" => "Control", "Group A", "Group B"],
+         :posture => r"(sit|stand)"i => lowercase,
+         :cue => r"cue[-_](fast|slow)" => s"\\\\1 cue" => r"(fast|slow) cue"
+       );
 
 julia> conds = TrialConditions((:subject,:group,:posture,:cue), labels;
-    types=Dict(:subject => Int));
+         types=Dict(:subject => Int));
 ```
 """
 struct TrialConditions
@@ -236,7 +238,7 @@ end
 
 Characterizes a single instance of data collected from a specific `subject`. The Trial has a
 `name`, and may have one or more `conditions` which describe experimental conditions and/or
-subject specific charateristics which are relevant to subsequent analyses. A Trial may have
+subject specific characteristics which are relevant to subsequent analyses. A Trial may have
 one or more complementary `sources` of data (e.g. simultaneous recordings from separate
 equipment stored in separate files, supplementary data for a primary data source, etc).
 
@@ -861,8 +863,8 @@ subdirectories, using the naming schema "\$trial.subject_\$srcname_\$basename(so
 
 ```julia-repl
 julia> export_trials(trials, pwd()) do trial, source
-    "\$(subject(trial))_\$(conditions(trial)[:group]).\$(srcext(source))"
-end
+           "\$(subject(trial))_\$(conditions(trial)[:group]).\$(srcext(source))"
+       end
 ```
 """
 function export_trials(trials::Vector{<:Trial}, outdir, srcs=unique_sources(trials))
