@@ -758,6 +758,7 @@ function analyzedataset(
     fun, trials::AbstractVector{Trial{I}}, ::Type{SRC};
     threaded=(Threads.nthreads() > 1), enable_progress=true, show_errors=true
 ) where {I} where {SRC<:AbstractSource}
+    isempty(trials) && throw(ArgumentError("`trials` is empty"))
     srs = Vector{SegmentResult{SRC,I}}(undef, length(trials))
     p = Progress(length(trials)+1; output=stdout, enabled=enable_progress,
         desc="Analyzing trials... ")
@@ -776,7 +777,7 @@ function analyzedataset(
                     print(io, e)
                     Base.show_backtrace(IOContext(io, IOContext(stderr)), bt)
                     err = replace(String(take!(io)), "\n" => "\n│ ")
-                    show_errors && @error trials[i] err
+                    show_errors && @error trials[i] exception=(e,bt)
                     sr = SegmentResult(Segment(trials[i], SRC()))
                 end
             end
@@ -797,9 +798,9 @@ function analyzedataset(
                     bt = catch_backtrace()
                     io = IOBuffer()
                     print(io, e)
-                    Base.show_backtrace(IOContext(io, IOContext(stderr)), bt)
+                    Base.show_backtrace(IOContext(io, IOContext(stderr, :color => true)), bt)
                     err = replace(String(take!(io)), "\n" => "\n│ ")
-                    show_errors && @error trials[i] err
+                    show_errors && @error trials[i] exception=(e,bt)
                     sr = SegmentResult(Segment(trials[i], SRC()))
                 end
             end
