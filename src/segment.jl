@@ -92,7 +92,7 @@ function Base.show(io::IO, s::Segment{S,ID}) where {S,ID}
     print(IOContext(io, :limit=>true), "Segment{$S,$ID}($(s.trial), ", typeof(s.source), "(…), ")
     print(io, isnothing(s.start) ? "begin" : s.start, ":")
     print(io, isnothing(s.finish) ? "end" : s.finish)
-    if s.conditions == conditions(trial(s))
+    if conditions_isequal(conditions(s), conditions(trial(s)))
         print(io, ")")
     else
         print(io, ", (")
