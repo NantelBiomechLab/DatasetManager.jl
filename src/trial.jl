@@ -61,7 +61,7 @@ function escape_period(ext)
     return replace(ext, r"^\\?\.?" => "\\.")
 end
 
-function DataSubset(name, source::Type{S}, dir, pattern; ext=escape_period(srcext(source)), dependent=false) where S <: AbstractSource
+function DataSubset(name, source::Type{S}, dir, pattern; ext=escape_period(srcext(source)), dependent=false) where {S<:AbstractSource}
     return DataSubset(name, (s) -> source(s), dir, pattern, ext, dependent)
 end
 
@@ -121,7 +121,7 @@ julia> conds = TrialConditions((:subject,:group,:posture,:cue), labels;
 struct TrialConditions
     condnames::Vector{Symbol}
     required::Vector{Symbol}
-    labels::Dict{Symbol, Regex}
+    labels::Dict{Symbol,Regex}
     types::Dict{Symbol,DataType}
     defaults::Dict{Symbol,Any}
     subst::Vector{Pair{Regex,Any}}
@@ -143,21 +143,21 @@ str_rgx(r::Regex) = r.pattern
 str_rgx(str::String) = str
 
 # TODO: Add tests labels (ie values in `labels`) for:
-    # - Regex
-    # - Regex => Function
-    # - Regex => Function => Vector{String}
-    # - Regex => Function => Regex
-    # - Regex => SubstitutionString => Regex
-    # - Vector{String}
-    # - Vector{Union{String,Pair{Vector{String},String}}}
-    # - Vector{Pair{Vector{String},String}}
+# - Regex
+# - Regex => Function
+# - Regex => Function => Vector{String}
+# - Regex => Function => Regex
+# - Regex => SubstitutionString => Regex
+# - Vector{String}
+# - Vector{Union{String,Pair{Vector{String},String}}}
+# - Vector{Pair{Vector{String},String}}
 function TrialConditions(
     conditions,
     labels;
     required=conditions,
     types=Dict(conditions .=> String),
     defaults=Dict{Symbol,Any}(),
-    subject_fmt=r"Subject (?<subject>\d+)?",
+    subject_fmt=r"Subject (?<subject>\d+)?"
 )
     labels_rg = Dict{Symbol,Regex}()
     subst = Vector{Pair{Regex,Any}}(undef, 0)
@@ -176,11 +176,11 @@ function TrialConditions(
             if labels[cond].second.second isa Regex || labels[cond].second.second isa String
                 print(rg, str_rgx(labels[cond].second.second), ')')
             else
-                join(rg, (str_rgx(x) for x in labels[cond].second.second ), '|')
+                join(rg, (str_rgx(x) for x in labels[cond].second.second), '|')
                 print(rg, ')')
             end
             push!(subst, labels[cond].first => labels[cond].second.first)
-        elseif typeof(labels[cond]) <: Pair{Regex,F} where F <: Function
+        elseif typeof(labels[cond]) <: Pair{Regex,F} where {F<:Function}
             print(rg, str_rgx(labels[cond].first), ')')
             push!(subst, labels[cond])
             if !iszero(labels[cond].first.compile_options & Base.PCRE.CASELESS)
@@ -188,7 +188,7 @@ function TrialConditions(
             end
         else
             join(rg, (x isa Pair ? str_rgx(x.second) : str_rgx(x)
-                for x in labels[cond]), '|')
+                      for x in labels[cond]), '|')
             print(rg, ')')
 
             foreach(labels[cond]) do condlabel
@@ -197,7 +197,7 @@ function TrialConditions(
                         push!(subst, condlabel)
                     else
                         altlabels = condlabel.first isa String ? [condlabel.first] :
-                            condlabel.first
+                                    condlabel.first
                         filter!(label -> label != condlabel.second, altlabels)
                         push!(subst, Regex("("*join(altlabels, '|')*")") => condlabel.second)
                     end
@@ -219,7 +219,7 @@ function extract_conditions(file, trialconds)
     last_ofst = 1
     first_ofst = 1
 
-    for (i,cond) in enumerate(trialconds.condnames)
+    for (i, cond) in enumerate(trialconds.condnames)
         m = match(trialconds.labels[cond], file, last_ofst)
         if !isnothing(m) && !isnothing(m[cond])
             conds[cond] = String(m[cond])
@@ -236,7 +236,7 @@ function Trial(
     name,
     conditions=Dict{Symbol,Any}(),
     sources=Dict{String,AbstractSource}()
-) where I
+) where {I}
     return Trial{I}(subject, String(name), conditions, sources)
 end
 
@@ -246,7 +246,7 @@ function Base.show(io::IO, t::Trial)
         print(io, length(conditions(t)), " conditions, ")
     else
         print(io, '(')
-        _io = IOContext(io, :typeinfo=>eltype(conditions(t)))
+        _io = IOContext(io, :typeinfo => eltype(conditions(t)))
         first = true
         for p in pairs(conditions(t))
             first || print(_io, ", ")
@@ -260,7 +260,7 @@ function Base.show(io::IO, t::Trial)
     print(io, numsources, " source", plural, ')')
 end
 
-function Base.show(io::IO, _::MIME"text/plain", t::Trial{I}) where I
+function Base.show(io::IO, ::MIME"text/plain", t::Trial{I}) where {I}
     println(io, "Trial{", I, "}")
     println(io, "  Subject: ", t.subject)
     println(io, "  Name: ", t.name)
@@ -282,11 +282,11 @@ end
 
 Base.isequal(x::Trial{I}, y::Trial{T}) where {I,T} = false
 
-function Base.isequal(x::Trial{I}, y::Trial{I}) where I
+function Base.isequal(x::Trial{I}, y::Trial{I}) where {I}
     return x.subject == y.subject && x.name == y.name && x.conditions == y.conditions
 end
 
-function Base.hash(x::Trial{I}, h::UInt) where I
+function Base.hash(x::Trial{I}, h::UInt) where {I}
     h = hash(x.subject, h)
     h = hash(x.name, h)
     h = hash(x.conditions, h)
@@ -397,11 +397,11 @@ true
 ```
 """
 hascondition(trial::Trial, cond::Symbol) = haskey(conditions(trial), cond)
-hascondition(trial::Trial, cond::Pair{Symbol,T}) where T = (get(conditions(trial), cond.first, missing) == cond.second) === true
-hascondition(trial::Trial, cond::Pair{Symbol,T}) where T <: Union{AbstractVector,Tuple} = (get(conditions(trial), cond.first, missing) ∈ cond.second) === true
-hascondition(trial::Trial, cond::Pair{Symbol,T}) where T <: Function = cond.second(conditions(trial)[cond.first])
-hascondition(trial::Trial, conds::Vararg{Pair{Symbol,T} where T <: Any}) = mapreduce(Base.Fix1(hascondition, trial), &, conds)
-hascondition(trial::Trial, conds::NTuple{N, Pair{Symbol,T} where T <: Any}) where N = hascondition(trial, conds...)
+hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T} = (get(conditions(trial), cond.first, missing) == cond.second) === true
+hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T<:Union{AbstractVector,Tuple}} = (get(conditions(trial), cond.first, missing) ∈ cond.second) === true
+hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T<:Function} = cond.second(conditions(trial)[cond.first])
+hascondition(trial::Trial, conds::Vararg{Pair{Symbol,T} where T<:Any}) = mapreduce(Base.Fix1(hascondition, trial), &, conds)
+hascondition(trial::Trial, conds::NTuple{N,Pair{Symbol,T} where T<:Any}) where {N} = hascondition(trial, conds...)
 
 """
     hascondition((condition => value)...) -> Bool
@@ -423,7 +423,7 @@ julia> filter(hascondition(:group => "A"), [trial1, trial2])
 """
 hascondition(cond::Symbol) = Base.Fix2(hascondition, cond)
 hascondition(cond::Pair{Symbol}) = Base.Fix2(hascondition, cond)
-hascondition(conds::Vararg{Pair{Symbol,T} where T <: Any}) = Base.Fix2(hascondition, conds)
+hascondition(conds::Vararg{Pair{Symbol,T} where T<:Any}) = Base.Fix2(hascondition, conds)
 
 function renamecondition!(trial, (old, new)::Pair)
     @assert hascondition(trial, old)
@@ -477,8 +477,8 @@ false
 """
 hassource(trial::Trial, src::String) = haskey(sources(trial), src)
 hassource(trial::Trial, src::Regex) = any(contains(src), keys(sources(trial)))
-hassource(trial::Trial, src::S) where S <: AbstractSource = src ∈ values(sources(trial))
-hassource(trial::Trial, ::Type{S}) where S <: AbstractSource = S ∈ typeof.(values(sources(trial)))
+hassource(trial::Trial, src::S) where {S<:AbstractSource} = src ∈ values(sources(trial))
+hassource(trial::Trial, ::Type{S}) where {S<:AbstractSource} = S ∈ typeof.(values(sources(trial)))
 
 """
     hassource(src) -> Bool
@@ -514,10 +514,10 @@ If a Regex `pattern` is given, multiple sources may be returned.
 """
 getsource(trial::Trial, src::String) = sources(trial)[src]
 getsource(trial::Trial, src::Regex) = getindex.(Ref(sources(trial)), filter(contains(src), keys(sources(trial))))
-function getsource(trial::Trial, ::Type{S}) where S <: AbstractSource
+function getsource(trial::Trial, ::Type{S}) where {S<:AbstractSource}
     only(filter(v -> v isa S, collect(values(sources(trial)))))
 end
-function getsource(trial::Trial, srcpair::Pair{String,T}) where T
+function getsource(trial::Trial, srcpair::Pair{String,T}) where {T}
     name, src = srcpair
     return get(sources(trial), name, getsource(trial, src))
 end
@@ -555,7 +555,7 @@ function highlight_matches(str, m, conds)
 end
 
 optionalparse(T, ::Nothing) = nothing
-optionalparse(::Type{T}, x::T) where T = x
+optionalparse(::Type{T}, x::T) where {T} = x
 optionalparse(T, x::U) where {U} = T <: String ? String(x) : parse(T, x)
 
 """
@@ -591,11 +591,11 @@ function findtrials!(
     trials::Vector{Trial{I}},
     subsets::AbstractVector{DataSubset},
     trialconds::TrialConditions;
-    ignorefiles::Union{Nothing, Vector{String}}=nothing,
+    ignorefiles::Union{Nothing,Vector{String}}=nothing,
     debug=false,
     verbose=false,
-    maxlogs=50,
-) where I
+    maxlogs=50
+) where {I}
     requiredconds = filter(!=(:subject), trialconds.required)
     condnames_nosubject = filter(!=(:subject), trialconds.condnames)
     defaultconds = trialconds.defaults
@@ -604,8 +604,8 @@ function findtrials!(
         ignorefiles .= normpath.(ignorefiles)
     end
     if debug
-        pretty_subst = [ pat => SubstitutionString(string(red, "\\1", green, rep, rst, lgry))
-            for (pat, rep) in trialconds.subst ]
+        pretty_subst = [pat => SubstitutionString(string(red, "\\1", green, rep, rst, lgry))
+                        for (pat, rep) in trialconds.subst]
     end
 
     for set in subsets
@@ -660,24 +660,24 @@ function findtrials!(
                     end
                     seenall = findall(trials) do trial
                         sid == subject(trial) &&
-                        all(requiredconds) do cond
-                            T = trialconds.types[cond]
-                            actual = get(conditions(trial), cond, get(defaultconds, cond, nothing))
-                            candidate = optionalparse(T, get(m, cond, get(defaultconds, cond, nothing)))
+                            all(requiredconds) do cond
+                                T = trialconds.types[cond]
+                                actual = get(conditions(trial), cond, get(defaultconds, cond, nothing))
+                                candidate = optionalparse(T, get(m, cond, get(defaultconds, cond, nothing)))
 
-                            return actual == candidate
-                        end
+                                return actual == candidate
+                            end
                     end
                 else
                     seenall = findall(trials) do trial
                         sid == subject(trial) &&
-                        all(condnames_nosubject) do cond
-                            T = trialconds.types[cond]
-                            actual = get(conditions(trial), cond, get(defaultconds, cond, nothing))
-                            candidate = optionalparse(T, get(m, cond, get(defaultconds, cond, nothing)))
+                            all(condnames_nosubject) do cond
+                                T = trialconds.types[cond]
+                                actual = get(conditions(trial), cond, get(defaultconds, cond, nothing))
+                                candidate = optionalparse(T, get(m, cond, get(defaultconds, cond, nothing)))
 
-                            return actual == candidate
-                        end
+                                return actual == candidate
+                            end
                     end
                 end
 
@@ -688,7 +688,7 @@ function findtrials!(
                         T = trialconds.types[cond]
                         get!(() -> optionalparse(T, m[cond]), conds, cond)
                     end
-                    foreach(defaultconds) do (k,v)
+                    foreach(defaultconds) do (k, v)
                         T = trialconds.types[k]
                         get!(() -> optionalparse(T, get(m, k, v)), conds, k)
                     end
@@ -702,7 +702,7 @@ function findtrials!(
                         Dict{String,AbstractSource}(set.name => set.source(file))))
                 else
                     if set.dependent
-                        _id=gensym(file)
+                        _id = gensym(file)
                     else
                         @assert length(seenall) == 1
                     end
@@ -721,7 +721,7 @@ function findtrials!(
                             end
 
                             if !@isdefined(_id)
-                                _id=gensym(file)
+                                _id = gensym(file)
                             end
 
                             let io = IOBuffer()
@@ -757,7 +757,7 @@ Map function `f` over all `trials` (multi-threaded by default) and return the
 function analyzedataset(
     fun, trials::AbstractVector{Trial{I}}, ::Type{SRC};
     threaded=(Threads.nthreads() > 1), enable_progress=true, show_errors=true
-) where I where SRC <: AbstractSource
+) where {I} where {SRC<:AbstractSource}
     srs = Vector{SegmentResult{SRC,I}}(undef, length(trials))
     p = Progress(length(trials)+1; output=stdout, enabled=enable_progress,
         desc="Analyzing trials... ")
