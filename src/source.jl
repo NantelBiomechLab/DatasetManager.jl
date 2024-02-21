@@ -90,16 +90,20 @@ function Base.showerror(io::IO, e::MissingSourceError)
 end
 
 """
-    requiresource!(trial, name::String; [force, deps, kwargs...]) -> nothing
-    requiresource!(trial, name::Regex; <keyword arguments>) -> nothing
-    requiresource!(trial, src::S; <keyword arguments>) where {S<:AbstractSource} -> nothing
-    requiresource!(trial, ::Type{S}; <keyword arguments>) where {S<:AbstractSource} -> nothing
-    requiresource!(trial, name::String => src; <keyword arguments>) -> nothing
+    requiresource!([generatesource::Function,] trial, name::String; <keyword args>) -> nothing
+    requiresource!([generatesource::Function,] trial, name::Regex; <keyword args>) -> nothing
+    requiresource!([generatesource::Function,] trial, src::{<:AbstractSource}; <keyword args>) -> nothing
+    requiresource!([generatesource::Function,] trial, ::Type{<:AbstractSource}; <keyword args>) -> nothing
+    requiresource!([generatesource::Function,] trial, name::String => src; <keyword args>) -> nothing
 
 Require `src` to be exist for `trial`. Generate `src` if it does not exist, or throw an
 error if `src` is not present and cannot be generated. When `src` is a `Regex`, `deps` is
 constrained to `UnknownDeps`, regardless of the keyword argument. Unused keyword arguments
 will be passed on to the `generatesource` method for `src`.
+
+Typically, a specific `generatesource` method should be written for each custom
+`AbstractSource` type, however, sometimes the `do` function syntax may be convenient. Note
+the `do` syntax does not allow passing additional kwargs.
 
 # Keyword arguments
 - `force=false`: Force generating `src`, even if it already exists
@@ -118,20 +122,35 @@ julia> requiresource!(trial, Source{Events})
 julia> requiresource!(trial, Source{Events}; force=true, deps=("mainc3d" => Source{C3DFile}))
 
 ```
+
+See also: [`generatesource`](@ref)
 """
-function requiresource!(trial, src::AbstractSource, parent=nothing; kwargs...)
-    requiresource!(trial, srcname_default(src) => src, parent; kwargs...)
+function requiresource!(
+    generate::Function, trial::Trial, src::AbstractSource, parent=nothing; kwargs...
+)
+    requiresource!(generate, trial, srcname_default(src) => src, parent; kwargs...)
 end
 
-function requiresource!(trial, src::Type{<:AbstractSource}, parent=nothing; kwargs...)
-    requiresource!(trial, srcname_default(src) => src(), parent; kwargs...)
+requiresource!(trial::Trial, src::AbstractSource, parent=nothing; kwargs...) =
+    requiresource!(generatesource, src, parent; kwargs...)
+
+function requiresource!(
+    generate::Function, trial::Trial, src::Type{<:AbstractSource}, parent=nothing; kwargs...
+)
+    requiresource!(generate, trial, srcname_default(src) => src(), parent; kwargs...)
 end
 
-function requiresource!(trial, name::Regex)
-    requiresource!(trial, name => Source{Nothing}(""), nothing; force=false, deps=UnknownDeps())
+requiresource!(trial::Trial, src::Type{<:AbstractSource}, parent=nothing; kwargs...) =
+    requiresource!(generatesource, trial, src::Type{<:AbstractSource}, parent=nothing; kwargs...)
+
+function requiresource!(generate::Function, trial::Trial, name::Regex)
+    requiresource!(generatesource, trial, name => Source{Nothing}(""), nothing;
+        force=false, deps=UnknownDeps())
 end
 
-function requiresource!(trial, namesrc::Pair, parent=nothing;
+requiresource!(trial::Trial, name::Regex) = requiresource!(generatesource, trial, name::Regex)
+
+function requiresource!(generate::Function, trial::Trial, namesrc::Pair, parent=nothing;
     force=false, deps=dependencies(namesrc.second), kwargs...
 )
     name, src = namesrc
@@ -154,10 +173,10 @@ function requiresource!(trial, namesrc::Pair, parent=nothing;
         end
     else
         foreach(deps) do reqsrc
-            requiresource!(trial, reqsrc, src; force=false)
+            requiresource!(generate, trial, reqsrc, src; force=false)
         end
     end
-    _src = generatesource(trial, src, deps; kwargs...)
+    _src = generate(trial, src, deps; kwargs...)
     isfile(sourcepath(_src)) ||
         throw(MissingSourceError("failed to generate source $name => $_src for $trial"))
 
