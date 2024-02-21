@@ -150,6 +150,9 @@ end
 
 requiresource!(trial::Trial, name::Regex) = requiresource!(generatesource, trial, name::Regex)
 
+requiresource!(trial::Trial, namesrc::Pair, parent=nothing; kwargs...) =
+    requiresource!(generatesource, trial, namesrc, parent; kwargs...)
+
 function requiresource!(generate::Function, trial::Trial, namesrc::Pair, parent=nothing;
     force=false, deps=dependencies(namesrc.second), kwargs...
 )
