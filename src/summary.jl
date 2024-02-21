@@ -145,7 +145,7 @@ function summarize(oio::IO, trials::AbstractVector{T};
     tmpio = IOBuffer()
     pretty_table(IOContext(tmpio, :color => true), unq_condsdf; hlines=[:header], display_size=(verbosity+4,w-4),
         vlines=1:ncol(unq_condsdf)-1, alignment=[fill(:r, ncol(unq_condsdf)-1); :l],
-        nosubheader=true, crop=:both, newline_at_end=false, backend=Val(:text),
+        show_subheader=false, crop=:both, newline_at_end=false, backend=Val(:text),
         header_crayon=[fill(BMGNTA, ncol(unq_condsdf)-1); LG],
         highlighters=Highlighter((v,i,j) -> j === ncol(unq_condsdf), LG),
         formatters=PrettyTables.ft_nomissing,
