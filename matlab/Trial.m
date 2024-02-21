@@ -31,10 +31,17 @@ classdef Trial < handle
     methods
         function obj = Trial(subject, name, conditions, sources)
             if nargin > 0
-                obj.subject = subject;
-                obj.name = name;
-                obj.sources = sources;
-                obj.conditions = conditions;
+                if nargin < 4
+                    obj.subject = subject;
+                    obj.name = name;
+                    obj.conditions = conditions;
+                    obj.sources = struct();
+                else
+                    obj.subject = subject;
+                    obj.name = name;
+                    obj.conditions = conditions;
+                    obj.sources = sources;
+                end
             end
         end
 
@@ -58,6 +65,21 @@ classdef Trial < handle
                     bool = bool | reshape(cellfun(@(s) any(structfun(@(x) isa(x, src), s)), {trial.sources}), size(trial));
                 else
                     bool = bool | reshape(cellfun(@(s) isfield(s, src), {trial.sources}), size(trial));
+                end
+            end
+        end
+
+        function bool = hascondition(trial, conds)
+            bool = false(size(trial));
+            condsfields = fieldnames(conds);
+            for fi = length(fieldnames(conds))
+                f = condsfields{fi};
+                if isa(conds.(f), 'cell') && prod(size(conds.(f))) > 1
+                    bool = bool | arrayfun(@(t) ismember(t.conditions.(f), conds.(f)), trial);
+                elseif isempty(conds.(f))
+                    bool = bool | arrayfun(@(t) ~isempty(t.conditions.(f)), trial);
+                else
+                    bool = bool | arrayfun(@(t) isequal(conds.(f), t.conditions.(f)), trial);
                 end
             end
         end
