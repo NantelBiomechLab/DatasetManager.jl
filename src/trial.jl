@@ -231,34 +231,6 @@ function extract_conditions(file, trialconds)
     return file[first_ofst:end], conds
 end
 
-"""
-    Trial{ID}(subject::ID, name::String, [conditions::Dict{Symbol}, sources::Dict{String}])
-
-Characterizes a single instance of data collected from a specific `subject`. The Trial has a
-`name`, and may have one or more `conditions` which describe experimental conditions and/or
-subject specific charateristics which are relevant to subsequent analyses. A Trial may have
-one or more complementary `sources` of data (e.g. simultaneous recordings from separate
-equipment stored in separate files, supplementary data for a primary data source, etc).
-
-# Examples
-```jldoctest
-julia> trial1 = Trial(1, "baseline", Dict(:group => "control", :session => 2))
-Trial{Int64}
-  Subject: 1
-  Name: baseline
-  Conditions:
-    :group => "control"
-    :session => 2
-  No sources
-```
-"""
-mutable struct Trial{I}
-    subject::I
-    name::String
-    conditions::Dict{Symbol,Any}
-    sources::Dict{String,AbstractSource}
-end
-
 function Trial(
     subject::I,
     name,

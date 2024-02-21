@@ -1,37 +1,3 @@
-"""
-    AbstractSource
-
-The abstract supertype for custom sources. Implement a subtype of `AbstractSource` if
-`Source{S}` is not sufficient for your source requirements (e.g. your source has additional
-information besides the path, such as encoding parameters, compression indicator, etc, that
-needs to be associated with each instance).
-
-# Extended help
-
-### `AbstractSource` interface requirements
-
-All subtypes of `AbstractSource` **must**:
-
-- have a `path` field or extend the [`sourcepath`](@ref) function.
-- have at least these two constructor methods:
-    - empty constructor
-    - single argument constructor accepting a string of an absolute path
-
-`AbstractSource` subtypes **should**:
-
-- have a [`readsource`](@ref) method
-
-`AbstractSource` subtypes **may** implement these additional methods to improve user
-experience and/or enable additional functionality:
-
-- [`readsegment`](@ref)
-- [`generatesource`](@ref) (if enabling `requiresource!` generation)
-- [`dependencies`](@ref) (if defining a `generatesource` method)
-- [`srcext`](@ref)
-- [`srcname_default`](@ref)
-"""
-abstract type AbstractSource end
-
 (::Type{S})() where S <: AbstractSource = S(tempname()*srcext(S))
 
 """
