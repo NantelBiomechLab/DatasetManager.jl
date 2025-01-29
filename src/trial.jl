@@ -396,7 +396,7 @@ true
 
 ```
 """
-hascondition(trial::Trial, cond::Symbol) = haskey(conditions(trial), cond)
+hascondition(trial::Trial, cond::Symbol...) = all(c -> haskey(conditions(trial), c), cond)
 hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T} = (get(conditions(trial), cond.first, missing) == cond.second) === true
 hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T<:Union{AbstractVector,Tuple}} = (get(conditions(trial), cond.first, missing) ∈ cond.second) === true
 hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T<:Function} = cond.second(conditions(trial)[cond.first])
