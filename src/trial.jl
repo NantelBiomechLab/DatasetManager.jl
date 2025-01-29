@@ -556,7 +556,7 @@ end
 
 optionalparse(T, ::Nothing) = nothing
 optionalparse(::Type{T}, x::T) where {T} = x
-optionalparse(T, x::U) where {U} = T <: String ? String(x) : parse(T, x)
+optionalparse(T, x::U) where {U} = T <: String ? string(x) : parse(T, x)
 
 """
     findtrials(subsets, conditions; <keyword arguments>) -> Vector{Trial}
