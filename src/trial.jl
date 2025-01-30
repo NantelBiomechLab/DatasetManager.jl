@@ -401,9 +401,16 @@ true
 ```
 """
 hascondition(trial::Trial, cond::Symbol...) = all(c -> haskey(conditions(trial), c), cond)
-hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T} = (get(conditions(trial), cond.first, missing) == cond.second) === true
-hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T<:Union{AbstractVector,Tuple}} = (get(conditions(trial), cond.first, missing) ∈ cond.second) === true
-hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T<:Function} = cond.second(conditions(trial)[cond.first])
+function hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T}
+    return haskey(conditions(trial), cond.first) && conditions(trial)[cond.first] == cond.second
+end
+function hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T<:Union{AbstractVector,Tuple}}
+    return haskey(conditions(trial), cond.first) && conditions(trial)[cond.first] ∈ cond.second
+end
+function hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T<:Function}
+    return haskey(conditions(trial), cond.first) && cond.second(conditions(trial)[cond.first])
+end
+
 hascondition(trial::Trial, conds::Vararg{Pair{Symbol,T} where T<:Any}) = mapreduce(Base.Fix1(hascondition, trial), &, conds)
 hascondition(trial::Trial, conds::NTuple{N,Pair{Symbol,T} where T<:Any}) where {N} = hascondition(trial, conds...)
 
