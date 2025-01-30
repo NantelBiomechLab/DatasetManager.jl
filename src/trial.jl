@@ -1,9 +1,13 @@
 """
     DataSubset(name, source::Union{Function,<:AbstractSource}, dir, pattern; [dependent=false])
 
-Describes a subset of `source` data files found within a folder `dir` which match `pattern`
+Describe a subset of `source` data files found within a folder `dir` which match `pattern`
 (using [glob syntax](https://en.wikipedia.org/wiki/Glob_(programming))). The `name` of the
 DataSubset will be used in `findtrials` as the source name in a Trial.
+
+`dir` should not include any information used to determine experimental conditions by a
+`TrialConditions`; `dir` will be stripped from file paths before the `TrialConditions` are
+searched for.
 
 Some sources described by a DataSubset may not be relevant as standalone/independent Trials
 (e.g. maximal voluntary contraction "trials", when collecting EMG data, are typically only
@@ -615,9 +619,10 @@ function findtrials!(
         if !isnothing(ignorefiles)
             setdiff!(files, ignorefiles)
         end
+        strip_dir = Regex("^($(set.dir))") => ""
 
         for file in files
-            _file = replace(file, trialconds.subst...)
+            _file = replace(file, strip_dir, trialconds.subst...)
             slug, m = extract_conditions(_file, trialconds)
 
             if debug && num_debugs ≤ maxlogs
