@@ -9,7 +9,7 @@ function stack(rs::Vector{<:SegmentResult}, conds=unique_conditions(rs);
     df = DataFrame(subject = categorical(subject.(rs)))
 
     for cond in conds
-        insertcols!(df, cond => categorical(getindex.(conditions.(rs), cond)))
+        insertcols!(df, cond => categorical(get.(conditions.(rs), cond, missing)))
     end
 
     for var in variables
