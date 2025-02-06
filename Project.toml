@@ -1,7 +1,7 @@
 name = "DatasetManager"
 uuid = "2ca6b172-e30b-458d-964f-9c975788bc07"
 authors = ["Allen Hill <allenofthehills@gmail.com> and contributors"]
-version = "0.4.2"
+version = "0.5.0"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -27,7 +27,7 @@ PrettyTables = "1, 2"
 ProgressMeter = "1.5"
 StatsBase = "0.33, 0.34"
 ThreadPools = "2"
-julia = "1.8"
+julia = "1.11"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

@@ -14,6 +14,8 @@ export findtrials, findtrials!, summarize, analyzedataset, write_results, export
     generatesource, dependencies, segment, source, readsegment, trial, results,
     resultsvariables
 
+public stack
+
 """
     AbstractSource
 
