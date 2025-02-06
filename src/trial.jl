@@ -615,6 +615,7 @@ function findtrials!(
     subsets::AbstractVector{DataSubset},
     trialconds::TrialConditions;
     ignorefiles::Union{Nothing,Vector{String}}=nothing,
+    compare_duplicate_sources=nothing,
     debug=false,
     verbose=false,
     maxlogs=50
@@ -744,7 +745,19 @@ function findtrials!(
 
                         if hassource(t, src_name)
                             if sourcepath(getsource(t, src_name)) == file
+                                # already has this exact source/file
                                 continue
+                            elseif !isnothing(compare_duplicate_sources)
+                                whichsource, reason = compare_duplicate_sources(file, sourcepath(getsource(t, src_name)))
+                                if whichsource == :new
+                                    @warn "Replacing $(t.sources[src_name]) with $file because $reason"
+                                    t.sources[src_name] = set.source(file)
+                                    continue
+                                elseif whichsource == :old
+                                    @info "Ignoring duplicate source $file because $reason"
+                                    continue
+                                # else fall-through to DuplicateSourceError
+                                end
                             end
 
                             if !@isdefined(_id)
