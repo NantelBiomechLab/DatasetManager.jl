@@ -463,8 +463,12 @@ function recodecondition!(trial, cond::Pair{Symbol,T}) where {T<:Base.Callable}
     end
 end
 
-function addcondition!(trial, cond::Pair{Symbol,T}) where {T<:Base.Callable}
-    @assert !hascondition(trial, cond.first)
+function addcondition!(trial, cond::Pair{Symbol,T}; skip_present=false) where {T<:Base.Callable}
+    if skip_present
+        hascondition(trial, cond.first) && return nothing
+    else
+        @assert !hascondition(trial, cond.first)
+    end
     f = cond.second
     c = f(trial)
     if !isnothing(c)
