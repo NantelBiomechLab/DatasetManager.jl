@@ -649,7 +649,10 @@ function findtrials!(
 
                     if !debugheader
                         debugheader = true
-                        println(stderr, "┌ Subset ", repr(set.name))
+                        st = stacktrace()
+                        ci = findlast(==(@__MODULE__)∘parentmodule, st)
+                        @assert !isnothing(ci)
+                        println(stderr, "┌ Subset ", repr(set.name), " (", st[ci+1], ")")
                     end
                     pretty_file = replace(string(lgry, file, rst), pretty_subst...)*string(rst)
 
