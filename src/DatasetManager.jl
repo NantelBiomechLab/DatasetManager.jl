@@ -9,10 +9,10 @@ export DataSubset, TrialConditions, Trial, DuplicateSourceError, Segment, Segmen
     AbstractSource, Source, MissingSourceError, UnknownDeps
 
 export findtrials, findtrials!, summarize, analyzedataset, write_results, export_trials,
-    subject, hassubject, conditions, hascondition, addcondition!, renamecondition!,
-    recodecondition!, sources, hassource, getsource, sourcepath, readsource, requiresource!,
-    generatesource, dependencies, segment, source, readsegment, trial, results,
-    resultsvariables
+    subject, conditions, addcondition!, renamecondition!, recodecondition!, hassubject,
+    hascondition, hassource, ∨, ∧, sources, getsource, sourcepath, readsource,
+    requiresource!, generatesource, dependencies, segment, source, readsegment, trial,
+    results, resultsvariables
 
 public stack
 
@@ -80,6 +80,7 @@ end
 
 include("source.jl")
 include("trial.jl")
+include("predicates.jl")
 include("segment.jl")
 include("stack.jl")
 include("print.jl")
