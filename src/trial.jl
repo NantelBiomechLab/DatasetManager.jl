@@ -54,11 +54,19 @@ struct DataSubset
     name::String
     source::Function
     dir::String
-    pattern::String
+    patterns::Vector{String}
     ext::String
     dependent::Bool
 
-    DataSubset(name, source, dir, pattern, ext=".", dependent=false) = new(name, source, dir, pattern, escape_period(ext), dependent)
+    function DataSubset(name, source, dir, pattern, ext=".", dependent=false)
+        @assert pattern isa Union{AbstractString,Vector{<:AbstractString}}
+        if pattern isa AbstractString
+            _pattern = [string(pattern)]
+        else
+            _pattern = string.(pattern)
+        end
+        new(name, source, dir, _pattern, escape_period(ext), dependent)
+    end
 end
 
 function escape_period(ext)
@@ -317,7 +325,7 @@ struct DuplicateSourceError <: Exception
 end
 
 function Base.showerror(io::IO, e::DuplicateSourceError)
-    numfolders = count(r"[/\\]", string(e.datasubset.pattern))
+    numfolders = count(r"[/\\]", string(e.datasubset.patterns))
     _original = joinpath("…", splitpath(e.original)[(end-numfolders):end]...)
     _dup = joinpath("…", splitpath(e.dup)[(end-numfolders):end]...)
 
@@ -621,8 +629,8 @@ function findtrials!(
 
     for set in subsets
         debugheader, num_debugs = false, 0
-        pattern = set.pattern
-        files = normpath.(glob(pattern, set.dir))
+        patterns = set.patterns
+        files = normpath.(mapreduce(p -> glob(p, set.dir), vcat, patterns))
         if !isnothing(ignorefiles)
             setdiff!(files, ignorefiles)
         end
