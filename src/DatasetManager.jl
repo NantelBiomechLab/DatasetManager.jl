@@ -1,8 +1,9 @@
 module DatasetManager
 
-using Glob, DataFrames, CategoricalArrays, PrettyTables, StatsBase, Printf, ThreadPools,
+using DataFrames, CategoricalArrays, PrettyTables, StatsBase, Printf, ThreadPools,
     ProgressMeter, Crayons, NaturalSort, CSV
 using Crayons.Box
+using Glob: glob
 
 export DataSubset, TrialConditions, Trial, DuplicateSourceError, Segment, SegmentResult,
     AbstractSource, Source, MissingSourceError, UnknownDeps
