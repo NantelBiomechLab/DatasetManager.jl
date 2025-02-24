@@ -79,7 +79,7 @@ end
 
 function Base.show(io::IO, ds::DataSubset)
     print(io, "DataSubset(", repr(ds.name), ", ", typeof(ds.source("")), ", ",
-        repr(ds.dir), ", ", repr(ds.pattern), ')')
+        repr(ds.dir), ", ", repr(ds.patterns), ')')
 end
 
 """
