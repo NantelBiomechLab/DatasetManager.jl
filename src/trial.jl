@@ -471,7 +471,7 @@ Find all the trials matching `conditions` which can be found in `subsets`.
 See also: [`Trial`](@ref), [`findtrials!`](@ref), [`DataSubset`](@ref), [`TrialConditions`](@ref)
 """
 function findtrials(subsets::AbstractVector{DataSubset}, trialconds::TrialConditions; kwargs...)
-    I = trialconds.types[:subject]
+    I = get(trialconds.types, :subject, String)
     findtrials!(Vector{Trial{I}}(), subsets, trialconds; kwargs...)
 end
 
@@ -563,7 +563,7 @@ function findtrials!(
                     seenall = findall(trials) do trial
                         sid == subject(trial) &&
                             all(requiredconds) do cond
-                                T = trialconds.types[cond]
+                                T = get(trialconds.types, cond, String)
                                 actual = get(conditions(trial), cond, get(defaultconds, cond, nothing))
                                 candidate = optionalparse(T, get(m, cond, get(defaultconds, cond, nothing)))
 
@@ -574,7 +574,7 @@ function findtrials!(
                     seenall = findall(trials) do trial
                         sid == subject(trial) &&
                             all(condnames_nosubject) do cond
-                                T = trialconds.types[cond]
+                                T = get(trialconds.types, cond, String)
                                 actual = get(conditions(trial), cond, get(defaultconds, cond, nothing))
                                 candidate = optionalparse(T, get(m, cond, get(defaultconds, cond, nothing)))
 
@@ -587,15 +587,15 @@ function findtrials!(
                     name = splitext(basename(file))[1]
                     conds = Dict{Symbol,Any}()
                     foreach(requiredconds) do cond
-                        T = trialconds.types[cond]
+                        T = get(trialconds.types, cond, String)
                         get!(() -> optionalparse(T, m[cond]), conds, cond)
                     end
                     foreach(defaultconds) do (k, v)
-                        T = trialconds.types[k]
+                        T = get(trialconds.types, k, String)
                         get!(() -> optionalparse(T, get(m, k, v)), conds, k)
                     end
                     foreach(optionalconds) do cond
-                        T = trialconds.types[cond]
+                        T = get(trialconds.types, cond, String)
                         if !isnothing(get(m, cond, nothing))
                             get!(() -> optionalparse(T, m[cond]), conds, cond)
                         end
