@@ -162,6 +162,8 @@ end
 
 PredicateChain{Op}(f::F, g::G) where {Op,F,G} = PredicateChain{Op,F,G}(f,g)
 
+Base.:!(p::PredicateChain) = (!) ∘ p
+
 function Base.show(io::IO, ::MIME"text/plain", p::PredicateChain{Op}) where {Op}
     preface = get(io, :anonymous_preface, false)
 
