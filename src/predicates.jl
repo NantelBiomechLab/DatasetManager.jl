@@ -1,9 +1,10 @@
+const TrialLike = Union{Trial,Segment,SegmentResult}
 """
     hassubject(trial, sub) -> Bool
 
 Test if the subject ID for `trial` is equal to `sub`
 """
-hassubject(trial::Trial, sub) = subject(trial) == sub
+hassubject(trial::TrialLike, sub) = subject(trial) == sub
 
 """
     hassubject(sub) -> Bool
@@ -44,19 +45,19 @@ true
 
 ```
 """
-hascondition(trial::Trial, cond::Symbol...) = all(c -> haskey(conditions(trial), c), cond)
-function hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T}
+hascondition(trial::TrialLike, cond::Symbol...) = all(c -> haskey(conditions(trial), c), cond)
+function hascondition(trial::TrialLike, cond::Pair{Symbol,T}) where {T}
     return haskey(conditions(trial), cond.first) && conditions(trial)[cond.first] == cond.second
 end
-function hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T<:Union{AbstractVector,Tuple}}
+function hascondition(trial::TrialLike, cond::Pair{Symbol,T}) where {T<:Union{AbstractVector,Tuple}}
     return haskey(conditions(trial), cond.first) && conditions(trial)[cond.first] ∈ cond.second
 end
-function hascondition(trial::Trial, cond::Pair{Symbol,T}) where {T<:Function}
+function hascondition(trial::TrialLike, cond::Pair{Symbol,T}) where {T<:Function}
     return haskey(conditions(trial), cond.first) && cond.second(conditions(trial)[cond.first])
 end
 
-hascondition(trial::Trial, conds::Vararg{Pair{Symbol,T} where T<:Any}) = mapreduce(Base.Fix1(hascondition, trial), &, conds)
-hascondition(trial::Trial, conds::NTuple{N,Pair{Symbol,T} where T<:Any}) where {N} = hascondition(trial, conds...)
+hascondition(trial::TrialLike, conds::Vararg{Pair{Symbol,T} where T<:Any}) = mapreduce(Base.Fix1(hascondition, trial), &, conds)
+hascondition(trial::TrialLike, conds::NTuple{N,Pair{Symbol,T} where T<:Any}) where {N} = hascondition(trial, conds...)
 
 """
     hascondition((condition => value)...) -> Bool
@@ -103,10 +104,10 @@ julia> hassource(trial1, r"test*")
 false
 ```
 """
-hassource(trial::Trial, src::String) = haskey(sources(trial), src)
-hassource(trial::Trial, src::Regex) = any(contains(src), keys(sources(trial)))
-hassource(trial::Trial, src::S) where {S<:AbstractSource} = src ∈ values(sources(trial))
-hassource(trial::Trial, ::Type{S}) where {S<:AbstractSource} = S ∈ typeof.(values(sources(trial)))
+hassource(trial::TrialLike, src::String) = haskey(sources(trial), src)
+hassource(trial::TrialLike, src::Regex) = any(contains(src), keys(sources(trial)))
+hassource(trial::TrialLike, src::S) where {S<:AbstractSource} = src ∈ values(sources(trial))
+hassource(trial::TrialLike, ::Type{S}) where {S<:AbstractSource} = S ∈ typeof.(values(sources(trial)))
 
 """
     hassource(src) -> Bool

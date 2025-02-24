@@ -80,8 +80,8 @@ end
 
 include("source.jl")
 include("trial.jl")
-include("predicates.jl")
 include("segment.jl")
+include("predicates.jl")
 include("stack.jl")
 include("print.jl")
 include("summary.jl")
