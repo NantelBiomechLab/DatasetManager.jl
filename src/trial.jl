@@ -134,7 +134,7 @@ struct TrialConditions
     condnames::Vector{Symbol}
     required::Vector{Symbol}
     labels::Dict{Symbol,Regex}
-    types::Dict{Symbol,DataType}
+    types::Dict{Symbol,Any}
     defaults::Dict{Symbol,Any}
     subst::Vector{Pair{Regex,Any}}
 
@@ -143,8 +143,6 @@ struct TrialConditions
         :subject ∉ required && push!(required, :subject)
         @assert issubset(conds, keys(labels))
         @assert issubset(required, conds)
-        get!.(Ref(types), setdiff(conds, keys(types)), String)
-        @assert issubset(conds, keys(types))
 
         return new(conds, required, labels, types, defaults, subst)
     end
@@ -454,6 +452,7 @@ end
 
 optionalparse(T, ::Nothing) = nothing
 optionalparse(::Type{T}, x::T) where {T} = x
+optionalparse(f::Function, x) = f(x)
 optionalparse(T, x::U) where {U} = T <: String ? string(x) : parse(T, x)
 
 """
